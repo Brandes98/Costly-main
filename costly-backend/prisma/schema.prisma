@@ -1,0 +1,825 @@
+// ============================================================
+// Costly — Schema de Base de Datos
+// Sistema de Gestión de Compras e Importaciones
+// Distribuidora de Servicios Vadibarot Ltda.
+// ============================================================
+
+
+generator client {
+provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum RolUsuario {
+  admin
+  operador_sr
+  operador
+  finanzas
+  consultas
+}
+
+enum EstadoPedido {
+  borrador
+  confirmado
+  en_produccion
+  listo_fabrica
+  embarcado
+  en_transito
+  en_puerto_cr
+  en_aduana
+  en_bodega
+  entregado
+  cerrado
+  cancelado
+}
+
+enum EstadoImportacion {
+  borrador
+  en_proceso
+  en_transito
+  en_aduana
+  en_bodega
+  cerrada
+}
+
+enum EstadoCosteo {
+  borrador
+  confirmado
+  aprobado
+}
+
+enum EstadoContenedor {
+  programado
+  pre_embarque
+  en_transito
+  en_puerto
+  en_aduana
+  en_bodega
+  retirado
+}
+
+enum TipoHito {
+  confirmacion
+  pago_senal
+  produccion
+  embarque
+  llegada_cr
+  retiro_aduana
+  entrega_bodega
+  entrega_cliente
+  personalizado
+}
+
+enum EstadoHito {
+  pendiente
+  en_proceso
+  completado
+  vencido
+}
+
+enum EstadoTramite {
+  pendiente
+  en_proceso
+  aprobado
+  objetado
+}
+
+enum TipoPago {
+  senal
+  saldo
+  total
+  anticipo
+  devolucion
+}
+
+enum EstadoPago {
+  programado
+  procesado
+  confirmado
+  devuelto
+}
+
+enum MetodoPago {
+  swift
+  transferencia_local
+  cheque
+  efectivo
+}
+
+enum TipoFactura {
+  comercial
+  proforma
+  credito
+}
+
+enum FuenteTC {
+  bccr
+  manual
+  hacienda
+}
+
+enum TipoPermiso {
+  minae
+  senasa
+  minsa
+  sutel
+  otro
+}
+
+enum EstadoPermiso {
+  pendiente
+  en_tramite
+  aprobado
+  rechazado
+  vencido
+}
+
+enum TipoDocumento {
+  factura
+  bl
+  dua
+  permiso
+  seguro
+  packing
+  otro
+}
+
+enum AccionAuditoria {
+  INSERT
+  UPDATE
+  DELETE
+  LOGIN
+  EXPORT
+}
+
+enum TipoContenedor {
+  GP20
+  GP40
+  HC40
+  LCL
+  aereo
+}
+
+enum TipoEstiba {
+  pallet_americano
+  pallet_europeo
+  pallet_medida
+  sin_pallet
+  otro
+}
+
+enum AccionHistorialUnion {
+  union
+  separacion
+}
+
+enum TipoCliente {
+  nacional
+  exportacion
+  interno
+}
+
+enum TipoReporte {
+  r01
+  r02
+  r03
+  r04
+  r05
+  r06
+  r07
+  r08
+  r09
+  r10
+  r11
+  r12
+  dinamico
+}
+
+// ============================================================
+// TABLAS
+// ============================================================
+
+// ------------------------------------------------------------
+// 1. EMPRESA
+// ------------------------------------------------------------
+model empresa {
+  empresa_id     Int      @id @default(autoincrement())
+  nombre         String   @db.VarChar(150)
+  ruc            String   @unique @db.VarChar(20)
+  moneda_base    String   @default("USD") @db.Char(3)
+  margen_default Decimal? @db.Decimal(5, 2)
+  iva_pct        Decimal  @default(13) @db.Decimal(5, 2)
+  ivi_pct        Decimal  @default(13) @db.Decimal(5, 2)
+  tc_fuente      FuenteTC @default(bccr)
+  creado_en      DateTime @default(now())
+
+  // Relaciones
+  usuarios      usuario[]
+  proveedores   proveedor[]
+  clientes      cliente[]
+  productos     producto[]
+  pedidos       pedido[]
+  importaciones importacion[]
+  tc_historico  tc_historico[]
+  documentos    documento[]
+  auditoria     auditoria[]
+  reportes      reporte[]
+}
+
+// ------------------------------------------------------------
+// 2. USUARIOS
+// ------------------------------------------------------------
+model usuario {
+  usuario_id     Int         @id @default(autoincrement())
+  empresa_id     Int
+  nombre         String      @db.VarChar(100)
+  email          String      @unique @db.VarChar(150)
+  password_hash  String      @db.VarChar(255)
+  rol            RolUsuario
+  activo         Boolean     @default(true)
+  ultimo_acceso  DateTime?
+  creado_en      DateTime    @default(now())
+
+  // Relaciones
+  empresa              empresa               @relation(fields: [empresa_id], references: [empresa_id])
+  pedidos_creados      pedido[]              @relation("PedidoCreadoPor")
+  costeos_creados      costeo[]              @relation("CosteoCreadoPor")
+  costeos_aprobados    costeo[]              @relation("CosteoAprobadoPor")
+  pagos_registrados    pago[]
+  hitos_responsable    hito[]
+  documentos_subidos   documento[]
+  auditoria            auditoria[]
+  reportes             reporte[]
+  historial_uniones    pedidos_historial_union[]
+}
+
+// ------------------------------------------------------------
+// 3. PAISES
+// ------------------------------------------------------------
+model pais {
+  pais_id  Int     @id @default(autoincrement())
+  codigo   String  @unique @db.Char(2)
+  nombre   String  @db.VarChar(80)
+  bandera  String? @db.Char(8)
+  region   String? @db.VarChar(60)
+
+  // Relaciones
+  proveedores proveedor[]
+}
+
+// ------------------------------------------------------------
+// 4. PROVEEDORES
+// ------------------------------------------------------------
+model proveedor {
+  proveedor_id      Int      @id @default(autoincrement())
+  empresa_id        Int
+  pais_id           Int
+  nombre            String   @db.VarChar(150)
+  ciudad            String?  @db.VarChar(100)
+  incoterm_pref     String?  @db.Char(3)
+  moneda            String   @db.Char(3)
+  dias_transito     Int?     @db.SmallInt
+  puerto_origen     String?  @db.VarChar(80)
+  condiciones_pago  String?  @db.VarChar(100)
+  contacto          String?  @db.VarChar(100)
+  email             String?  @db.VarChar(150)
+  activo            Boolean  @default(true)
+
+  // Relaciones
+  empresa        empresa         @relation(fields: [empresa_id], references: [empresa_id])
+  pais           pais            @relation(fields: [pais_id], references: [pais_id])
+  pedidos        pedido[]
+  facturas       factura_prov[]
+  pagos          pago[]
+  tramites       tramite_aduana[]
+}
+
+// ------------------------------------------------------------
+// 5. CLIENTES
+// ------------------------------------------------------------
+model cliente {
+  cliente_id     Int         @id @default(autoincrement())
+  empresa_id     Int
+  nombre         String      @db.VarChar(150)
+  cedula         String?     @unique @db.VarChar(20)
+  tipo           TipoCliente
+  moneda         String      @db.Char(3)
+  descuento_pct  Decimal?    @db.Decimal(5, 2)
+  email          String?     @db.VarChar(150)
+  activo         Boolean     @default(true)
+
+  // Relaciones
+  empresa  empresa  @relation(fields: [empresa_id], references: [empresa_id])
+  pedidos  pedido[]
+}
+
+// ------------------------------------------------------------
+// 6. PRODUCTOS
+// ------------------------------------------------------------
+model producto {
+  producto_id       Int        @id @default(autoincrement())
+  empresa_id        Int
+  sku               String     @unique @db.VarChar(50)
+  nombre            String     @db.VarChar(150)
+  descripcion       String?    @db.Text
+  categoria         String?    @db.VarChar(80)
+  cod_arancelario   String?    @db.VarChar(20)
+  arancel_pct       Decimal?   @db.Decimal(5, 2)
+  isc_pct           Decimal?   @db.Decimal(5, 2)
+
+  // Dimensiones y peso unitario
+  peso_kg           Decimal?   @db.Decimal(10, 3)
+  largo_cm          Decimal?   @db.Decimal(10, 2)
+  ancho_cm          Decimal?   @db.Decimal(10, 2)
+  alto_cm           Decimal?   @db.Decimal(10, 2)
+  volumen_m3        Decimal?   @db.Decimal(10, 4)  // calculado o ingresado
+
+  // Empaque
+  unidades_por_caja Int?
+  peso_caja_kg      Decimal?   @db.Decimal(10, 3)
+  volumen_caja_m3   Decimal?   @db.Decimal(10, 4)
+
+  // Estiba
+  tipo_estiba         TipoEstiba @default(pallet_americano)
+  pallet_largo_cm     Decimal?   @db.Decimal(10, 2)  // solo si tipo = pallet_medida
+  pallet_ancho_cm     Decimal?   @db.Decimal(10, 2)
+  pallet_alto_max_cm  Decimal?   @db.Decimal(10, 2)
+  pallet_peso_max_kg  Decimal?   @db.Decimal(10, 3)
+  nota_estiba         String?    @db.Text             // obligatorio si tipo = otro
+
+  // Permisos
+  requiere_permiso  Boolean    @default(false)
+  permiso_tipo      String?    @db.VarChar(80)
+  activo            Boolean    @default(true)
+
+  // Relaciones
+  empresa        empresa        @relation(fields: [empresa_id], references: [empresa_id])
+  lineas_pedido  linea_pedido[]
+  permisos       permiso[]
+}
+
+// ------------------------------------------------------------
+// 7. PEDIDOS
+// ------------------------------------------------------------
+model pedido {
+  pedido_id       Int          @id @default(autoincrement())
+  empresa_id      Int
+  importacion_id  Int?
+  proveedor_id    Int
+  cliente_id      Int?
+  creado_por      Int
+
+  // Identificación
+  codigo          String       @unique @db.VarChar(30)  // PED-2025-018
+  codigo_padre    String?      @db.VarChar(30)          // si es subpedido
+  subindice       String?      @db.VarChar(5)           // "A", "B", "C"
+
+  // Datos del pedido
+  fecha_pedido    DateTime     @db.Date
+  incoterm        String       @db.Char(3)
+  moneda          String       @db.Char(3)
+  estado          EstadoPedido @default(borrador)
+  creado_en       DateTime     @default(now())
+  actualizado_en  DateTime     @updatedAt
+
+  // Relaciones
+  empresa          empresa                   @relation(fields: [empresa_id], references: [empresa_id])
+  importacion      importacion?              @relation(fields: [importacion_id], references: [importacion_id])
+  proveedor        proveedor                 @relation(fields: [proveedor_id], references: [proveedor_id])
+  cliente          cliente?                  @relation(fields: [cliente_id], references: [cliente_id])
+  creador          usuario                   @relation("PedidoCreadoPor", fields: [creado_por], references: [usuario_id])
+  lineas           linea_pedido[]
+  facturas         factura_prov[]
+  hitos            hito[]
+  pagos            pago[]
+  permisos         permiso[]
+  historial_union  pedidos_historial_union[]
+  proyeccion       proyeccion_volumen?
+}
+
+// ------------------------------------------------------------
+// 8. IMPORTACIONES
+// ------------------------------------------------------------
+model importacion {
+  importacion_id  Int               @id @default(autoincrement())
+  empresa_id      Int
+  creado_por      Int
+  codigo          String            @unique @db.VarChar(30)  // IMP-2025-004
+  descripcion     String?           @db.VarChar(200)
+  fecha_union     DateTime?         @db.Date
+  estado          EstadoImportacion @default(borrador)
+  consolidado     Boolean           @default(false)
+  creado_en       DateTime          @default(now())
+
+  // Relaciones
+  empresa          empresa                   @relation(fields: [empresa_id], references: [empresa_id])
+  pedidos          pedido[]
+  costeos          costeo[]
+  contenedores     contenedor[]
+  tramite_aduana   tramite_aduana?
+  historial_union  pedidos_historial_union[]
+}
+
+// ------------------------------------------------------------
+// 9. LINEAS DE PEDIDO
+// ------------------------------------------------------------
+model linea_pedido {
+  linea_id    Int      @id @default(autoincrement())
+  pedido_id   Int
+  producto_id Int
+  numero      Int      @db.SmallInt
+
+  // Cantidades y precios
+  cantidad    Decimal  @db.Decimal(12, 3)
+  precio_unit Decimal  @db.Decimal(14, 4)
+  total_linea Decimal  @db.Decimal(16, 4)
+
+  // Distribución logística
+  pct_peso    Decimal? @db.Decimal(7, 4)
+  nota        String?  @db.VarChar(200)
+
+  // Estiba (override por línea)
+  estiba_override     Boolean    @default(false)
+  tipo_estiba_linea   TipoEstiba?
+  pallet_largo_cm     Decimal?   @db.Decimal(10, 2)
+  pallet_ancho_cm     Decimal?   @db.Decimal(10, 2)
+  pallet_alto_max_cm  Decimal?   @db.Decimal(10, 2)
+  pallet_peso_max_kg  Decimal?   @db.Decimal(10, 3)
+  nota_estiba_linea   String?    @db.Text
+
+  // Calculados de volumen
+  volumen_total_m3    Decimal?   @db.Decimal(10, 4)
+  peso_total_kg       Decimal?   @db.Decimal(10, 3)
+  cajas_estimadas     Int?
+
+  // Relaciones
+  pedido             pedido               @relation(fields: [pedido_id], references: [pedido_id])
+  producto           producto             @relation(fields: [producto_id], references: [producto_id])
+  lineas_costeo      linea_costeo[]
+  proyeccion_detalle proyeccion_detalle[]
+}
+
+// ------------------------------------------------------------
+// 10. FACTURAS PROVEEDOR
+// ------------------------------------------------------------
+model factura_prov {
+  factura_id   Int         @id @default(autoincrement())
+  pedido_id    Int
+  proveedor_id Int
+  numero       String      @unique @db.VarChar(60)
+  fecha        DateTime    @db.Date
+  monto        Decimal     @db.Decimal(16, 4)
+  moneda       String      @db.Char(3)
+  tipo         TipoFactura
+
+  // Relaciones
+  pedido    pedido    @relation(fields: [pedido_id], references: [pedido_id])
+  proveedor proveedor @relation(fields: [proveedor_id], references: [proveedor_id])
+}
+
+// ------------------------------------------------------------
+// 11. COSTEOS
+// ------------------------------------------------------------
+model costeo {
+  costeo_id    Int          @id @default(autoincrement())
+  importacion_id Int
+  creado_por   Int
+  aprobado_por Int?
+  version      Int          @default(1) @db.SmallInt
+  estado       EstadoCosteo @default(borrador)
+
+  // Costos de transporte
+  flete_maritimo  Decimal?  @db.Decimal(14, 4)
+  seguro          Decimal?  @db.Decimal(14, 4)
+
+  // Aranceles
+  arancel_pct     Decimal?  @db.Decimal(5, 2)
+  arancel_monto   Decimal?  @db.Decimal(14, 4)
+
+  // Gastos en CR
+  agente_aduana   Decimal?  @db.Decimal(14, 4)
+  flete_cr        Decimal?  @db.Decimal(14, 4)
+
+  // ISC
+  isc_pct         Decimal?  @db.Decimal(5, 2)
+  isc_monto       Decimal?  @db.Decimal(14, 4)
+
+  // Bodega y otros
+  bodega_costo    Decimal?  @db.Decimal(14, 4)
+  bodega_periodo  Int?      @db.SmallInt
+  otros_costos    Decimal?  @db.Decimal(14, 4)
+  otros_desc      String?   @db.VarChar(200)
+
+  // Tipo de cambio
+  tc_usd_crc      Decimal   @db.Decimal(10, 4)
+  tc_fuente       String?   @db.VarChar(50)
+
+  // Totales calculados
+  costo_origen        Decimal  @db.Decimal(16, 4)
+  valor_cif           Decimal  @db.Decimal(16, 4)
+  costo_total_cr      Decimal  @db.Decimal(16, 4)
+  iva_ref_d150        Decimal? @db.Decimal(16, 4)
+
+  // Precio de venta
+  margen_global       Decimal? @db.Decimal(5, 2)
+  precio_venta_total  Decimal? @db.Decimal(16, 4)
+  utilidad_bruta      Decimal? @db.Decimal(16, 4)
+
+  // Timestamps
+  creado_en    DateTime  @default(now())
+  aprobado_en  DateTime?
+
+  // Relaciones
+  importacion    importacion    @relation(fields: [importacion_id], references: [importacion_id])
+  creador        usuario        @relation("CosteoCreadoPor", fields: [creado_por], references: [usuario_id])
+  aprobador      usuario?       @relation("CosteoAprobadoPor", fields: [aprobado_por], references: [usuario_id])
+  lineas_costeo  linea_costeo[]
+}
+
+// ------------------------------------------------------------
+// 12. LINEAS DE COSTEO
+// ------------------------------------------------------------
+model linea_costeo {
+  lc_id           Int     @id @default(autoincrement())
+  costeo_id       Int
+  linea_id        Int
+
+  pct_peso        Decimal @db.Decimal(7, 4)
+  dist_logistica  Decimal @db.Decimal(14, 4)
+  costo_unit_cr   Decimal @db.Decimal(14, 4)
+  margen_pct      Decimal @db.Decimal(5, 2)
+  precio_venta_u  Decimal @db.Decimal(14, 4)
+  precio_venta_t  Decimal @db.Decimal(16, 4)
+  utilidad        Decimal @db.Decimal(14, 4)
+  ivi_incluido    Boolean @default(false)
+
+  // Relaciones
+  costeo       costeo       @relation(fields: [costeo_id], references: [costeo_id])
+  linea_pedido linea_pedido @relation(fields: [linea_id], references: [linea_id])
+}
+
+// ------------------------------------------------------------
+// 13. CONTENEDORES
+// ------------------------------------------------------------
+model contenedor {
+  contenedor_id   Int              @id @default(autoincrement())
+  importacion_id  Int
+  codigo          String           @unique @db.VarChar(20)
+  tipo            TipoContenedor?
+  naviera         String?          @db.VarChar(80)
+  bl_numero       String?          @db.VarChar(60)
+  puerto_origen   String?          @db.VarChar(80)
+  puerto_destino  String?          @db.VarChar(80)
+  fecha_salida    DateTime?        @db.Date
+  eta_cr          DateTime?        @db.Date
+  fecha_arribo    DateTime?        @db.Date
+  estado          EstadoContenedor @default(programado)
+
+  // Relaciones
+  importacion importacion @relation(fields: [importacion_id], references: [importacion_id])
+}
+
+// ------------------------------------------------------------
+// 14. HITOS
+// ------------------------------------------------------------
+model hito {
+  hito_id         Int        @id @default(autoincrement())
+  pedido_id       Int
+  responsable_id  Int?
+  tipo            TipoHito
+  fecha_plan      DateTime?  @db.Date
+  fecha_real      DateTime?  @db.Date
+  estado          EstadoHito @default(pendiente)
+  alerta_enviada  Boolean    @default(false)
+  nota            String?    @db.Text
+
+  // Relaciones
+  pedido       pedido   @relation(fields: [pedido_id], references: [pedido_id])
+  responsable  usuario? @relation(fields: [responsable_id], references: [usuario_id])
+}
+
+// ------------------------------------------------------------
+// 15. TRAMITE ADUANA
+// ------------------------------------------------------------
+model tramite_aduana {
+  tramite_id      Int           @id @default(autoincrement())
+  importacion_id  Int           @unique
+  agente_id       Int?
+  dua_numero      String?       @unique @db.VarChar(40)
+  tc_hacienda     Decimal?      @db.Decimal(10, 4)
+  fecha_dua       DateTime?     @db.Date
+  almacen_fiscal  String?       @db.VarChar(120)
+  valor_cif_cr    Decimal?      @db.Decimal(16, 4)
+  total_tributos  Decimal?      @db.Decimal(16, 4)
+  estado          EstadoTramite @default(pendiente)
+
+  // Relaciones
+  importacion importacion @relation(fields: [importacion_id], references: [importacion_id])
+  agente      proveedor?  @relation(fields: [agente_id], references: [proveedor_id])
+}
+
+// ------------------------------------------------------------
+// 16. PAGOS
+// ------------------------------------------------------------
+model pago {
+  pago_id        Int        @id @default(autoincrement())
+  pedido_id      Int
+  proveedor_id   Int
+  registrado_por Int
+  tipo           TipoPago
+  monto          Decimal    @db.Decimal(16, 4)
+  moneda         String     @db.Char(3)
+  tc_usado       Decimal?   @db.Decimal(10, 4)
+  fecha_pago     DateTime   @db.Date
+  fecha_limite   DateTime?  @db.Date
+  metodo         MetodoPago?
+  referencia     String?    @db.VarChar(100)
+  estado         EstadoPago @default(programado)
+  comprobante_url String?   @db.VarChar(300)
+  registrado_en  DateTime   @default(now())
+
+  // Relaciones
+  pedido    pedido    @relation(fields: [pedido_id], references: [pedido_id])
+  proveedor proveedor @relation(fields: [proveedor_id], references: [proveedor_id])
+  registrador usuario @relation(fields: [registrado_por], references: [usuario_id])
+}
+
+// ------------------------------------------------------------
+// 17. TIPO DE CAMBIO HISTORICO
+// ------------------------------------------------------------
+model tc_historico {
+  tc_id      Int      @id @default(autoincrement())
+  empresa_id Int
+  fecha      DateTime @unique @db.Date
+  usd_crc    Decimal  @db.Decimal(10, 4)
+  eur_crc    Decimal? @db.Decimal(10, 4)
+  eur_usd    Decimal? @db.Decimal(10, 6)
+  fuente     FuenteTC
+  creado_en  DateTime @default(now())
+
+  // Relaciones
+  empresa empresa @relation(fields: [empresa_id], references: [empresa_id])
+}
+
+// ------------------------------------------------------------
+// 18. PERMISOS
+// ------------------------------------------------------------
+model permiso {
+  permiso_id        Int           @id @default(autoincrement())
+  pedido_id         Int
+  producto_id       Int?
+  tipo              TipoPermiso
+  numero            String?       @db.VarChar(60)
+  estado            EstadoPermiso @default(pendiente)
+  fecha_solicitud   DateTime?     @db.Date
+  fecha_aprobacion  DateTime?     @db.Date
+  fecha_vencimiento DateTime?     @db.Date
+  url_documento     String?       @db.VarChar(300)
+  nota              String?       @db.Text
+
+  // Relaciones
+  pedido   pedido   @relation(fields: [pedido_id], references: [pedido_id])
+  producto producto? @relation(fields: [producto_id], references: [producto_id])
+}
+
+// ------------------------------------------------------------
+// 19. DOCUMENTOS
+// ------------------------------------------------------------
+model documento {
+  doc_id       Int           @id @default(autoincrement())
+  empresa_id   Int
+  subido_por   Int
+  entidad_tipo String        @db.VarChar(40)
+  entidad_id   Int
+  tipo_doc     TipoDocumento
+  nombre       String        @db.VarChar(200)
+  url          String        @db.VarChar(500)
+  tamanio_kb   Int?
+  mime_type    String?       @db.VarChar(80)
+  subido_en    DateTime      @default(now())
+
+  // Relaciones
+  empresa   empresa @relation(fields: [empresa_id], references: [empresa_id])
+  subidor   usuario @relation(fields: [subido_por], references: [usuario_id])
+}
+
+// ------------------------------------------------------------
+// 20. AUDITORIA
+// ------------------------------------------------------------
+model auditoria {
+  audit_id      BigInt          @id @default(autoincrement())
+  empresa_id    Int
+  usuario_id    Int?
+  accion        AccionAuditoria
+  entidad_tipo  String          @db.VarChar(60)
+  entidad_id    Int?
+  campo         String?         @db.VarChar(80)
+  valor_antes   Json?
+  valor_despues Json?
+  ip            String?         @db.VarChar(45)
+  creado_en     DateTime        @default(now())
+
+  // Relaciones
+  empresa empresa  @relation(fields: [empresa_id], references: [empresa_id])
+  usuario usuario? @relation(fields: [usuario_id], references: [usuario_id])
+}
+
+// ------------------------------------------------------------
+// 21. REPORTES
+// ------------------------------------------------------------
+model reporte {
+  reporte_id  Int         @id @default(autoincrement())
+  empresa_id  Int
+  usuario_id  Int
+  nombre      String      @db.VarChar(120)
+  tipo        TipoReporte
+  config_json Json
+  publico     Boolean     @default(false)
+  creado_en   DateTime    @default(now())
+
+  // Relaciones
+  empresa empresa @relation(fields: [empresa_id], references: [empresa_id])
+  usuario usuario @relation(fields: [usuario_id], references: [usuario_id])
+}
+
+// ------------------------------------------------------------
+// 22. HISTORIAL UNION/SEPARACION DE PEDIDOS  ← NUEVO
+// ------------------------------------------------------------
+model pedidos_historial_union {
+  historial_id   Int                  @id @default(autoincrement())
+  importacion_id Int?
+  pedido_id      Int
+  accion         AccionHistorialUnion
+  fecha          DateTime             @default(now())
+  usuario_id     Int
+  nota           String?              @db.Text
+
+  // Relaciones
+  importacion importacion? @relation(fields: [importacion_id], references: [importacion_id])
+  pedido      pedido       @relation(fields: [pedido_id], references: [pedido_id])
+  usuario     usuario      @relation(fields: [usuario_id], references: [usuario_id])
+}
+
+// ------------------------------------------------------------
+// 23. PROYECCION DE VOLUMEN  ← NUEVO
+// ------------------------------------------------------------
+model proyeccion_volumen {
+  proyeccion_id        Int      @id @default(autoincrement())
+  pedido_id            Int      @unique
+  tipo_pallet_default  TipoEstiba @default(pallet_americano)
+
+  // Totales
+  volumen_total_m3     Decimal  @db.Decimal(10, 4)
+  peso_total_kg        Decimal  @db.Decimal(10, 3)
+
+  // Pallets por tipo estándar
+  pallets_americanos   Int?
+  pallets_europeos     Int?
+
+  // Resumen de items especiales
+  items_sin_pallet     Int?     @default(0)
+  items_pallet_medida  Int?     @default(0)
+  items_especiales     Int?     @default(0)
+
+  // Sugerencia de contenedor
+  contenedor_sugerido  String   @db.VarChar(20)
+  contenedores_cant    Int?     @default(1)
+
+  // Alertas
+  tiene_carga_especial Boolean  @default(false)
+  notas_especiales     String?  @db.Text
+
+  calculado_en         DateTime @default(now())
+
+  // Relaciones
+  pedido  pedido               @relation(fields: [pedido_id], references: [pedido_id])
+  detalle proyeccion_detalle[]
+}
+
+// ------------------------------------------------------------
+// 24. PROYECCION DETALLE (por línea)  ← NUEVO
+// ------------------------------------------------------------
+model proyeccion_detalle {
+  detalle_id         Int        @id @default(autoincrement())
+  proyeccion_id      Int
+  linea_id           Int
+
+  tipo_estiba_usado  TipoEstiba
+  volumen_m3         Decimal    @db.Decimal(10, 4)
+  peso_kg            Decimal    @db.Decimal(10, 3)
+  pallets_necesarios Decimal?   @db.Decimal(8, 2)  // puede ser fracción
+  es_especial        Boolean    @default(false)
+  nota               String?    @db.Text
+
+  // Relaciones
+  proyeccion   proyeccion_volumen @relation(fields: [proyeccion_id], references: [proyeccion_id])
+  linea_pedido linea_pedido       @relation(fields: [linea_id], references: [linea_id])
+}
