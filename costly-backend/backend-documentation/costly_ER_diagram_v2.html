@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Costly — Diagrama ER v2</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f1117; color: #e2e8f0; overflow: hidden; }
+
+  #toolbar {
+    position: fixed; top: 0; left: 0; right: 0; height: 52px;
+    background: #1a1d2e; border-bottom: 1px solid #2d3748;
+    display: flex; align-items: center; gap: 12px; padding: 0 20px; z-index: 1000;
+  }
+  #toolbar h1 { font-size: 15px; font-weight: 700; color: #63b3ed; letter-spacing: 1px; margin-right: 8px; }
+  #toolbar span { font-size: 12px; color: #718096; }
+  .tb-btn {
+    padding: 5px 12px; border-radius: 6px; border: 1px solid #2d3748;
+    background: #2d3748; color: #e2e8f0; font-size: 12px; cursor: pointer;
+    transition: all .15s;
+  }
+  .tb-btn:hover { background: #4a5568; border-color: #63b3ed; }
+  .tb-sep { width: 1px; height: 24px; background: #2d3748; margin: 0 4px; }
+  #zoom-label { font-size: 12px; color: #a0aec0; min-width: 40px; text-align: center; }
+
+  /* Legend */
+  #legend {
+    position: fixed; bottom: 16px; left: 16px; background: #1a1d2e;
+    border: 1px solid #2d3748; border-radius: 10px; padding: 12px 16px; z-index: 1000;
+    font-size: 11px;
+  }
+  #legend h3 { font-size: 11px; color: #a0aec0; margin-bottom: 8px; letter-spacing: .5px; }
+  .leg-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+  .leg-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+
+  /* Canvas */
+  #canvas-wrap { position: fixed; top: 52px; left: 0; right: 0; bottom: 0; overflow: hidden; }
+  #canvas { position: absolute; transform-origin: 0 0; cursor: grab; }
+  #canvas.grabbing { cursor: grabbing; }
+
+  /* Tabla */
+  .table-card {
+    position: absolute; min-width: 200px;
+    background: #1a1d2e; border: 2px solid #2d3748;
+    border-radius: 10px; overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,.5);
+    transition: box-shadow .2s, border-color .2s;
+    user-select: none;
+  }
+  .table-card:hover { border-color: #63b3ed; box-shadow: 0 6px 30px rgba(99,179,237,.2); }
+  .table-card.selected { border-color: #f6ad55; box-shadow: 0 0 0 3px rgba(246,173,85,.2); }
+
+  .card-header {
+    padding: 8px 12px; display: flex; align-items: center; gap: 8px; cursor: move;
+  }
+  .card-icon { font-size: 14px; }
+  .card-title { font-size: 12px; font-weight: 700; letter-spacing: .5px; flex: 1; }
+  .card-count { font-size: 10px; color: #718096; background: #2d3748; padding: 1px 6px; border-radius: 8px; }
+
+  .card-body { padding: 6px 0; border-top: 1px solid #2d3748; }
+  .field-row {
+    display: flex; align-items: center; padding: 3px 12px; gap: 6px;
+    font-size: 11px; line-height: 1.4;
+  }
+  .field-row:hover { background: #2d3748; }
+  .field-pk  { color: #f6ad55; font-weight: 700; }
+  .field-fk  { color: #68d391; }
+  .field-norm{ color: #cbd5e0; }
+  .field-new { color: #b794f4; }
+  .badge {
+    font-size: 9px; padding: 1px 5px; border-radius: 4px; font-weight: 700; flex-shrink: 0;
+  }
+  .badge-pk  { background: #744210; color: #f6ad55; }
+  .badge-fk  { background: #1c4532; color: #68d391; }
+  .badge-uk  { background: #2a4365; color: #90cdf4; }
+  .badge-new { background: #44337a; color: #d6bcfa; }
+  .field-type { color: #718096; font-size: 10px; margin-left: auto; flex-shrink: 0; }
+
+  /* SVG relaciones */
+  #relations-svg {
+    position: absolute; top: 0; left: 0; pointer-events: none;
+    overflow: visible;
+  }
+  .rel-line { stroke-width: 1.5; fill: none; opacity: .5; }
+  .rel-line:hover { opacity: 1; }
+
+  /* Info panel */
+  #info-panel {
+    position: fixed; top: 64px; right: 16px;
+    background: #1a1d2e; border: 1px solid #2d3748; border-radius: 10px;
+    padding: 14px 16px; width: 240px; z-index: 999;
+    font-size: 11px; display: none;
+  }
+  #info-panel h3 { font-size: 13px; font-weight: 700; margin-bottom: 8px; color: #63b3ed; }
+  #info-panel .info-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+  #info-panel .info-key { color: #718096; }
+  #info-panel .info-val { color: #e2e8f0; font-weight: 600; }
+  #close-panel { float: right; cursor: pointer; color: #718096; font-size: 14px; }
+  #close-panel:hover { color: #e2e8f0; }
+</style>
+</head>
+<body>
+
+<div id="toolbar">
+  <h1>⚡ COSTLY</h1>
+  <span>Diagrama ER v2 — 24 tablas</span>
+  <div class="tb-sep"></div>
+  <button class="tb-btn" onclick="zoomIn()">＋ Zoom</button>
+  <span id="zoom-label">100%</span>
+  <button class="tb-btn" onclick="zoomOut()">－ Zoom</button>
+  <button class="tb-btn" onclick="resetView()">⌂ Reset</button>
+  <div class="tb-sep"></div>
+  <button class="tb-btn" onclick="toggleRelations()">🔗 Relaciones</button>
+  <button class="tb-btn" onclick="autoLayout()">⚙ Auto-layout</button>
+</div>
+
+<div id="canvas-wrap">
+  <div id="canvas">
+    <svg id="relations-svg"></svg>
+  </div>
+</div>
+
+<div id="legend">
+  <h3>LEYENDA</h3>
+  <div class="leg-row"><div class="leg-dot" style="background:#744210;border:1px solid #f6ad55"></div> PK — Llave primaria</div>
+  <div class="leg-row"><div class="leg-dot" style="background:#1c4532;border:1px solid #68d391"></div> FK — Llave foránea</div>
+  <div class="leg-row"><div class="leg-dot" style="background:#2a4365;border:1px solid #90cdf4"></div> UK — Único</div>
+  <div class="leg-row"><div class="leg-dot" style="background:#44337a;border:1px solid #d6bcfa"></div> NEW — Campo nuevo</div>
+  <div class="leg-row"><div class="leg-dot" style="background:#1a365d;border:1px solid #4299e1"></div> Core / Catálogo</div>
+  <div class="leg-row"><div class="leg-dot" style="background:#1c4532;border:1px solid #48bb78"></div> Financiero</div>
+  <div class="leg-row"><div class="leg-dot" style="background:#44337a;border:1px solid #9f7aea"></div> Nuevo / Proyección</div>
+</div>
+
+<div id="info-panel">
+  <span id="close-panel" onclick="document.getElementById('info-panel').style.display='none'">✕</span>
+  <h3 id="info-title">—</h3>
+  <div id="info-content"></div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// DEFINICIÓN DE TABLAS
+// ══════════════════════════════════════════════════════
+const TABLES = [
+  {
+    id: 'empresa', title: 'empresa', icon: '🏢', color: '#1a365d', headerColor: '#2b6cb0',
+    group: 'core',
+    fields: [
+      { name: 'empresa_id', type: 'Int', badge: 'PK' },
+      { name: 'nombre', type: 'VarChar(150)' },
+      { name: 'ruc', type: 'VarChar(20)', badge: 'UK' },
+      { name: 'moneda_base', type: 'Char(3)' },
+      { name: 'margen_default', type: 'Decimal?' },
+      { name: 'iva_pct', type: 'Decimal' },
+      { name: 'ivi_pct', type: 'Decimal' },
+      { name: 'tc_fuente', type: 'FuenteTC' },
+      { name: 'creado_en', type: 'DateTime' },
+    ]
+  },
+  {
+    id: 'usuario', title: 'usuario', icon: '👤', color: '#1a365d', headerColor: '#2b6cb0',
+    group: 'core',
+    fields: [
+      { name: 'usuario_id', type: 'Int', badge: 'PK' },
+      { name: 'empresa_id', type: 'Int', badge: 'FK' },
+      { name: 'nombre', type: 'VarChar(100)' },
+      { name: 'email', type: 'VarChar(150)', badge: 'UK' },
+      { name: 'password_hash', type: 'VarChar(255)' },
+      { name: 'rol', type: 'RolUsuario' },
+      { name: 'activo', type: 'Boolean' },
+      { name: 'ultimo_acceso', type: 'DateTime?' },
+      { name: 'creado_en', type: 'DateTime' },
+    ]
+  },
+  {
+    id: 'pais', title: 'pais', icon: '🌍', color: '#1a365d', headerColor: '#2b6cb0',
+    group: 'core',
+    fields: [
+      { name: 'pais_id', type: 'Int', badge: 'PK' },
+      { name: 'codigo', type: 'Char(2)', badge: 'UK' },
+      { name: 'nombre', type: 'VarChar(80)' },
+      { name: 'bandera', type: 'Char(8)?' },
+      { name: 'region', type: 'VarChar(60)?' },
+    ]
+  },
+  {
+    id: 'proveedor', title: 'proveedor', icon: '🏭', color: '#1a365d', headerColor: '#2b6cb0',
+    group: 'core',
+    fields: [
+      { name: 'proveedor_id', type: 'Int', badge: 'PK' },
+      { name: 'empresa_id', type: 'Int', badge: 'FK' },
+      { name: 'pais_id', type: 'Int', badge: 'FK' },
+      { name: 'nombre', type: 'VarChar(150)' },
+      { name: 'ciudad', type: 'VarChar(100)?' },
+      { name: 'incoterm_pref', type: 'Char(3)?' },
+      { name: 'moneda', type: 'Char(3)' },
+      { name: 'dias_transito', type: 'SmallInt?' },
+      { name: 'puerto_origen', type: 'VarChar(80)?' },
+      { name: 'condiciones_pago', type: 'VarChar(100)?' },
+      { name: 'contacto', type: 'VarChar(100)?' },
+      { name: 'email', type: 'VarChar(150)?' },
+      { name: 'activo', type: 'Boolean' },
+    ]
+  },
+  {
+    id: 'cliente', title: 'cliente', icon: '🧑‍💼', color: '#1a365d', headerColor: '#2b6cb0',
+    group: 'core',
+    fields: [
+      { name: 'cliente_id', type: 'Int', badge: 'PK' },
+      { name: 'empresa_id', type: 'Int', badge: 'FK' },
+      { name: 'nombre', type: 'VarChar(150)' },
+      { name: 'cedula', type: 'VarChar(20)?', badge: 'UK' },
+      { name: 'tipo', type: 'TipoCliente' },
+      { name: 'moneda', type: 'Char(3)' },
+      { name: 'descuento_pct', type: 'Decimal?' },
+      { name: 'email', type: 'VarChar(150)?' },
+      { name: 'activo', type: 'Boolean' },
+    ]
+  },
+  {
+    id: 'producto', title: 'producto', icon: '📦', color: '#1a365d', headerColor: '#2b6cb0',
+    group: 'core',
+    fields: [
+      { name: 'producto_id', type: 'Int', badge: 'PK' },
+      { name: 'empresa_id', type: 'Int', badge: 'FK' },
+      { name: 'sku', type: 'VarChar(50)', badge: 'UK' },
+      { name: 'nombre', type: 'VarChar(150)' },
+      { name: 'categoria', type: 'VarChar(80)?' },
+      { name: 'cod_arancelario', type: 'VarChar(20)?' },
+      { name: 'arancel_pct', type: 'Decimal?' },
+      { name: 'isc_pct', type: 'Decimal?' },
+      { name: 'modo_volumen', type: 'VarChar(20)', badge: 'NEW' },
+      { name: 'peso_kg', type: 'Decimal?' },
+      { name: 'largo_cm', type: 'Decimal?', badge: 'NEW' },
+      { name: 'ancho_cm', type: 'Decimal?', badge: 'NEW' },
+      { name: 'alto_cm', type: 'Decimal?', badge: 'NEW' },
+      { name: 'volumen_m3', type: 'Decimal?', badge: 'NEW' },
+      { name: 'unidades_por_caja', type: 'Int?', badge: 'NEW' },
+      { name: 'peso_caja_kg', type: 'Decimal?', badge: 'NEW' },
+      { name: 'volumen_caja_m3', type: 'Decimal?', badge: 'NEW' },
+      { name: 'tipo_estiba', type: 'TipoEstiba', badge: 'NEW' },
+      { name: 'pallet_largo_cm', type: 'Decimal?', badge: 'NEW' },
+      { name: 'pallet_ancho_cm', type: 'Decimal?', badge: 'NEW' },
+      { name: 'pallet_alto_max_cm', type: 'Decimal?', badge: 'NEW' },
+      { name: 'pallet_peso_max_kg', type: 'Decimal?', badge: 'NEW' },
+      { name: 'nota_estiba', type: 'Text?', badge: 'NEW' },
+      { name: 'requiere_permiso', type: 'Boolean' },
+      { name: 'permiso_tipo', type: 'VarChar(80)?' },
+      { name: 'activo', type: 'Boolean' },
+    ]
+  },
+  {
+    id: 'pedido', title: 'pedido', icon: '🛒', color: '#2d1b69', headerColor: '#553c9a',
+    group: 'ops',
+    fields: [
+      { name: 'pedido_id', type: 'Int', badge: 'PK' },
+      { name: 'empresa_id', type: 'Int', badge: 'FK' },
+      { name: 'importacion_id', type: 'Int?', badge: 'FK' },
+      { name: 'proveedor_id', type: 'Int', badge: 'FK' },
+      { name: 'cliente_id', type: 'Int?', badge: 'FK' },
+      { name: 'creado_por', type: 'Int', badge: 'FK' },
+      { name: 'codigo', type: 'VarChar(30)', badge: 'UK' },
+      { name: 'codigo_padre', type: 'VarChar(30)?', badge: 'NEW' },
+      { name: 'subindice', type: 'VarChar(5)?', badge: 'NEW' },
+      { name: 'fecha_pedido', type: 'Date' },
+      { name: 'incoterm', type: 'Char(3)' },
+      { name: 'moneda', type: 'Char(3)' },
+      { name: 'estado', type: 'EstadoPedido' },
+      { name: 'creado_en', type: 'DateTime' },
+      { name: 'actualizado_en', type: 'DateTime' },
+    ]
+  },
+  {
+    id: 'importacion', title: 'importacion', icon: '🚢', color: '#2d1b69', headerColor: '#553c9a',
+    group: 'ops',
+    fields: [
+      { name: 'importacion_id', type: 'Int', badge: 'PK' },
+      { name: 'empresa_id', type: 'Int', badge: 'FK' },
+      { name: 'creado_por', type: 'Int', badge: 'FK' },
+      { name: 'codigo', type: 'VarChar(30)', badge: 'UK' },
+      { name: 'descripcion', type: 'VarChar(200)?' },
+      { name: 'fecha_union', type: 'Date?' },
+      { name: 'estado', type: 'EstadoImportacion' },
+      { name: 'consolidado', type: 'Boolean' },
+      { name: 'creado_en', type: 'DateTime' },
+    ]
+  },
+  {
+    id: 'linea_pedido', title: 'linea_pedido', icon: '📋', color: '#2d1b69', headerColor: '#553c9a',
+    group: 'ops',
+    fields: [
+      { name: 'linea_id', type: 'Int', badge: 'PK' },
+      { name: 'pedido_id', type: 'Int', badge: 'FK' },
+      { name: 'producto_id', type: 'Int', badge: 'FK' },
+      { name: 'numero', type: 'SmallInt' },
+      { name: 'cantidad', type: 'Decimal' },
+      { name: 'precio_unit', type: 'Decimal' },
+      { name: 'total_linea', type: 'Decimal' },
+      { name: 'pct_peso', type: 'Decimal?' },
+      { name: 'nota', type: 'VarChar(200)?' },
+      { name: 'estiba_override', type: 'Boolean', badge: 'NEW' },
+      { name: 'tipo_estiba_linea', type: 'TipoEstiba?', badge: 'NEW' },
+      { name: 'pallet_largo_cm', type: 'Decimal?', badge: 'NEW' },
+      { name: 'pallet_ancho_cm', type: 'Decimal?', badge: 'NEW' },
+      { name: 'pallet_alto_max_cm', type: 'Decimal?', badge: 'NEW' },
+      { name: 'pallet_peso_max_kg', type: 'Decimal?', badge: 'NEW' },
+      { name: 'nota_estiba_linea', type: 'Text?', badge: 'NEW' },
+      { name: 'volumen_total_m3', type: 'Decimal?', badge: 'NEW' },
+      { name: 'peso_total_kg', type: 'Decimal?', badge: 'NEW' },
+      { name: 'cajas_estimadas', type: 'Int?', badge: 'NEW' },
+    ]
+  },
+  {
+    id: 'factura_prov', title: 'factura_prov', icon: '🧾', color: '#1a4532', headerColor: '#276749',
+    group: 'fin',
+    fields: [
+      { name: 'factura_id', type: 'Int', badge: 'PK' },
+      { name: 'pedido_id', type: 'Int', badge: 'FK' },
+      { name: 'proveedor_id', type: 'Int', badge: 'FK' },
+      { name: 'numero', type: 'VarChar(60)', badge: 'UK' },
+      { name: 'fecha', type: 'Date' },
+      { name: 'monto', type: 'Decimal' },
+      { name: 'moneda', type: 'Char(3)' },
+      { name: 'tipo', type: 'TipoFactura' },
+    ]
+  },
+  {
+    id: 'costeo', title: 'costeo', icon: '💰', color: '#1a4532', headerColor: '#276749',
+    group: 'fin',
+    fields: [
+      { name: 'costeo_id', type: 'Int', badge: 'PK' },
+      { name: 'importacion_id', type: 'Int', badge: 'FK' },
+      { name: 'creado_por', type: 'Int', badge: 'FK' },
+      { name: 'aprobado_por', type: 'Int?', badge: 'FK' },
+      { name: 'version', type: 'SmallInt' },
+      { name: 'estado', type: 'EstadoCosteo' },
+      { name: 'flete_maritimo', type: 'Decimal?' },
+      { name: 'seguro', type: 'Decimal?' },
+      { name: 'arancel_pct', type: 'Decimal?' },
+      { name: 'arancel_monto', type: 'Decimal?' },
+      { name: 'agente_aduana', type: 'Decimal?' },
+      { name: 'flete_cr', type: 'Decimal?' },
+      { name: 'isc_pct', type: 'Decimal?' },
+      { name: 'isc_monto', type: 'Decimal?' },
+      { name: 'bodega_costo', type: 'Decimal?' },
+      { name: 'otros_costos', type: 'Decimal?' },
+      { name: 'tc_usd_crc', type: 'Decimal' },
+      { name: 'costo_origen', type: 'Decimal' },
+      { name: 'valor_cif', type: 'Decimal' },
+      { name: 'costo_total_cr', type: 'Decimal' },
+      { name: 'iva_ref_d150', type: 'Decimal?' },
+      { name: 'margen_global', type: 'Decimal?' },
+      { name: 'precio_venta_total', type: 'Decimal?' },
+      { name: 'utilidad_bruta', type: 'Decimal?' },
+      { name: 'creado_en', type: 'DateTime' },
+      { name: 'aprobado_en', type: 'DateTime?' },
+    ]
+  },
+  {
+    id: 'linea_costeo', title: 'linea_costeo', icon: '🧮', color: '#1a4532', headerColor: '#276749',
+    group: 'fin',
+    fields: [
+      { name: 'lc_id', type: 'Int', badge: 'PK' },
+      { name: 'costeo_id', type: 'Int', badge: 'FK' },
+      { name: 'linea_id', type: 'Int', badge: 'FK' },
+      { name: 'pct_peso', type: 'Decimal' },
+      { name: 'dist_logistica', type: 'Decimal' },
+      { name: 'costo_unit_cr', type: 'Decimal' },
+      { name: 'margen_pct', type: 'Decimal' },
+      { name: 'precio_venta_u', type: 'Decimal' },
+      { name: 'precio_venta_t', type: 'Decimal' },
+      { name: 'utilidad', type: 'Decimal' },
+      { name: 'ivi_incluido', type: 'Boolean' },
+    ]
+  },
+  {
+    id: 'contenedor', title: 'contenedor', icon: '📫', color: '#2d1b69', headerColor: '#553c9a',
+    group: 'ops',
+    fields: [
+      { name: 'contenedor_id', type: 'Int', badge: 'PK' },
+      { name: 'importacion_id', type: 'Int', badge: 'FK' },
+      { name: 'codigo', type: 'VarChar(20)', badge: 'UK' },
+      { name: 'tipo', type: 'TipoContenedor?' },
+      { name: 'naviera', type: 'VarChar(80)?' },
+      { name: 'bl_numero', type: 'VarChar(60)?' },
+      { name: 'puerto_origen', type: 'VarChar(80)?' },
+      { name: 'puerto_destino', type: 'VarChar(80)?' },
+      { name: 'fecha_salida', type: 'Date?' },
+      { name: 'eta_cr', type: 'Date?' },
+      { name: 'fecha_arribo', type: 'Date?' },
+      { name: 'estado', type: 'EstadoContenedor' },
+    ]
+  },
+  {
+    id: 'hito', title: 'hito', icon: '🎯', color: '#2d1b69', headerColor: '#553c9a',
+    group: 'ops',
+    fields: [
+      { name: 'hito_id', type: 'Int', badge: 'PK' },
+      { name: 'pedido_id', type: 'Int', badge: 'FK' },
+      { name: 'responsable_id', type: 'Int?', badge: 'FK' },
+      { name: 'tipo', type: 'TipoHito' },
+      { name: 'fecha_plan', type: 'Date?' },
+      { name: 'fecha_real', type: 'Date?' },
+      { name: 'estado', type: 'EstadoHito' },
+      { name: 'alerta_enviada', type: 'Boolean' },
+      { name: 'nota', type: 'Text?' },
+    ]
+  },
+  {
+    id: 'tramite_aduana', title: 'tramite_aduana', icon: '🛃', color: '#2d1b69', headerColor: '#553c9a',
+    group: 'ops',
+    fields: [
+      { name: 'tramite_id', type: 'Int', badge: 'PK' },
+      { name: 'importacion_id', type: 'Int', badge: 'FK' },
+      { name: 'agente_id', type: 'Int?', badge: 'FK' },
+      { name: 'dua_numero', type: 'VarChar(40)?', badge: 'UK' },
+      { name: 'tc_hacienda', type: 'Decimal?' },
+      { name: 'fecha_dua', type: 'Date?' },
+      { name: 'almacen_fiscal', type: 'VarChar(120)?' },
+      { name: 'valor_cif_cr', type: 'Decimal?' },
+      { name: 'total_tributos', type: 'Decimal?' },
+      { name: 'estado', type: 'EstadoTramite' },
+    ]
+  },
+  {
+    id: 'pago', title: 'pago', icon: '💳', color: '#1a4532', headerColor: '#276749',
+    group: 'fin',
+    fields: [
+      { name: 'pago_id', type: 'Int', badge: 'PK' },
+      { name: 'pedido_id', type: 'Int', badge: 'FK' },
+      { name: 'proveedor_id', type: 'Int', badge: 'FK' },
+      { name: 'registrado_por', type: 'Int', badge: 'FK' },
+      { name: 'tipo', type: 'TipoPago' },
+      { name: 'monto', type: 'Decimal' },
+      { name: 'moneda', type: 'Char(3)' },
+      { name: 'tc_usado', type: 'Decimal?' },
+      { name: 'fecha_pago', type: 'Date' },
+      { name: 'fecha_limite', type: 'Date?' },
+      { name: 'metodo', type: 'MetodoPago?' },
+      { name: 'referencia', type: 'VarChar(100)?' },
+      { name: 'estado', type: 'EstadoPago' },
+      { name: 'comprobante_url', type: 'VarChar(300)?' },
+      { name: 'registrado_en', type: 'DateTime' },
+    ]
+  },
+  {
+    id: 'tc_historico', title: 'tc_historico', icon: '💱', color: '#1a4532', headerColor: '#276749',
+    group: 'fin',
+    fields: [
+      { name: 'tc_id', type: 'Int', badge: 'PK' },
+      { name: 'empresa_id', type: 'Int', badge: 'FK' },
+      { name: 'fecha', type: 'Date', badge: 'UK' },
+      { name: 'usd_crc', type: 'Decimal' },
+      { name: 'eur_crc', type: 'Decimal?' },
+      { name: 'eur_usd', type: 'Decimal?' },
+      { name: 'fuente', type: 'FuenteTC' },
+      { name: 'creado_en', type: 'DateTime' },
+    ]
+  },
+  {
+    id: 'permiso', title: 'permiso', icon: '📜', color: '#2d1b69', headerColor: '#553c9a',
+    group: 'ops',
+    fields: [
+      { name: 'permiso_id', type: 'Int', badge: 'PK' },
+      { name: 'pedido_id', type: 'Int', badge: 'FK' },
+      { name: 'producto_id', type: 'Int?', badge: 'FK' },
+      { name: 'tipo', type: 'TipoPermiso' },
+      { name: 'numero', type: 'VarChar(60)?' },
+      { name: 'estado', type: 'EstadoPermiso' },
+      { name: 'fecha_solicitud', type: 'Date?' },
+      { name: 'fecha_aprobacion', type: 'Date?' },
+      { name: 'fecha_vencimiento', type: 'Date?' },
+      { name: 'url_documento', type: 'VarChar(300)?' },
+      { name: 'nota', type: 'Text?' },
+    ]
+  },
+  {
+    id: 'documento', title: 'documento', icon: '📄', color: '#1a365d', headerColor: '#2b6cb0',
+    group: 'core',
+    fields: [
+      { name: 'doc_id', type: 'Int', badge: 'PK' },
+      { name: 'empresa_id', type: 'Int', badge: 'FK' },
+      { name: 'subido_por', type: 'Int', badge: 'FK' },
+      { name: 'entidad_tipo', type: 'VarChar(40)' },
+      { name: 'entidad_id', type: 'Int' },
+      { name: 'tipo_doc', type: 'TipoDocumento' },
+      { name: 'nombre', type: 'VarChar(200)' },
+      { name: 'url', type: 'VarChar(500)' },
+      { name: 'tamanio_kb', type: 'Int?' },
+      { name: 'mime_type', type: 'VarChar(80)?' },
+      { name: 'subido_en', type: 'DateTime' },
+    ]
+  },
+  {
+    id: 'auditoria', title: 'auditoria', icon: '🔍', color: '#1a365d', headerColor: '#2b6cb0',
+    group: 'core',
+    fields: [
+      { name: 'audit_id', type: 'BigInt', badge: 'PK' },
+      { name: 'empresa_id', type: 'Int', badge: 'FK' },
+      { name: 'usuario_id', type: 'Int?', badge: 'FK' },
+      { name: 'accion', type: 'AccionAuditoria' },
+      { name: 'entidad_tipo', type: 'VarChar(60)' },
+      { name: 'entidad_id', type: 'Int?' },
+      { name: 'campo', type: 'VarChar(80)?' },
+      { name: 'valor_antes', type: 'Json?' },
+      { name: 'valor_despues', type: 'Json?' },
+      { name: 'ip', type: 'VarChar(45)?' },
+      { name: 'creado_en', type: 'DateTime' },
+    ]
+  },
+  {
+    id: 'reporte', title: 'reporte', icon: '📊', color: '#1a365d', headerColor: '#2b6cb0',
+    group: 'core',
+    fields: [
+      { name: 'reporte_id', type: 'Int', badge: 'PK' },
+      { name: 'empresa_id', type: 'Int', badge: 'FK' },
+      { name: 'usuario_id', type: 'Int', badge: 'FK' },
+      { name: 'nombre', type: 'VarChar(120)' },
+      { name: 'tipo', type: 'TipoReporte' },
+      { name: 'config_json', type: 'Json' },
+      { name: 'publico', type: 'Boolean' },
+      { name: 'creado_en', type: 'DateTime' },
+    ]
+  },
+  {
+    id: 'pedidos_historial_union', title: 'pedidos_historial_union', icon: '🔗', color: '#44337a', headerColor: '#6b46c1',
+    group: 'new',
+    fields: [
+      { name: 'historial_id', type: 'Int', badge: 'PK' },
+      { name: 'importacion_id', type: 'Int?', badge: 'FK' },
+      { name: 'pedido_id', type: 'Int', badge: 'FK' },
+      { name: 'accion', type: 'AccionHistorialUnion' },
+      { name: 'fecha', type: 'DateTime' },
+      { name: 'usuario_id', type: 'Int', badge: 'FK' },
+      { name: 'nota', type: 'Text?' },
+    ]
+  },
+  {
+    id: 'proyeccion_volumen', title: 'proyeccion_volumen', icon: '📐', color: '#44337a', headerColor: '#6b46c1',
+    group: 'new',
+    fields: [
+      { name: 'proyeccion_id', type: 'Int', badge: 'PK' },
+      { name: 'pedido_id', type: 'Int', badge: 'FK' },
+      { name: 'tipo_pallet_default', type: 'TipoEstiba' },
+      { name: 'volumen_total_m3', type: 'Decimal' },
+      { name: 'peso_total_kg', type: 'Decimal' },
+      { name: 'pallets_americanos', type: 'Int?' },
+      { name: 'pallets_europeos', type: 'Int?' },
+      { name: 'items_sin_pallet', type: 'Int?' },
+      { name: 'items_pallet_medida', type: 'Int?' },
+      { name: 'items_especiales', type: 'Int?' },
+      { name: 'contenedor_sugerido', type: 'VarChar(20)' },
+      { name: 'contenedores_cant', type: 'Int?' },
+      { name: 'tiene_carga_especial', type: 'Boolean' },
+      { name: 'notas_especiales', type: 'Text?' },
+      { name: 'calculado_en', type: 'DateTime' },
+    ]
+  },
+  {
+    id: 'proyeccion_detalle', title: 'proyeccion_detalle', icon: '🔢', color: '#44337a', headerColor: '#6b46c1',
+    group: 'new',
+    fields: [
+      { name: 'detalle_id', type: 'Int', badge: 'PK' },
+      { name: 'proyeccion_id', type: 'Int', badge: 'FK' },
+      { name: 'linea_id', type: 'Int', badge: 'FK' },
+      { name: 'tipo_estiba_usado', type: 'TipoEstiba' },
+      { name: 'volumen_m3', type: 'Decimal' },
+      { name: 'peso_kg', type: 'Decimal' },
+      { name: 'pallets_necesarios', type: 'Decimal?' },
+      { name: 'es_especial', type: 'Boolean' },
+      { name: 'nota', type: 'Text?' },
+    ]
+  },
+]
+
+// ══════════════════════════════════════════════════════
+// RELACIONES  [from, to, label]
+// ══════════════════════════════════════════════════════
+const RELATIONS = [
+  ['usuario',    'empresa',    ''],
+  ['proveedor',  'empresa',    ''],
+  ['cliente',    'empresa',    ''],
+  ['producto',   'empresa',    ''],
+  ['pedido',     'empresa',    ''],
+  ['importacion','empresa',    ''],
+  ['tc_historico','empresa',   ''],
+  ['documento',  'empresa',    ''],
+  ['auditoria',  'empresa',    ''],
+  ['reporte',    'empresa',    ''],
+  ['proveedor',  'pais',       ''],
+  ['pedido',     'proveedor',  ''],
+  ['pedido',     'cliente',    ''],
+  ['pedido',     'usuario',    'creado_por'],
+  ['pedido',     'importacion',''],
+  ['linea_pedido','pedido',    ''],
+  ['linea_pedido','producto',  ''],
+  ['factura_prov','pedido',    ''],
+  ['factura_prov','proveedor', ''],
+  ['costeo',     'importacion',''],
+  ['costeo',     'usuario',    'creado_por'],
+  ['linea_costeo','costeo',    ''],
+  ['linea_costeo','linea_pedido',''],
+  ['contenedor', 'importacion',''],
+  ['hito',       'pedido',     ''],
+  ['hito',       'usuario',    'responsable'],
+  ['tramite_aduana','importacion',''],
+  ['tramite_aduana','proveedor',  'agente'],
+  ['pago',       'pedido',     ''],
+  ['pago',       'proveedor',  ''],
+  ['pago',       'usuario',    'registrado_por'],
+  ['permiso',    'pedido',     ''],
+  ['permiso',    'producto',   ''],
+  ['documento',  'usuario',    'subido_por'],
+  ['auditoria',  'usuario',    ''],
+  ['reporte',    'usuario',    ''],
+  ['pedidos_historial_union','importacion',''],
+  ['pedidos_historial_union','pedido',     ''],
+  ['pedidos_historial_union','usuario',    ''],
+  ['proyeccion_volumen','pedido',          ''],
+  ['proyeccion_detalle','proyeccion_volumen',''],
+  ['proyeccion_detalle','linea_pedido',    ''],
+]
+
+// ══════════════════════════════════════════════════════
+// POSICIONES INICIALES
+// ══════════════════════════════════════════════════════
+const POSITIONS = {
+  empresa:                   { x: 700,  y: 20   },
+  usuario:                   { x: 1050, y: 20   },
+  pais:                      { x: 20,   y: 20   },
+  proveedor:                 { x: 20,   y: 200  },
+  cliente:                   { x: 700,  y: 280  },
+  producto:                  { x: 350,  y: 20   },
+  pedido:                    { x: 350,  y: 320  },
+  importacion:               { x: 700,  y: 550  },
+  linea_pedido:              { x: 20,   y: 580  },
+  factura_prov:              { x: 20,   y: 900  },
+  costeo:                    { x: 700,  y: 850  },
+  linea_costeo:              { x: 1050, y: 550  },
+  contenedor:                { x: 1050, y: 850  },
+  hito:                      { x: 350,  y: 750  },
+  tramite_aduana:            { x: 1050, y: 1120 },
+  pago:                      { x: 700,  y: 1160 },
+  tc_historico:              { x: 350,  y: 1120 },
+  permiso:                   { x: 20,   y: 1120 },
+  documento:                 { x: 1400, y: 20   },
+  auditoria:                 { x: 1400, y: 300  },
+  reporte:                   { x: 1400, y: 620  },
+  pedidos_historial_union:   { x: 1400, y: 850  },
+  proyeccion_volumen:        { x: 350,  y: 980  },
+  proyeccion_detalle:        { x: 20,   y: 1350 },
+}
+
+// ══════════════════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════════════════
+let scale = 0.75
+let panX = 20, panY = 20
+let showRels = true
+const positions = { ...POSITIONS }
+
+const canvas  = document.getElementById('canvas')
+const svg     = document.getElementById('relations-svg')
+
+function renderAll() {
+  canvas.innerHTML = ''
+  canvas.appendChild(svg)
+  svg.innerHTML = ''
+  canvas.style.transform = `translate(${panX}px,${panY}px) scale(${scale})`
+
+  TABLES.forEach(tbl => {
+    const el = createCard(tbl)
+    canvas.appendChild(el)
+  })
+
+  if (showRels) drawRelations()
+}
+
+function createCard(tbl) {
+  const pos = positions[tbl.id] || { x: 100, y: 100 }
+  const card = document.createElement('div')
+  card.className = 'table-card'
+  card.id = 'card-' + tbl.id
+  card.style.left  = pos.x + 'px'
+  card.style.top   = pos.y + 'px'
+  card.style.borderColor = tbl.headerColor
+
+  const fieldCount = tbl.fields.length
+
+  card.innerHTML = `
+    <div class="card-header" style="background:${tbl.color}">
+      <span class="card-icon">${tbl.icon}</span>
+      <span class="card-title" style="color:${tbl.headerColor === '#6b46c1' ? '#d6bcfa' : '#90cdf4'}">${tbl.title}</span>
+      <span class="card-count">${fieldCount} campos</span>
+    </div>
+    <div class="card-body">
+      ${tbl.fields.map(f => {
+        const cls = f.badge === 'PK' ? 'field-pk' : f.badge === 'FK' ? 'field-fk' : f.badge === 'NEW' ? 'field-new' : 'field-norm'
+        const badgeHtml = f.badge
+          ? `<span class="badge badge-${f.badge.toLowerCase()}">${f.badge}</span>`
+          : ''
+        return `<div class="field-row">
+          ${badgeHtml}
+          <span class="${cls}">${f.name}</span>
+          <span class="field-type">${f.type}</span>
+        </div>`
+      }).join('')}
+    </div>
+  `
+
+  // Drag
+  let dragging = false, startX, startY, origX, origY
+  const header = card.querySelector('.card-header')
+  header.addEventListener('mousedown', e => {
+    dragging = true
+    startX = e.clientX; startY = e.clientY
+    origX = positions[tbl.id].x; origY = positions[tbl.id].y
+    canvas.classList.add('grabbing')
+    e.preventDefault()
+  })
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return
+    const dx = (e.clientX - startX) / scale
+    const dy = (e.clientY - startY) / scale
+    positions[tbl.id] = { x: origX + dx, y: origY + dy }
+    card.style.left = positions[tbl.id].x + 'px'
+    card.style.top  = positions[tbl.id].y + 'px'
+    if (showRels) drawRelations()
+  })
+  document.addEventListener('mouseup', () => {
+    if (dragging) { dragging = false; canvas.classList.remove('grabbing') }
+  })
+
+  // Click info
+  card.addEventListener('click', e => {
+    if (e.target.closest('.card-header') && !dragging) showInfo(tbl)
+  })
+
+  return card
+}
+
+function getCardCenter(id) {
+  const card = document.getElementById('card-' + id)
+  if (!card) return null
+  const w = card.offsetWidth
+  const h = card.offsetHeight
+  const pos = positions[id]
+  return { x: pos.x + w / 2, y: pos.y + h / 2, w, h, x0: pos.x, y0: pos.y }
+}
+
+function drawRelations() {
+  svg.innerHTML = ''
+  const colors = { core: '#4299e1', ops: '#9f7aea', fin: '#68d391', new: '#f6ad55' }
+
+  RELATIONS.forEach(([from, to]) => {
+    const a = getCardCenter(from)
+    const b = getCardCenter(to)
+    if (!a || !b) return
+
+    const fromTbl = TABLES.find(t => t.id === from)
+    const color = colors[fromTbl?.group] || '#4a5568'
+
+    const dx = b.x - a.x
+    const dy = b.y - a.y
+    const cx1 = a.x + dx * 0.5
+    const cy1 = a.y
+    const cx2 = a.x + dx * 0.5
+    const cy2 = b.y
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+    path.setAttribute('d', `M${a.x},${a.y} C${cx1},${cy1} ${cx2},${cy2} ${b.x},${b.y}`)
+    path.setAttribute('class', 'rel-line')
+    path.setAttribute('stroke', color)
+    svg.appendChild(path)
+
+    // Punto en destino
+    const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
+    dot.setAttribute('cx', b.x); dot.setAttribute('cy', b.y); dot.setAttribute('r', 3)
+    dot.setAttribute('fill', color)
+    svg.appendChild(dot)
+  })
+}
+
+function showInfo(tbl) {
+  const panel = document.getElementById('info-panel')
+  const newFields  = tbl.fields.filter(f => f.badge === 'NEW').length
+  const fkFields   = tbl.fields.filter(f => f.badge === 'FK').length
+  const relCount   = RELATIONS.filter(([f, t]) => f === tbl.id || t === tbl.id).length
+
+  document.getElementById('info-title').textContent = `${tbl.icon} ${tbl.title}`
+  document.getElementById('info-content').innerHTML = `
+    <div class="info-row"><span class="info-key">Grupo</span><span class="info-val">${tbl.group.toUpperCase()}</span></div>
+    <div class="info-row"><span class="info-key">Campos</span><span class="info-val">${tbl.fields.length}</span></div>
+    <div class="info-row"><span class="info-key">FKs</span><span class="info-val">${fkFields}</span></div>
+    <div class="info-row"><span class="info-key">Campos nuevos</span><span class="info-val" style="color:#d6bcfa">${newFields}</span></div>
+    <div class="info-row"><span class="info-key">Relaciones</span><span class="info-val">${relCount}</span></div>
+  `
+  panel.style.display = 'block'
+}
+
+// ── Zoom & Pan
+function zoomIn()  { scale = Math.min(scale * 1.2, 3); applyTransform() }
+function zoomOut() { scale = Math.max(scale / 1.2, .15); applyTransform() }
+function resetView() { scale = .75; panX = 20; panY = 20; applyTransform() }
+function applyTransform() {
+  canvas.style.transform = `translate(${panX}px,${panY}px) scale(${scale})`
+  document.getElementById('zoom-label').textContent = Math.round(scale * 100) + '%'
+}
+function toggleRelations() { showRels = !showRels; showRels ? drawRelations() : (svg.innerHTML = '') }
+
+// Mouse wheel zoom
+document.getElementById('canvas-wrap').addEventListener('wheel', e => {
+  e.preventDefault()
+  const factor = e.deltaY < 0 ? 1.1 : 0.9
+  scale = Math.min(Math.max(scale * factor, .15), 3)
+  applyTransform()
+}, { passive: false })
+
+// Pan
+let panning = false, panStartX, panStartY
+document.getElementById('canvas-wrap').addEventListener('mousedown', e => {
+  if (e.target === canvas || e.target === document.getElementById('canvas-wrap')) {
+    panning = true; panStartX = e.clientX - panX; panStartY = e.clientY - panY
+    canvas.classList.add('grabbing')
+  }
+})
+document.addEventListener('mousemove', e => {
+  if (!panning) return
+  panX = e.clientX - panStartX; panY = e.clientY - panStartY
+  applyTransform()
+})
+document.addEventListener('mouseup', () => { panning = false; canvas.classList.remove('grabbing') })
+
+// Auto-layout (grilla)
+function autoLayout() {
+  const cols = 5
+  const colW = 260, rowH = 480
+  TABLES.forEach((tbl, i) => {
+    const col = i % cols
+    const row = Math.floor(i / cols)
+    positions[tbl.id] = { x: 20 + col * colW, y: 20 + row * rowH }
+  })
+  renderAll()
+}
+
+// Init
+renderAll()
+document.getElementById('zoom-label').textContent = Math.round(scale * 100) + '%'
+</script>
+</body>
+</html>
