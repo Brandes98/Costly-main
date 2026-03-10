@@ -334,14 +334,20 @@ model producto {
   arancel_pct       Decimal?   @db.Decimal(5, 2)
   isc_pct           Decimal?   @db.Decimal(5, 2)
 
+  // Modo de cálculo de volumen
+  // unitario    → volumen_m3 × cantidad
+  // por_caja    → volumen_caja_m3 × CEIL(cantidad ÷ unidades_por_caja)
+  // sin_volumen → solo peso (láminas, perfiles, cables)
+  modo_volumen      String     @default("unitario") @db.VarChar(20)
+
   // Dimensiones y peso unitario
   peso_kg           Decimal?   @db.Decimal(10, 3)
   largo_cm          Decimal?   @db.Decimal(10, 2)
   ancho_cm          Decimal?   @db.Decimal(10, 2)
   alto_cm           Decimal?   @db.Decimal(10, 2)
-  volumen_m3        Decimal?   @db.Decimal(10, 4)  // calculado o ingresado
+  volumen_m3        Decimal?   @db.Decimal(10, 4)  // usado si modo_volumen = unitario
 
-  // Empaque
+  // Empaque — usado si modo_volumen = por_caja
   unidades_por_caja Int?
   peso_caja_kg      Decimal?   @db.Decimal(10, 3)
   volumen_caja_m3   Decimal?   @db.Decimal(10, 4)

@@ -41,17 +41,40 @@ const pesoMaxPallet = (tipo, customDims = null) => {
   return PALLETS[tipo]?.peso_max_kg || 1000
 }
 
+// ── Calcular volumen de una línea según modo_volumen del producto
+const calcularVolumenLinea = (producto, cantidad) => {
+  const modo = producto.modo_volumen || 'unitario'
+
+  switch (modo) {
+    case 'unitario': {
+      const volumen = parseFloat(producto.volumen_m3 || 0) * cantidad
+      return { volumen, cajas: null, modo }
+    }
+
+    case 'por_caja': {
+      const unidadesPorCaja = parseInt(producto.unidades_por_caja || 1)
+      const cajas           = Math.ceil(cantidad / unidadesPorCaja)
+      const volumen         = parseFloat(producto.volumen_caja_m3 || 0) * cajas
+      return { volumen, cajas, modo }
+    }
+
+    case 'sin_volumen':
+    default:
+      return { volumen: 0, cajas: null, modo: 'sin_volumen' }
+  }
+}
+
 // Calcular pallets necesarios para una línea
 export const calcularPalletsLinea = (linea, producto) => {
   // Determinar qué configuración usar
   const usarOverride = linea.estiba_override
   const tipoEstiba   = usarOverride ? linea.tipo_estiba_linea : producto.tipo_estiba
-  const volumenUnit  = parseFloat(producto.volumen_m3 || 0)
-  const pesoUnit     = parseFloat(producto.peso_kg    || 0)
+  const pesoUnit     = parseFloat(producto.peso_kg || 0)
   const cantidad     = parseFloat(linea.cantidad)
 
-  const volumenTotal = volumenUnit * cantidad
-  const pesoTotal    = pesoUnit    * cantidad
+  // Calcular volumen según modo
+  const { volumen: volumenTotal, cajas, modo: modoVolumen } = calcularVolumenLinea(producto, cantidad)
+  const pesoTotal = pesoUnit * cantidad
 
   const esEspecial = ['sin_pallet', 'otro'].includes(tipoEstiba)
 
@@ -82,8 +105,10 @@ export const calcularPalletsLinea = (linea, producto) => {
 
   return {
     tipo_estiba_usado:  tipoEstiba,
+    modo_volumen:       modoVolumen,
     volumen_m3:         volumenTotal,
     peso_kg:            pesoTotal,
+    cajas_estimadas:    cajas,
     pallets_necesarios: palletsNecesarios,
     es_especial:        esEspecial,
     nota: usarOverride ? linea.nota_estiba_linea : producto.nota_estiba,
