@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Costly — Sistema de Gestión de Importaciones · Vadibarot</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Lora:ital,wght@0,500;1,400&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#1A2433;--slate:#5C7089;--mist:#8FA3B8;
+  --border:#E2E8EF;--border-lt:#EEF1F5;--bg:#F2F5F8;--sur:#FFF;--sur2:#F8FAFB;--sur3:#F0F4F7;
+  --tl:#1F7A7A;--tl-d:#155555;--tl-m:#2A9494;--tl-l:#DFF2F2;--tl-xl:#F0FAFA;
+  --gd:#B8821A;--gd-l:#FBF3E3;--am:#D97706;
+  --rs:#A33A36;--rs-l:#FDF1F0;--sg:#3A6B4A;--sg-l:#E8F4ED;--vi:#5B4FCF;--vi-l:#EEECFB;
+  --op:#9DB3C8;
+  --sh0:0 1px 4px rgba(26,36,51,.07);--sh1:0 3px 14px rgba(26,36,51,.09);--sh2:0 8px 32px rgba(26,36,51,.12);
+}
+body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--ink);font-size:13px;overflow:hidden}
+.shell{display:flex;height:100vh;overflow:hidden}
+
+/* SIDEBAR */
+.sb{width:210px;flex-shrink:0;background:var(--ink);display:flex;flex-direction:column;position:relative;overflow:hidden}
+.sb::before{content:'';position:absolute;top:-60px;right:-60px;width:160px;height:160px;border-radius:50%;background:rgba(42,148,148,.08)}
+.sb::after{content:'';position:absolute;bottom:90px;left:-40px;width:110px;height:110px;border-radius:50%;background:rgba(184,130,26,.07)}
+.sb-logo{padding:20px 18px 14px;border-bottom:1px solid rgba(255,255,255,.07);z-index:1;position:relative}
+.sb-brand{font-family:'Lora',serif;font-size:21px;font-weight:500;color:#fff}
+.sb-brand span{color:var(--tl-m)}
+.sb-sub{font-size:9px;color:rgba(255,255,255,.25);letter-spacing:.12em;text-transform:uppercase;margin-top:2px}
+.sb-nav{flex:1;padding:10px 0;overflow-y:auto;z-index:1;position:relative}
+.sb-sec{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.2);padding:10px 18px 4px;font-weight:500}
+.sb-it{display:flex;align-items:center;gap:8px;padding:8px 18px;cursor:pointer;color:rgba(255,255,255,.45);font-size:12.5px;transition:all .15s;position:relative}
+.sb-it:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.05)}
+.sb-it.on{color:#fff;background:rgba(31,122,122,.22);font-weight:500}
+.sb-it.on::before{content:'';position:absolute;left:0;top:5px;bottom:5px;width:3px;background:var(--tl-m);border-radius:0 2px 2px 0}
+.sb-ic{font-size:13px;width:15px;text-align:center}
+.sb-badge{margin-left:auto;background:var(--rs);color:#fff;font-size:9px;font-weight:600;padding:1px 5px;border-radius:20px}
+.sb-usr{padding:12px 18px;border-top:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:8px;z-index:1;position:relative}
+.sb-av{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--tl),#0D4A4A);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#fff;flex-shrink:0}
+.sb-un{font-size:11px;color:rgba(255,255,255,.8);font-weight:500}
+.sb-ur{font-size:10px;color:rgba(255,255,255,.3)}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{background:var(--sur);border-bottom:1px solid var(--border);height:52px;display:flex;align-items:center;padding:0 22px;gap:12px;flex-shrink:0;box-shadow:var(--sh0)}
+.tb-ti{font-family:'Lora',serif;font-size:16px;font-weight:500;color:var(--ink);flex:1}
+.tb-bc{font-size:11px;color:var(--mist)}.tb-bc b{color:var(--tl)}
+.tb-act{display:flex;align-items:center;gap:7px}
+.bell{width:32px;height:32px;border-radius:7px;background:var(--sur2);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;position:relative;transition:all .15s}
+.bell:hover{border-color:var(--tl);background:var(--tl-xl)}
+.bell-dot{position:absolute;top:3px;right:3px;width:6px;height:6px;background:var(--rs);border-radius:50%;border:2px solid var(--sur)}
+.btn{padding:6px 13px;border-radius:7px;font-family:'Sora',sans-serif;font-size:12px;font-weight:500;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:5px;transition:all .15s}
+.btn-t{background:var(--tl);color:#fff}.btn-t:hover{background:var(--tl-d)}
+.btn-o{background:transparent;color:var(--ink);border:1.5px solid var(--border)}.btn-o:hover{border-color:var(--tl);color:var(--tl);background:var(--tl-xl)}
+.btn-sm{padding:5px 10px;font-size:11.5px}
+.con{flex:1;overflow-y:auto;padding:20px 22px}
+.scr{display:none;animation:fu .22s ease}.scr.on{display:block}
+@keyframes fu{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+
+/* CARDS */
+.card{background:var(--sur);border:1px solid var(--border);border-radius:11px;box-shadow:var(--sh0);overflow:hidden}
+.c-hd{padding:12px 16px 10px;border-bottom:1px solid var(--border-lt);display:flex;align-items:center;justify-content:space-between}
+.c-ti{font-size:13px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:6px}
+.c-bd{padding:14px 16px}
+
+/* GRIDS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px}
+.g23{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+.mb14{margin-bottom:14px}.mb18{margin-bottom:18px}
+
+/* KPI */
+.kpi{background:var(--sur);border:1px solid var(--border);border-radius:11px;padding:16px;box-shadow:var(--sh0);position:relative;overflow:hidden;transition:transform .18s,box-shadow .18s;cursor:default}
+.kpi:hover{transform:translateY(-2px);box-shadow:var(--sh1)}
+.kpi::after{content:'';position:absolute;top:0;right:0;width:52px;height:52px;border-radius:0 11px 0 52px;opacity:.08}
+.kpi.kt::after{background:var(--tl)}.kpi.kg::after{background:var(--gd)}.kpi.kr::after{background:var(--rs)}.kpi.ks::after{background:var(--sg)}
+.k-ic{width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;margin-bottom:10px}
+.kpi.kt .k-ic{background:var(--tl-l)}.kpi.kg .k-ic{background:var(--gd-l)}.kpi.kr .k-ic{background:var(--rs-l)}.kpi.ks .k-ic{background:var(--sg-l)}
+.k-v{font-size:24px;font-weight:700;color:var(--ink);line-height:1}
+.k-l{font-size:11px;color:var(--mist);margin-top:3px}
+.k-d{font-size:10.5px;font-weight:500;margin-top:8px}
+.up{color:var(--sg)}.dn{color:var(--rs)}
+
+/* SEMAFORO */
+.s3{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0}
+.s3g{background:#3A6B4A;box-shadow:0 0 0 3px #DFF0E5}
+.s3y{background:#D97706;box-shadow:0 0 0 3px #FEF3C7}
+.s3r{background:#A33A36;box-shadow:0 0 0 3px var(--rs-l);animation:pr 1.5s infinite}
+@keyframes pr{0%,100%{box-shadow:0 0 0 3px var(--rs-l)}50%{box-shadow:0 0 0 6px rgba(163,58,54,.12)}}
+
+/* PILL */
+.pill{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap}
+.pill::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.75}
+.pg{background:var(--sg-l);color:var(--sg)}.py{background:#FEF3C7;color:#92600A}
+.pb{background:var(--tl-l);color:var(--tl)}.pgr{background:var(--sur3);color:var(--slate)}
+.pr{background:var(--rs-l);color:var(--rs)}.pn{background:#E8EDF2;color:var(--ink)}.pv{background:var(--vi-l);color:var(--vi)}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{text-align:left;font-size:10px;font-weight:600;color:var(--mist);text-transform:uppercase;letter-spacing:.05em;padding:8px 11px;border-bottom:1px solid var(--border);background:var(--sur2)}
+.tbl td{padding:10px 11px;border-bottom:1px solid var(--border-lt);font-size:12px;vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}.tbl tr:hover td{background:#FAFCFD}
+.tbl-tot td{background:var(--sur2)!important;font-weight:700;border-top:2px solid var(--border)}
+
+/* PROGRESS */
+.pt{height:4px;background:var(--border);border-radius:10px;overflow:hidden;flex:1}
+.pf{height:100%;border-radius:10px}
+
+/* BARS */
+.bars{display:flex;align-items:flex-end;gap:4px;height:60px;padding-top:6px}
+.bar{flex:1;border-radius:3px 3px 0 0;background:var(--tl-l);cursor:pointer;transition:background .15s}
+.bar:hover,.bar.on{background:var(--tl)}
+.bls{display:flex;gap:4px;margin-top:4px}.bl{flex:1;text-align:center;font-size:9px;color:var(--mist)}
+
+/* DONUT */
+.donut{width:76px;height:76px;border-radius:50%;background:conic-gradient(var(--tl) 0% 42%,var(--gd) 42% 66%,var(--sg) 66% 82%,var(--slate) 82% 100%);position:relative;flex-shrink:0}
+.donut::after{content:'';position:absolute;inset:17px;border-radius:50%;background:var(--sur)}
+.leg{display:flex;flex-direction:column;gap:5px}
+.li{display:flex;align-items:center;gap:6px;font-size:11px}
+.ld{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+
+/* ALERT ITEMS */
+.ai{display:flex;gap:9px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border-lt)}
+.ai:last-child{border-bottom:none}
+.ai-ic{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+.ai-tl{font-size:12px;font-weight:500;color:var(--ink)}
+.ai-mt{font-size:10.5px;color:var(--mist);margin-top:1px}
+.ai-tm{font-size:10px;color:var(--mist);white-space:nowrap}
+
+/* CHIPS */
+.ic{display:inline-flex;align-items:center;gap:3px;font-size:11px;color:var(--mist);background:var(--sur2);border:1px solid var(--border);border-radius:4px;padding:1px 6px}
+.incb{background:var(--gd-l);color:var(--gd);font-size:10px;font-weight:700;padding:2px 5px;border-radius:3px}
+
+/* SECTION CARD */
+.sc{background:var(--sur);border:1px solid var(--border);border-radius:11px;box-shadow:var(--sh0);overflow:hidden;margin-bottom:12px}
+.sc-hd{padding:11px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border-lt);cursor:pointer;user-select:none}
+.sc-hl{display:flex;align-items:center;gap:8px}
+.sc-ic{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+.sc-nm{font-size:13px;font-weight:600;color:var(--ink)}
+.sc-ds{font-size:11px;color:var(--mist);margin-top:1px}
+.tag{padding:2px 6px;border-radius:3px;font-size:9.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.treq{background:var(--tl-l);color:var(--tl)}.topt{background:var(--sur2);color:var(--op);border:1px dashed var(--border)}
+.chv{font-size:10px;color:var(--mist);transition:transform .2s}.chv.op{transform:rotate(180deg)}
+.sc-bd{padding:14px 15px}.sc-bd.hid{display:none}
+
+/* FORM */
+.fl{display:flex;flex-direction:column;gap:4px}
+.fll{font-size:10px;font-weight:600;color:var(--slate);text-transform:uppercase;letter-spacing:.05em}
+.flo{font-size:9px;font-weight:400;color:var(--op);text-transform:none;font-style:italic}
+.fi{height:34px;border:1.5px solid var(--border);border-radius:7px;padding:0 10px;font-family:'Sora',sans-serif;font-size:12.5px;color:var(--ink);background:var(--sur);outline:none;transition:all .15s;width:100%;appearance:none}
+.fi:focus{border-color:var(--tl);box-shadow:0 0 0 3px rgba(31,122,122,.1);background:var(--tl-xl)}
+.fi.fil{background:var(--sur2)}
+.fi.calc{background:var(--tl-l);border-color:rgba(31,122,122,.3);color:var(--tl);font-weight:600;cursor:default}
+.fi.gld{background:var(--gd-l);border-color:rgba(184,130,26,.3);color:var(--gd);font-weight:700;cursor:default}
+select.fi{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238FA3B8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:26px;cursor:pointer}
+.fw{position:relative}.fp{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:600;color:var(--mist);pointer-events:none}.fw .fi{padding-left:22px}
+.fs{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--mist);pointer-events:none}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.fg4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px}
+
+/* STEPS */
+.steps{display:flex;align-items:center;margin-bottom:18px}
+.stn{display:flex;flex-direction:column;align-items:center}
+.stb{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:600;border:2px solid var(--border);background:var(--sur);color:var(--mist);position:relative;z-index:1}
+.stn.dn .stb{background:var(--tl);border-color:var(--tl);color:#fff}
+.stn.ac .stb{background:var(--ink);border-color:var(--ink);color:#fff}
+.stl{font-size:9.5px;color:var(--mist);margin-top:3px;white-space:nowrap}
+.stn.dn .stl{color:var(--tl)}.stn.ac .stl{color:var(--ink);font-weight:600}
+.stw{flex:1;height:2px;background:var(--border);margin:0 -1px;padding-bottom:12px}.stw.dn{background:var(--tl)}
+
+/* LINES TABLE */
+.lt{width:100%;border-collapse:collapse}
+.lt th{font-size:9.5px;font-weight:600;color:var(--mist);text-transform:uppercase;letter-spacing:.05em;padding:7px 8px;border-bottom:2px solid var(--border);text-align:left;background:var(--sur2);white-space:nowrap}
+.lt td{padding:7px 8px;border-bottom:1px solid var(--border-lt);vertical-align:middle;font-size:12px}
+.lt tr:last-child td{border-bottom:none}.lt tr:hover td{background:#FAFCFD}
+.lii{border:1.5px solid transparent;background:transparent;font-family:'Sora',sans-serif;font-size:12px;color:var(--ink);border-radius:5px;padding:3px 6px;width:100%;outline:none;transition:all .14s}
+.lii:focus{border-color:var(--tl);background:var(--tl-xl)}
+.lc{font-weight:600;color:var(--tl);text-align:right;white-space:nowrap}
+.pcc{display:inline-block;background:var(--sur2);border:1px solid var(--border);border-radius:3px;padding:1px 5px;font-size:9.5px;color:var(--mist)}
+.pcc.hl{background:var(--tl-l);border-color:rgba(31,122,122,.2);color:var(--tl)}
+.del{color:var(--border);cursor:pointer;font-size:14px;transition:color .14s}.del:hover{color:var(--rs)}
+.prov-div td{padding:12px 8px 4px!important;border-bottom:none!important;background:transparent!important}
+.pd-i{display:flex;align-items:center;gap:9px;width:100%}
+.pd-l{flex:1;height:1px;background:var(--border-lt)}
+.pd-t{display:flex;align-items:center;gap:4px;white-space:nowrap;font-size:9.5px;font-weight:600;color:var(--mist);letter-spacing:.04em;text-transform:uppercase}
+
+/* MARGIN TABLE */
+.mt{width:100%;border-collapse:collapse;min-width:700px}
+.mt th{font-size:9.5px;font-weight:600;color:var(--mist);text-transform:uppercase;letter-spacing:.05em;padding:7px 8px;border-bottom:2px solid var(--border);text-align:right;background:var(--sur2);white-space:nowrap}
+.mt th:first-child{text-align:left}
+.mt td{padding:7px 8px;border-bottom:1px solid var(--border-lt);font-size:11.5px;text-align:right}
+.mt td:first-child{text-align:left}
+.mt tr:hover td{background:#FAFCFD}
+.mt tr.mtt td{background:var(--sur2);font-weight:700;border-top:2px solid var(--border)}
+.mni{width:52px;border:1.5px solid transparent;background:transparent;font-family:'Sora',sans-serif;font-size:11.5px;color:var(--ink);border-radius:5px;padding:3px 4px;outline:none;text-align:center;transition:all .14s}
+.mni:focus{border-color:var(--tl);background:var(--tl-xl)}
+
+/* RIGHT PANEL */
+.rp{background:var(--ink);border-radius:11px;overflow:hidden;box-shadow:var(--sh2)}
+.rp-hd{padding:13px 16px 10px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;justify-content:space-between;align-items:flex-start}
+.rp-ti{font-family:'Lora',serif;font-size:13px;font-weight:500;color:rgba(255,255,255,.9)}
+.rp-su{font-size:10px;color:rgba(255,255,255,.3);margin-top:1px}
+.rp-bd{padding:12px 16px}
+.cl{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.cl:last-child{border-bottom:none}
+.cll{font-size:11px;color:rgba(255,255,255,.42)}.clv{font-size:11.5px;font-weight:500;color:rgba(255,255,255,.72)}
+.cifr{background:rgba(31,122,122,.2);margin:0 -3px;padding:6px 3px;border-radius:5px;border-bottom:none!important;margin-bottom:3px}
+.cifr .cll,.cifr .clv{color:#7ECECE!important;font-weight:600}
+.totr{border-top:1px solid rgba(255,255,255,.1)!important;padding-top:8px!important;margin-top:3px}
+.totr .cll{color:rgba(255,255,255,.9)!important;font-weight:600;font-size:12px}
+.totr .clv{color:#fff!important;font-weight:700;font-size:13.5px}
+.ivar .cll,.ivar .clv{color:rgba(255,255,255,.22)!important;font-size:10px!important;font-style:italic}
+.pb{background:linear-gradient(135deg,rgba(31,122,122,.25),rgba(31,122,122,.1));border:1px solid rgba(31,122,122,.28);border-radius:8px;padding:12px 14px;margin-top:12px;text-align:center}
+.pb-l{font-size:10px;color:rgba(255,255,255,.38);margin-bottom:3px}
+.pb-v{font-size:22px;font-weight:700;color:#7ECECE;line-height:1}
+.pb-s{font-size:10px;color:rgba(255,255,255,.32);margin-top:3px}
+.pb-c{display:inline-block;background:rgba(58,107,74,.3);border:1px solid rgba(58,107,74,.4);color:#7EC899;font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;margin-top:4px}
+
+/* WARN */
+.wi{display:flex;gap:8px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--border-lt)}
+.wi:last-child{border-bottom:none}
+.wd{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.wo{background:var(--am);box-shadow:0 0 0 3px rgba(217,119,6,.14)}
+.wr{background:var(--rs);box-shadow:0 0 0 3px rgba(163,58,54,.14)}
+.wg{background:var(--sg);box-shadow:0 0 0 3px rgba(58,107,74,.14)}
+.wt{color:var(--slate);line-height:1.4;font-size:11.5px}.wt strong{color:var(--ink)}
+
+/* PROVIDER CHIPS */
+.pb-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.pc{background:var(--sur2);border:1.5px solid var(--border);border-radius:8px;padding:8px 12px;flex:1;min-width:150px;transition:border-color .15s}
+.pc:hover,.pc.sel{border-color:var(--tl);background:var(--tl-xl)}
+.pc-t{display:flex;align-items:center;gap:6px}
+.pc-nm{font-size:12px;font-weight:600;color:var(--ink)}.pc-sb{font-size:10.5px;color:var(--mist);margin-top:1px}
+.pc-bg{margin-left:auto;background:var(--tl-l);color:var(--tl);font-size:9px;font-weight:600;padding:2px 5px;border-radius:3px}
+.pc-in{display:flex;align-items:center;gap:4px;margin-top:5px;padding-top:5px;border-top:1px solid var(--border-lt)}
+.it{background:#fff;border:1px solid var(--border);border-radius:3px;padding:1px 5px;font-size:10.5px;color:var(--slate);font-weight:500}
+.itm{color:var(--gd);background:var(--gd-l);border-color:rgba(184,130,26,.2)}
+.comb{display:flex;align-items:center;gap:5px;background:var(--tl-l);border:1px solid rgba(31,122,122,.2);border-radius:6px;padding:6px 11px;margin-bottom:12px;font-size:11px;color:var(--tl);font-weight:500}
+
+/* BOXES */
+.iva-box{background:linear-gradient(135deg,#FBF3E3,#FFF8EC);border:1.5px solid rgba(184,130,26,.22);border-radius:8px;padding:12px 14px;margin-bottom:12px}
+.iva-ti{font-size:12px;font-weight:600;color:var(--gd);margin-bottom:6px;display:flex;align-items:center;gap:5px}
+.cif-box{background:var(--tl-l);border:1.5px solid rgba(31,122,122,.2);border-radius:8px;padding:11px 14px;display:flex;align-items:center;justify-content:space-between}
+
+/* INC PILLS */
+.incp{display:flex;gap:6px;flex-wrap:wrap}
+.inc{padding:5px 11px;border:1.5px solid var(--border);border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;transition:all .15s;color:var(--mist);background:var(--sur);display:flex;flex-direction:column;align-items:center;gap:1px}
+.inc-s{font-size:9.5px;font-weight:400;color:var(--op)}
+.inc:hover{border-color:var(--tl);color:var(--tl);background:var(--tl-xl)}.inc.sel{border-color:var(--tl);background:var(--tl-l);color:var(--tl)}
+
+/* CURRENCY TOGGLE */
+.ctg{display:flex;gap:5px}
+.cb{padding:5px 12px;border:1.5px solid var(--border);border-radius:6px;font-size:11.5px;font-weight:500;cursor:pointer;transition:all .15s;color:var(--mist);background:var(--sur);font-family:'Sora',sans-serif}
+.cb:hover{border-color:var(--tl);color:var(--tl)}.cb.on{background:var(--ink);border-color:var(--ink);color:#fff}
+
+/* TOGGLE */
+.tg{position:relative;width:34px;height:18px;cursor:pointer}
+.tg input{opacity:0;width:0;height:0}
+.tg-sl{position:absolute;top:0;left:0;right:0;bottom:0;background:var(--border);border-radius:10px;transition:.22s}
+.tg-sl:before{content:'';position:absolute;width:14px;height:14px;left:2px;bottom:2px;background:#fff;border-radius:50%;transition:.22s}
+.tg input:checked+.tg-sl{background:var(--tl)}
+.tg input:checked+.tg-sl:before{transform:translateX(16px)}
+
+/* DOC */
+.dz{border:2px dashed var(--border);border-radius:9px;padding:16px;text-align:center;cursor:pointer;transition:all .18s;background:var(--sur2)}
+.dz:hover{border-color:var(--tl);background:var(--tl-xl)}
+.dl{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.di{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--sur2);border:1px solid var(--border);border-radius:7px;transition:all .15s}
+.di:hover{border-color:var(--tl)}
+.di-in{flex:1;min-width:0}
+.di-nm{font-size:11.5px;font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.di-mt{font-size:10px;color:var(--mist);margin-top:1px}
+.dt{padding:1px 6px;border-radius:3px;font-size:9.5px;font-weight:600}
+.dtr{background:var(--tl-l);color:var(--tl)}.dto{background:var(--sur2);color:var(--op);border:1px dashed var(--border)}.dtw{background:var(--rs-l);color:var(--rs)}
+
+/* REPORTS */
+.rtabs{display:flex;gap:3px;background:var(--sur2);border:1.5px solid var(--border);border-radius:8px;padding:3px;margin-bottom:16px}
+.rtab{padding:5px 13px;border-radius:5px;font-size:12px;font-weight:500;cursor:pointer;color:var(--mist);transition:all .15s}
+.rtab:hover{color:var(--ink)}.rtab.on{background:var(--sur);color:var(--ink);box-shadow:var(--sh0)}
+.rf{background:var(--sur);border:1px solid var(--border);border-radius:11px;padding:14px 16px;margin-bottom:16px;box-shadow:var(--sh0)}
+.rff{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+.rfg{display:flex;flex-direction:column;gap:3px;min-width:130px}
+.rfl{font-size:9.5px;font-weight:600;color:var(--mist);text-transform:uppercase;letter-spacing:.05em}
+.rfi{height:32px;border:1.5px solid var(--border);border-radius:6px;padding:0 9px;font-family:'Sora',sans-serif;font-size:12px;color:var(--ink);background:var(--sur2);outline:none;appearance:none;transition:border-color .15s;cursor:pointer}
+.rfi:focus{border-color:var(--tl)}
+.ss{display:flex;gap:9px;margin-bottom:16px}
+.sb2{flex:1;background:var(--sur);border:1px solid var(--border);border-radius:8px;padding:10px 12px;text-align:center;box-shadow:var(--sh0)}
+.sv{font-size:18px;font-weight:700;color:var(--ink)}.sl{font-size:10.5px;color:var(--mist);margin-top:2px}
+.eb{display:flex;align-items:center;gap:4px;padding:5px 11px;border-radius:6px;font-size:11.5px;font-weight:500;cursor:pointer;border:1.5px solid var(--border);background:var(--sur);color:var(--ink);transition:all .15s;font-family:'Sora',sans-serif}
+.eb:hover{border-color:var(--tl);color:var(--tl);background:var(--tl-xl)}
+.rs{display:none}.rs.on{display:block;animation:fu .2s ease}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:10px}
+[data-tip]{position:relative;cursor:help}
+[data-tip]::after{content:attr(data-tip);position:absolute;bottom:calc(100%+5px);left:50%;transform:translateX(-50%);background:#243447;color:#fff;font-size:10.5px;padding:4px 8px;border-radius:5px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;z-index:999}
+[data-tip]:hover::after{opacity:1}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- SIDEBAR -->
+<aside class="sb">
+  <div class="sb-logo">
+    <div class="sb-brand">Cost<span>ly</span></div>
+    <div class="sb-sub">Vadibarot Ltda.</div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-sec">Principal</div>
+    <div class="sb-it on" onclick="nav('dashboard',this)"><span class="sb-ic">⬡</span>Dashboard<span class="sb-badge">3</span></div>
+    <div class="sb-sec">Operaciones</div>
+    <div class="sb-it" onclick="nav('pedidos',this)"><span class="sb-ic">◈</span>Pedidos</div>
+    <div class="sb-it" onclick="nav('costeo',this)"><span class="sb-ic">💰</span>Costeo</div>
+    <div class="sb-it" onclick="nav('seguimiento',this)"><span class="sb-ic">◷</span>Seguimiento</div>
+    <div class="sb-it" onclick="nav('aduana',this)"><span class="sb-ic">🏛</span>Aduana</div>
+    <div class="sb-it" onclick="nav('pagos',this)"><span class="sb-ic">💳</span>Pagos</div>
+    <div class="sb-sec">Catálogos</div>
+    <div class="sb-it" onclick="nav('prov',this)"><span class="sb-ic">◻</span>Proveedores</div>
+    <div class="sb-it" onclick="nav('prod',this)"><span class="sb-ic">◻</span>Productos</div>
+    <div class="sb-it" onclick="nav('cli',this)"><span class="sb-ic">◻</span>Clientes</div>
+    <div class="sb-sec">Análisis</div>
+    <div class="sb-it" onclick="nav('reportes',this)"><span class="sb-ic">▦</span>Reportes</div>
+    <div class="sb-it" onclick="nav('norm',this)"><span class="sb-ic">📋</span>Normativa CR</div>
+    <div class="sb-sec">Admin</div>
+    <div class="sb-it" onclick="nav('usr',this)"><span class="sb-ic">◎</span>Usuarios</div>
+    <div class="sb-it" onclick="nav('audit',this)"><span class="sb-ic">◎</span>Auditoría</div>
+  </nav>
+  <div class="sb-usr">
+    <div class="sb-av">MA</div>
+    <div><div class="sb-un">María Alvarado</div><div class="sb-ur">Operador Senior</div></div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+<div class="topbar">
+  <div>
+    <div class="tb-ti" id="tbt">Dashboard</div>
+    <div class="tb-bc" id="tbb">Inicio &rsaquo; <b>Dashboard</b></div>
+  </div>
+  <div class="tb-act">
+    <div class="bell" title="3 alertas"><span>🔔</span><div class="bell-dot"></div></div>
+    <button class="btn btn-o btn-sm" onclick="nav('pedidos',null)">📋 Pedidos</button>
+    <button class="btn btn-t btn-sm" onclick="nav('costeo',null)">＋ Nuevo pedido</button>
+  </div>
+</div>
+<div class="con">
+
+<!-- DASHBOARD -->
+<div class="scr on" id="s-dashboard">
+  <div class="g4 mb18">
+    <div class="kpi kt"><div class="k-ic">📦</div><div class="k-v">24</div><div class="k-l">Pedidos activos</div><div class="k-d up">↑ 3 esta semana</div></div>
+    <div class="kpi kg"><div class="k-ic">🚢</div><div class="k-v">8</div><div class="k-l">En tránsito</div><div class="k-d up">↑ 2 embarcados hoy</div></div>
+    <div class="kpi kr"><div class="k-ic">⏳</div><div class="k-v">3</div><div class="k-l">Alertas vencidas</div><div class="k-d dn">Requieren atención</div></div>
+    <div class="kpi ks"><div class="k-ic">💵</div><div class="k-v">$184k</div><div class="k-l">Importado este mes</div><div class="k-d up">↑ +12% vs anterior</div></div>
+  </div>
+  <div class="g23 mb18">
+    <div class="card">
+      <div class="c-hd">
+        <div class="c-ti">📋 Pedidos activos — Semáforo</div>
+        <div style="display:flex;gap:9px;font-size:10.5px;color:var(--mist)">
+          <span style="display:flex;align-items:center;gap:3px"><span class="s3 s3g"></span>OK</span>
+          <span style="display:flex;align-items:center;gap:3px"><span class="s3 s3y"></span>Pronto</span>
+          <span style="display:flex;align-items:center;gap:3px"><span class="s3 s3r"></span>Vencido</span>
+        </div>
+      </div>
+      <table class="tbl">
+        <thead><tr><th></th><th>Pedido</th><th>Proveedor</th><th>Estado</th><th>Próx. Deadline</th><th>Costo CR</th><th>P.Venta</th><th>Pago prov.</th></tr></thead>
+        <tbody>
+          <tr><td style="padding-left:13px"><span class="s3 s3r"></span></td><td><strong>PED-2025-018</strong></td><td><span class="ic">🇨🇳 Shenzhen</span></td><td><span class="pill pb">En tránsito</span></td><td style="color:var(--rs);font-weight:500;font-size:11.5px">HOY — Llegada CR</td><td style="font-weight:600">$8,653</td><td style="font-weight:600;color:var(--tl)">$11,682</td><td><span class="pill py">Saldo pend.</span></td></tr>
+          <tr><td style="padding-left:13px"><span class="s3 s3r"></span></td><td><strong>PED-2025-021</strong></td><td><span class="ic">🇨🇳 Guangzhou</span></td><td><span class="pill py">Almacén fiscal</span></td><td style="color:var(--rs);font-weight:500;font-size:11.5px">Ayer — DUA vencido</td><td style="font-weight:600">$12,240</td><td style="font-weight:600;color:var(--tl)">$16,524</td><td><span class="pill pg">Pagado</span></td></tr>
+          <tr><td style="padding-left:13px"><span class="s3 s3y"></span></td><td><strong>IMP-2025-004</strong><br><span style="font-size:10px;color:var(--tl)">PED-026+027+028</span></td><td><span class="ic">🇨🇳🇺🇸 Consol.</span></td><td><span class="pill pb">En tránsito</span></td><td style="color:#92600A;font-weight:500;font-size:11.5px">En 5 días</td><td style="font-weight:600">$11,158</td><td style="font-weight:600;color:var(--tl)">$15,063</td><td><span class="pill pg">Pagado</span></td></tr>
+          <tr><td style="padding-left:13px"><span class="s3 s3y"></span></td><td><strong>PED-2025-019</strong></td><td><span class="ic">🇨🇳 Sino Import</span></td><td><span class="pill pn">En producción</span></td><td style="color:#92600A;font-weight:500;font-size:11.5px">En 6 días</td><td style="color:var(--mist)">Pend.</td><td style="color:var(--mist)">Pend.</td><td><span class="pill py">Señal pagada</span></td></tr>
+          <tr><td style="padding-left:13px"><span class="s3 s3g"></span></td><td><strong>PED-2025-024</strong></td><td><span class="ic">🇺🇸 ProParts</span></td><td><span class="pill pgr">Confirmado</span></td><td style="color:var(--mist);font-size:11.5px">En 18 días</td><td style="color:var(--mist)">Pend.</td><td style="color:var(--mist)">Pend.</td><td><span class="pill pgr">Sin pago</span></td></tr>
+          <tr><td style="padding-left:13px"><span class="s3 s3g"></span></td><td><strong>PED-2025-025</strong></td><td><span class="ic">🇩🇪 Euro Mach</span></td><td><span class="pill pgr">Borrador</span></td><td style="color:var(--mist);font-size:11.5px">En 30 días</td><td style="color:var(--mist)">Pend.</td><td style="color:var(--mist)">Pend.</td><td><span class="pill pgr">Sin pago</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="card">
+        <div class="c-hd"><div class="c-ti">🔔 Alertas <span style="background:var(--rs-l);color:var(--rs);font-size:9.5px;padding:1px 5px;border-radius:10px;margin-left:3px;font-weight:600">3</span></div></div>
+        <div class="c-bd">
+          <div class="ai"><div class="ai-ic" style="background:var(--rs-l)">🚨</div><div style="flex:1"><div class="ai-tl">PED-021 — DUA vencido</div><div class="ai-mt">Almacén Heredia</div></div><div class="ai-tm">HOY</div></div>
+          <div class="ai"><div class="ai-ic" style="background:var(--rs-l)">🛳️</div><div style="flex:1"><div class="ai-tl">PED-018 — Llegada CR</div><div class="ai-mt">Puerto Limón</div></div><div class="ai-tm">HOY</div></div>
+          <div class="ai"><div class="ai-ic" style="background:var(--gd-l)">🏭</div><div style="flex:1"><div class="ai-tl">PED-019 — Listo fábrica</div><div class="ai-mt">Pago saldo antes embarque</div></div><div class="ai-tm">6 días</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="c-hd"><div class="c-ti">📊 Importaciones 2025</div></div>
+        <div class="c-bd">
+          <div class="bars"><div class="bar" style="height:45%"></div><div class="bar" style="height:60%"></div><div class="bar" style="height:38%"></div><div class="bar" style="height:72%"></div><div class="bar" style="height:55%"></div><div class="bar on" style="height:88%"></div></div>
+          <div class="bls"><div class="bl">Feb</div><div class="bl">Mar</div><div class="bl">Abr</div><div class="bl">May</div><div class="bl">Jun</div><div class="bl">Jul</div></div>
+          <div style="display:flex;justify-content:space-between;margin-top:9px"><span style="font-size:11px;color:var(--mist)">Total semestre</span><span style="font-size:12.5px;font-weight:700;color:var(--ink)">$842,300</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="c-hd"><div class="c-ti">📦 Pedidos por estado</div></div>
+      <div class="c-bd" style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;align-items:center;gap:9px"><span style="font-size:11.5px;width:130px">En tránsito</span><div class="pt"><div class="pf" style="width:60%;background:var(--tl)"></div></div><span style="font-size:12px;font-weight:600;color:var(--tl);width:16px;text-align:right">8</span></div>
+        <div style="display:flex;align-items:center;gap:9px"><span style="font-size:11.5px;width:130px">En producción</span><div class="pt"><div class="pf" style="width:30%;background:var(--gd)"></div></div><span style="font-size:12px;font-weight:600;color:var(--gd);width:16px;text-align:right">4</span></div>
+        <div style="display:flex;align-items:center;gap:9px"><span style="font-size:11.5px;width:130px">En aduana/fiscal</span><div class="pt"><div class="pf" style="width:22%;background:var(--rs)"></div></div><span style="font-size:12px;font-weight:600;color:var(--rs);width:16px;text-align:right">3</span></div>
+        <div style="display:flex;align-items:center;gap:9px"><span style="font-size:11.5px;width:130px">Confirmados</span><div class="pt"><div class="pf" style="width:37%;background:var(--slate)"></div></div><span style="font-size:12px;font-weight:600;color:var(--slate);width:16px;text-align:right">5</span></div>
+        <div style="display:flex;align-items:center;gap:9px"><span style="font-size:11.5px;width:130px">Borradores</span><div class="pt"><div class="pf" style="width:22%;background:#C9C5BC"></div></div><span style="font-size:12px;font-weight:600;color:var(--mist);width:16px;text-align:right">3</span></div>
+        <div style="display:flex;align-items:center;gap:9px"><span style="font-size:11.5px;width:130px">Listo entrega</span><div class="pt"><div class="pf" style="width:7%;background:var(--sg)"></div></div><span style="font-size:12px;font-weight:600;color:var(--sg);width:16px;text-align:right">1</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="c-hd"><div class="c-ti">🌍 Top proveedores — Jul 2025</div></div>
+      <table class="tbl">
+        <thead><tr><th>Proveedor</th><th>País</th><th>Ped.</th><th>Monto</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Shenzhen Tech</strong></td><td>🇨🇳 China</td><td style="text-align:center">7</td><td style="font-weight:600;color:var(--tl)">$62,400</td></tr>
+          <tr><td><strong>Guangzhou Mach.</strong></td><td>🇨🇳 China</td><td style="text-align:center">5</td><td style="font-weight:600;color:var(--tl)">$48,100</td></tr>
+          <tr><td><strong>BestMach Ltd.</strong></td><td>🇨🇳 China</td><td style="text-align:center">4</td><td style="font-weight:600;color:var(--tl)">$31,600</td></tr>
+          <tr><td><strong>ProParts USA</strong></td><td>🇺🇸 USA</td><td style="text-align:center">2</td><td style="font-weight:600;color:var(--tl)">$24,800</td></tr>
+          <tr><td><strong>Euro Mach GmbH</strong></td><td>🇩🇪 Alemania</td><td style="text-align:center">1</td><td style="font-weight:600;color:var(--tl)">$17,400</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- PEDIDOS -->
+<div class="scr" id="s-pedidos">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+    <div style="display:flex;gap:7px">
+      <div style="display:flex;align-items:center;gap:6px;height:32px;padding:0 10px;font-size:12px;color:var(--mist);border:1.5px solid var(--border);border-radius:6px;background:var(--sur2);width:200px;cursor:text">🔍 Buscar pedido...</div>
+      <select class="rfi"><option>Todos los estados</option><option>En tránsito</option><option>En aduana</option><option>Listo entrega</option></select>
+      <select class="rfi"><option>Todos los proveedores</option><option>Shenzhen Tech</option><option>Guangzhou Mach.</option></select>
+    </div>
+    <button class="btn btn-t btn-sm" onclick="nav('costeo',null)">＋ Nuevo pedido</button>
+  </div>
+  <div class="card">
+    <div class="c-hd"><div class="c-ti">📋 Pedidos activos</div><span style="font-size:11.5px;color:var(--mist)">24 pedidos</span></div>
+    <table class="tbl">
+      <thead><tr><th></th><th>Pedido</th><th>Proveedor</th><th>Incoterm</th><th>Contenedor</th><th>Estado</th><th>Próx. Deadline</th><th>Costo CR</th><th>P.Venta</th><th>Pago prov.</th></tr></thead>
+      <tbody>
+        <tr><td style="padding-left:12px"><span class="s3 s3r"></span></td><td><strong>PED-2025-018</strong></td><td><span class="ic">🇨🇳 Shenzhen Tech</span></td><td><span class="incb">FOB</span></td><td style="font-size:11px;color:var(--mist)">SZTU-2301845</td><td><span class="pill pb">En tránsito</span></td><td style="color:var(--rs);font-weight:500;font-size:11.5px">HOY</td><td style="font-weight:600">$8,653</td><td style="font-weight:600;color:var(--tl)">$11,682</td><td><span class="pill py">Saldo pend.</span></td></tr>
+        <tr><td style="padding-left:12px"><span class="s3 s3r"></span></td><td><strong>PED-2025-021</strong></td><td><span class="ic">🇨🇳 Guangzhou Co.</span></td><td><span class="incb">CIF</span></td><td style="font-size:11px;color:var(--mist)">GZHU-4412301</td><td><span class="pill py">Almacén fiscal</span></td><td style="color:var(--rs);font-weight:500;font-size:11.5px">Ayer</td><td style="font-weight:600">$12,240</td><td style="font-weight:600;color:var(--tl)">$16,524</td><td><span class="pill pg">Pagado</span></td></tr>
+        <tr><td style="padding-left:12px"><span class="s3 s3y"></span></td><td><strong>IMP-2025-004</strong><br><span style="font-size:10px;color:var(--tl)">PED-026+027+028</span></td><td><span class="ic">🇨🇳🇺🇸 Consolidado</span></td><td><span class="incb">FOB</span></td><td style="font-size:11px;color:var(--mist)">SZTU-2301920</td><td><span class="pill pb">En tránsito</span></td><td style="color:#92600A;font-weight:500;font-size:11.5px">En 5 días</td><td style="font-weight:600">$11,158</td><td style="font-weight:600;color:var(--tl)">$15,063</td><td><span class="pill pg">Pagado</span></td></tr>
+        <tr><td style="padding-left:12px"><span class="s3 s3y"></span></td><td><strong>PED-2025-019</strong></td><td><span class="ic">🇨🇳 Sino Import</span></td><td><span class="incb">EXW</span></td><td style="font-size:11px;color:var(--mist)">—</td><td><span class="pill pn">En producción</span></td><td style="color:#92600A;font-weight:500;font-size:11.5px">En 6 días</td><td style="color:var(--mist)">Pend.</td><td style="color:var(--mist)">Pend.</td><td><span class="pill py">Señal pagada</span></td></tr>
+        <tr><td style="padding-left:12px"><span class="s3 s3g"></span></td><td><strong>PED-2025-024</strong></td><td><span class="ic">🇺🇸 ProParts USA</span></td><td><span class="incb">CIF</span></td><td style="font-size:11px;color:var(--mist)">—</td><td><span class="pill pgr">Confirmado</span></td><td style="color:var(--mist);font-size:11.5px">En 18 días</td><td style="color:var(--mist)">Pend.</td><td style="color:var(--mist)">Pend.</td><td><span class="pill pgr">Sin pago</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- COSTEO -->
+<div class="scr" id="s-costeo">
+  <div style="font-size:11px;color:var(--mist);margin-bottom:12px">IMP-2025-004 &nbsp;·&nbsp; <span style="color:var(--tl);font-weight:500">PED-026 + PED-027 + PED-028</span> &nbsp;·&nbsp; 🇨🇳 China + 🇺🇸 USA → 🇨🇷 CR</div>
+  <div class="steps">
+    <div class="stn dn"><div class="stb">✓</div><div class="stl">Proveedor</div></div><div class="stw dn"></div>
+    <div class="stn dn"><div class="stb">✓</div><div class="stl">Datos</div></div><div class="stw dn"></div>
+    <div class="stn dn"><div class="stb">✓</div><div class="stl">Líneas</div></div><div class="stw dn"></div>
+    <div class="stn dn"><div class="stb">✓</div><div class="stl">Deadlines</div></div><div class="stw dn"></div>
+    <div class="stn ac"><div class="stb">5</div><div class="stl">Costeo</div></div><div class="stw"></div>
+    <div class="stn"><div class="stb">6</div><div class="stl">Confirmar</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 285px;gap:16px">
+  <div>
+
+  <div class="sc">
+    <div class="sc-hd" onclick="tg(this)">
+      <div class="sc-hl"><div class="sc-ic" style="background:var(--tl-xl)">🏭</div><div><div class="sc-nm">Proveedores y facturas</div><div class="sc-ds">IMP-2025-004 — 3 pedidos consolidados</div></div></div>
+      <div style="display:flex;align-items:center;gap:7px"><span class="tag treq">Requerido</span><span class="chv op">▾</span></div>
+    </div>
+    <div class="sc-bd">
+      <div class="comb">🔗 PED-026 + PED-027 + PED-028 &nbsp;·&nbsp; Unión: 18 jul 2025 · M. Alvarado</div>
+      <div class="pb-bar">
+        <div class="pc sel"><div class="pc-t"><span>🇨🇳</span><div><div class="pc-nm">Shenzhen Tech Co.</div><div class="pc-sb">Shenzhen · FOB · USD</div></div><span class="pc-bg">PED-026</span></div><div class="pc-in"><span style="font-size:10px;color:var(--mist)">Fact:</span><span class="it">SZT-4471</span><span style="font-size:10px;color:var(--mist);margin-left:5px">$4,880</span></div></div>
+        <div class="pc"><div class="pc-t"><span>🇨🇳</span><div><div class="pc-nm">Guangzhou Mach.</div><div class="pc-sb">Guangzhou · FOB · USD</div></div><span class="pc-bg">PED-027</span></div><div class="pc-in"><span class="it itm">GZM-0891</span><span class="it itm" style="margin-left:4px">GZM-0892</span><span style="font-size:10px;color:var(--mist);margin-left:5px">$3,300</span></div></div>
+        <div class="pc"><div class="pc-t"><span>🇺🇸</span><div><div class="pc-nm">ProParts USA</div><div class="pc-sb">Miami · CIF · USD</div></div><span class="pc-bg">PED-028</span></div><div class="pc-in"><span style="font-size:10px;color:var(--mist)">Fact:</span><span class="it">PPU-1144</span><span style="font-size:10px;color:var(--mist);margin-left:5px">$1,880</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sc">
+    <div class="sc-hd" onclick="tg(this)">
+      <div class="sc-hl"><div class="sc-ic" style="background:var(--tl-xl)">📦</div><div><div class="sc-nm">Líneas de producto</div><div class="sc-ds">5 líneas · 3 proveedores</div></div></div>
+      <div style="display:flex;align-items:center;gap:7px"><span class="tag treq">Requerido</span><span class="chv op">▾</span></div>
+    </div>
+    <div class="sc-bd" style="padding-bottom:10px">
+      <div style="overflow-x:auto">
+      <table class="lt" style="min-width:560px">
+        <thead><tr><th>#</th><th style="min-width:160px">Producto</th><th style="width:52px;text-align:center">Cant.</th><th style="width:95px">P.Unit.</th><th style="width:60px">Mon.</th><th style="width:95px;text-align:right">Total USD</th><th style="width:60px;text-align:center">% Peso</th><th style="width:22px"></th></tr></thead>
+        <tbody id="c-lines">
+          <tr class="prov-div"><td colspan="8"><div class="pd-i"><div class="pd-l"></div><div class="pd-t"><span>🇨🇳</span>&nbsp;Shenzhen Tech · PED-026 · SZT-4471</div><div class="pd-l"></div></div></td></tr>
+          <tr><td style="color:var(--mist);text-align:center;font-size:11px">1</td><td><div style="font-weight:500">Motor HX-200</div><div style="font-size:10px;color:var(--mist)">MTR-HX200</div></td><td><input class="lii qty" style="text-align:center" value="5" oninput="rc()"></td><td><div style="position:relative"><span style="position:absolute;left:6px;top:50%;transform:translateY(-50%);font-size:10.5px;color:var(--mist)">$</span><input class="lii price" style="padding-left:16px" value="480" oninput="rc()"></div></td><td><select class="lii" style="font-size:10.5px"><option>USD</option><option>EUR</option></select></td><td class="lc sub">$2,400</td><td style="text-align:center"><span class="pcc hl pd">23.9%</span></td><td><span class="del" onclick="dln(this)">×</span></td></tr>
+          <tr><td style="color:var(--mist);text-align:center;font-size:11px">2</td><td><div style="font-weight:500">Termostato TDX-4</div><div style="font-size:10px;color:var(--mist)">TDX-4</div></td><td><input class="lii qty" style="text-align:center" value="15" oninput="rc()"></td><td><div style="position:relative"><span style="position:absolute;left:6px;top:50%;transform:translateY(-50%);font-size:10.5px;color:var(--mist)">$</span><input class="lii price" style="padding-left:16px" value="48" oninput="rc()"></div></td><td><select class="lii" style="font-size:10.5px"><option>USD</option><option>EUR</option></select></td><td class="lc sub">$720</td><td style="text-align:center"><span class="pcc hl pd">7.2%</span></td><td><span class="del" onclick="dln(this)">×</span></td></tr>
+          <tr><td style="color:var(--mist);text-align:center;font-size:11px">3</td><td><div style="font-weight:500">Evaporador EV-20</div><div style="font-size:10px;color:var(--mist)">EVP-EV20</div></td><td><input class="lii qty" style="text-align:center" value="6" oninput="rc()"></td><td><div style="position:relative"><span style="position:absolute;left:6px;top:50%;transform:translateY(-50%);font-size:10.5px;color:var(--mist)">$</span><input class="lii price" style="padding-left:16px" value="293" oninput="rc()"></div></td><td><select class="lii" style="font-size:10.5px"><option>USD</option><option>EUR</option></select></td><td class="lc sub">$1,758</td><td style="text-align:center"><span class="pcc hl pd">17.5%</span></td><td><span class="del" onclick="dln(this)">×</span></td></tr>
+          <tr class="prov-div"><td colspan="8"><div class="pd-i"><div class="pd-l"></div><div class="pd-t"><span>🇨🇳</span>&nbsp;Guangzhou Mach. · PED-027 · GZM-0891+0892</div><div class="pd-l"></div></div></td></tr>
+          <tr><td style="color:var(--mist);text-align:center;font-size:11px">4</td><td><div style="font-weight:500">Compresor CR-45A</div><div style="font-size:10px;color:var(--am)">⚠ MINAE · CMP-CR45</div></td><td><input class="lii qty" style="text-align:center" value="3" oninput="rc()"></td><td><div style="position:relative"><span style="position:absolute;left:6px;top:50%;transform:translateY(-50%);font-size:10.5px;color:var(--mist)">$</span><input class="lii price" style="padding-left:16px" value="1100" oninput="rc()"></div></td><td><select class="lii" style="font-size:10.5px"><option>USD</option><option>EUR</option></select></td><td class="lc sub">$3,300</td><td style="text-align:center"><span class="pcc hl pd">32.8%</span></td><td><span class="del" onclick="dln(this)">×</span></td></tr>
+          <tr class="prov-div"><td colspan="8"><div class="pd-i"><div class="pd-l"></div><div class="pd-t"><span>🇺🇸</span>&nbsp;ProParts USA · PED-028 · PPU-1144 · CIF</div><div class="pd-l"></div></div></td></tr>
+          <tr><td style="color:var(--mist);text-align:center;font-size:11px">5</td><td><div style="font-weight:500">Banda RT-08</div><div style="font-size:10px;color:var(--mist)">RPT-RT08</div></td><td><input class="lii qty" style="text-align:center" value="20" oninput="rc()"></td><td><div style="position:relative"><span style="position:absolute;left:6px;top:50%;transform:translateY(-50%);font-size:10.5px;color:var(--mist)">$</span><input class="lii price" style="padding-left:16px" value="94" oninput="rc()"></div></td><td><select class="lii" style="font-size:10.5px"><option>USD</option><option>EUR</option></select></td><td class="lc sub">$1,880</td><td style="text-align:center"><span class="pcc hl pd">18.7%</span></td><td><span class="del" onclick="dln(this)">×</span></td></tr>
+        </tbody>
+      </table>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:9px">
+        <div style="background:var(--sur2);border:1px solid var(--border);border-radius:6px;padding:7px 13px;display:flex;align-items:center;gap:11px">
+          <span style="font-size:11px;color:var(--mist)">Total origen</span>
+          <span id="c-tot" style="font-size:14px;font-weight:700;color:var(--ink)">$10,058</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sc">
+    <div class="sc-hd" onclick="tg(this)">
+      <div class="sc-hl"><div class="sc-ic" style="background:#E8F4EE">🚢</div><div><div class="sc-nm">Transporte, aduana e IVA Hacienda</div><div class="sc-ds">Fletes · Aranceles · ISC · IVA ref. D-150</div></div></div>
+      <div style="display:flex;align-items:center;gap:7px"><span class="tag treq">Requerido</span><span class="chv op">▾</span></div>
+    </div>
+    <div class="sc-bd">
+      <div class="fg4 mb14">
+        <div class="fl"><div class="fll">Flete marítimo</div><div class="fw"><span class="fp">$</span><input class="fi fil" id="c-fmar" value="680" oninput="rc()"></div></div>
+        <div class="fl"><div class="fll">Seguro <span class="flo">(opc.)</span></div><div class="fw"><span class="fp">$</span><input class="fi" id="c-seg" value="95" oninput="rc()"></div></div>
+        <div class="fl"><div class="fll">Arancel (%)</div><div class="fw"><input class="fi fil" id="c-aran" value="1" oninput="rc()" style="padding-right:20px"><span class="fs">%</span></div></div>
+        <div class="fl"><div class="fll">Agente <span class="flo">(sin IVA)</span></div><div class="fw"><span class="fp">$</span><input class="fi fil" id="c-age" value="120" oninput="rc()"></div></div>
+      </div>
+      <div class="fg4 mb14">
+        <div class="fl"><div class="fll">Flete CR <span class="flo">(opc.)</span></div><div class="fw"><span class="fp">$</span><input class="fi" id="c-fcr" value="95" oninput="rc()"></div></div>
+        <div class="fl"><div class="fll">ISC <span class="flo">(si aplica)</span></div><div class="fw"><input class="fi" id="c-isc" value="0" oninput="rc()" style="padding-right:20px"><span class="fs">%</span></div></div>
+        <div class="fl"><div class="fll">T/C CRC <span style="font-size:9.5px;color:var(--tl);cursor:pointer">↻ BCCR</span></div><div class="fw"><input class="fi fil" id="c-tc" value="520" oninput="rc()"><span class="fs">₡</span></div></div>
+        <div class="fl"><div class="fll">Otros aduana <span class="flo">(opc.)</span></div><div class="fw"><span class="fp">$</span><input class="fi" id="c-otr" value="0" oninput="rc()"></div></div>
+      </div>
+
+      <!-- COSTOS OPERATIVOS CR -->
+      <div style="font-size:10.5px;font-weight:600;color:var(--slate);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;padding-top:4px;border-top:1px solid var(--border-lt);margin-top:4px">Costos operativos en CR</div>
+      <div class="fg4 mb14">
+        <div class="fl" data-tip="Alquiler o costo proporcional del espacio de bodega donde se almacena la mercadería al llegar a CR">
+          <div class="fll">Bodega / almacenaje <span class="flo">(opc.)</span></div>
+          <div class="fw"><span class="fp">$</span><input class="fi" id="c-bod" value="0" oninput="rc()"></div>
+        </div>
+        <div class="fl">
+          <div class="fll">Período almacenaje</div>
+          <select class="fi" id="c-bod-per" onchange="rc()" style="font-size:12px">
+            <option value="1">Por lote (una vez)</option>
+            <option value="1">1 mes</option>
+            <option value="2">2 meses</option>
+            <option value="3">3 meses</option>
+          </select>
+        </div>
+        <div class="fl" data-tip="Salarios, comisiones, gastos operativos o cualquier otro costo relacionado con esta importación específica">
+          <div class="fll">Otros costos relacionados <span class="flo">(opc.)</span></div>
+          <div class="fw"><span class="fp">$</span><input class="fi" id="c-ocos" value="0" oninput="rc()"></div>
+        </div>
+        <div class="fl">
+          <div class="fll">Descripción <span class="flo">(opc.)</span></div>
+          <input class="fi" id="c-ocos-desc" placeholder="Ej: salarios, empaque, etc." style="font-size:12px">
+        </div>
+      </div>
+      <div style="background:var(--vi-l);border:1px solid rgba(91,79,207,.18);border-radius:7px;padding:9px 13px;margin-bottom:12px;font-size:11.5px;color:var(--slate);line-height:1.5">
+        <strong style="color:var(--vi)">💼 Nota:</strong> Los costos operativos (bodega, salarios, otros) se distribuyen entre las líneas de producto y forman parte del costo unitario en CR.
+      </div>
+      <div class="iva-box">
+        <div class="iva-ti">📊 IVA importación — Referencia D-150 (no va al costo)</div>
+        <div style="font-size:11px;color:var(--slate);line-height:1.5;margin-bottom:8px">El IVA de importación y de servicios se recupera como crédito fiscal en la declaración <strong style="color:var(--gd)">D-150</strong>. No forma parte del costo.</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:11px;color:var(--mist)">IVA referencial (13%):</span>
+          <span id="c-iva-ref" style="font-size:13px;font-weight:700;color:var(--gd)">$1,408</span>
+          <span style="background:#F1F3F6;border:1px solid var(--border);color:var(--mist);font-size:9px;padding:2px 5px;border-radius:3px;font-weight:600">NO VA AL COSTO</span>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:11px">
+        <div style="background:var(--sur2);border:1px solid var(--border);border-radius:6px;padding:7px 13px;display:flex;align-items:center;gap:11px">
+          <span style="font-size:11px;color:var(--mist)">Costo total en CR</span>
+          <span id="c-costoT" style="font-size:15px;font-weight:700;color:var(--ink)">$11,156</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sc">
+    <div class="sc-hd" onclick="tg(this)">
+      <div class="sc-hl"><div class="sc-ic" style="background:var(--gd-l)">💰</div><div><div class="sc-nm">Margen y precio de venta</div><div class="sc-ds">Por línea · IVI · Multimoneda</div></div></div>
+      <div style="display:flex;align-items:center;gap:7px"><span class="tag treq">Requerido</span><span class="chv op">▾</span></div>
+    </div>
+    <div class="sc-bd">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:11px;font-weight:600;color:var(--slate)">Margen global:</span>
+          <div style="position:relative;width:66px"><input class="fi fil" id="c-mg" value="35" oninput="applyMG()" style="padding-right:18px;text-align:center"><span style="position:absolute;right:7px;top:50%;transform:translateY(-50%);font-size:10.5px;color:var(--mist)">%</span></div>
+          <button onclick="applyMG()" style="padding:4px 9px;background:var(--tl-l);border:1.5px solid rgba(31,122,122,.28);border-radius:5px;font-size:11px;font-weight:600;color:var(--tl);cursor:pointer;font-family:Sora,sans-serif">Aplicar</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:11px;font-weight:600;color:var(--slate)">Moneda:</span>
+          <div class="ctg"><button class="cb on" onclick="setCur(this,'usd')">USD</button><button class="cb" onclick="setCur(this,'crc')">CRC ₡</button><button class="cb" onclick="setCur(this,'eur')">EUR €</button></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;background:var(--tl-l);border:1px solid rgba(31,122,122,.18);border-radius:6px;padding:5px 9px;margin-left:auto">
+          <label class="tg"><input type="checkbox" id="c-ivi" onchange="rc()"><span class="tg-sl"></span></label>
+          <div style="font-size:11px;font-weight:600;color:var(--tl)">Ver precios con IVI</div>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="mt">
+          <thead><tr>
+            <th style="text-align:left;min-width:140px">Producto</th>
+            <th>Cant.</th><th>Origen</th><th>Dist.</th>
+            <th style="background:var(--tl-l);color:var(--tl)">Costo CR unit.</th>
+            <th>Margen</th>
+            <th id="mh1" style="background:var(--gd-l);color:var(--gd)">P.Venta unit.</th>
+            <th id="mh2" style="background:var(--gd-l);color:var(--gd)">P.Venta total</th>
+            <th>Utilidad</th>
+          </tr></thead>
+          <tbody id="m-body"></tbody>
+          <tfoot><tr class="mtt">
+            <td colspan="4" style="text-align:right;font-size:10.5px;color:var(--mist)">Totales</td>
+            <td id="m-tc" style="font-weight:600;color:var(--tl)">—</td>
+            <td>—</td>
+            <td id="m-pv" style="font-weight:600;color:var(--gd)">—</td>
+            <td id="m-pvt" style="font-weight:600;color:var(--gd)">—</td>
+            <td id="m-ut" style="font-weight:600;color:var(--sg)">—</td>
+          </tr></tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="sc">
+    <div class="sc-hd" onclick="tg(this)">
+      <div class="sc-hl"><div class="sc-ic" style="background:#F1F3F6">📎</div><div><div class="sc-nm">Documentos adjuntos y notas</div><div class="sc-ds">Facturas · BL · DUA · Permisos</div></div></div>
+      <div style="display:flex;align-items:center;gap:7px"><span class="tag topt">Opcional</span><span class="chv op">▾</span></div>
+    </div>
+    <div class="sc-bd">
+      <div class="dz" onclick="simUp()"><div style="font-size:22px;margin-bottom:5px">☁️</div><div style="font-size:12.5px;font-weight:500;color:var(--slate)">Arrastra o haz clic para cargar</div><div style="font-size:10.5px;color:var(--mist);margin-top:1px">PDF, JPG, PNG, XLSX · Máx. 20 MB</div></div>
+      <div class="dl" id="doc-list">
+        <div class="di"><span style="font-size:17px">📄</span><div class="di-in"><div class="di-nm">SZT-4471_Factura_ShenzhenTech.pdf</div><div class="di-mt">18 jul 2025 · 842 KB · M. Alvarado</div></div><span class="dt dtr">Factura</span><span class="del" onclick="this.closest('.di').remove()" style="margin-left:6px">×</span></div>
+        <div class="di"><span style="font-size:17px">🚢</span><div class="di-in"><div class="di-nm">BL_SZTU2301920_Embarque.pdf</div><div class="di-mt">20 jul 2025 · 320 KB</div></div><span class="dt dtr">Bill of Lading</span><span class="del" onclick="this.closest('.di').remove()" style="margin-left:6px">×</span></div>
+        <div class="di" style="border-color:rgba(163,58,54,.25);background:var(--rs-l)"><span style="font-size:17px">⚠️</span><div class="di-in"><div class="di-nm">Permiso MINAE — PENDIENTE</div><div class="di-mt" style="color:var(--rs)">Requerido antes llegada CR</div></div><span class="dt dtw">Pendiente</span><span class="del" onclick="this.closest('.di').remove()" style="margin-left:6px">×</span></div>
+      </div>
+      <div style="height:1px;background:var(--border-lt);margin:12px 0"></div>
+      <div class="fg3">
+        <div class="fl"><div class="fll">N.º DUA <span class="flo">(al tramitar)</span></div><input class="fi" placeholder="2025-14-00034512"></div>
+        <div class="fl"><div class="fll">T/C Hacienda <span class="flo">(si difirió)</span></div><div class="fw"><input class="fi" placeholder="520.00"><span class="fs">₡</span></div></div>
+        <div class="fl"><div class="fll">Referencia interna <span class="flo">(opc.)</span></div><input class="fi" placeholder="OP-2025-089"></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;justify-content:flex-end;gap:8px;padding-top:4px">
+    <button class="btn btn-o">Guardar borrador</button>
+    <button class="btn btn-t">Confirmar costeo →</button>
+  </div>
+
+  </div><!-- /left col costeo -->
+
+  <div style="position:sticky;top:0;align-self:start">
+    <div class="rp mb14">
+      <div class="rp-hd">
+        <div><div class="rp-ti">Resumen costeo</div><div class="rp-su">IMP-2025-004 · PED-026+027+028</div></div>
+        <span style="font-size:9.5px;color:rgba(255,255,255,.28)">🇨🇳🇺🇸→🇨🇷</span>
+      </div>
+      <div class="rp-bd">
+        <div class="cl"><span class="cll">Costo origen</span><span class="clv" id="r-or">$10,058</span></div>
+        <div class="cl"><span class="cll">Flete marítimo</span><span class="clv" id="r-fm">$680</span></div>
+        <div class="cl"><span class="cll">Seguro</span><span class="clv" id="r-sg">$95</span></div>
+        <div class="cl cifr"><span class="cll">Valor CIF</span><span class="clv" id="r-cif">$10,833</span></div>
+        <div class="cl"><span class="cll">Arancel aduana</span><span class="clv" id="r-ar">$108</span></div>
+        <div class="cl"><span class="cll">Agente + gastos</span><span class="clv" id="r-ag">$120</span></div>
+        <div class="cl"><span class="cll">Flete CR</span><span class="clv" id="r-fc">$95</span></div>
+        <div class="cl"><span class="cll">Bodega / almacenaje</span><span class="clv" id="r-bod">$0</span></div>
+        <div class="cl"><span class="cll">Otros costos oper.</span><span class="clv" id="r-ocos">$0</span></div>
+        <div class="cl totr"><span class="cll">Costo total CR</span><span class="clv" id="r-tot">$11,156</span></div>
+        <div class="cl ivar" style="padding-top:3px"><span class="cll">IVA ref. D-150</span><span class="clv" id="r-iva">$1,408</span></div>
+        <div class="pb">
+          <div class="pb-l" id="r-plbl">Precio venta total (35%)</div>
+          <div class="pb-v" id="r-pval">$15,061</div>
+          <div class="pb-s" id="r-pun">49 unidades</div>
+          <div class="pb-c" id="r-pch">Utilidad ≈ $3,905</div>
+        </div>
+      </div>
+    </div>
+    <div class="card mb14">
+      <div class="c-bd" style="padding:10px 13px">
+        <div class="wi"><div class="wd wr"></div><div class="wt"><strong>Permiso MINAE</strong> — Compresor CR-45A pendiente</div></div>
+        <div class="wi"><div class="wd wo"></div><div class="wt"><strong>Saldo proveedor</strong> — $7,042 antes embarque</div></div>
+        <div class="wi"><div class="wd wg"></div><div class="wt"><strong>T/C BCCR</strong> actualizado hoy ₡519.80</div></div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <button class="btn btn-o btn-sm" style="justify-content:center">📄 Exportar PDF</button>
+      <button class="btn btn-o btn-sm" style="justify-content:center">📤 A Facturación</button>
+    </div>
+  </div>
+
+  </div><!-- /grid costeo -->
+</div><!-- /s-costeo -->
+
+<!-- REPORTES -->
+<div class="scr" id="s-reportes">
+  <div class="rtabs">
+    <div class="rtab on" onclick="showR('r1',this)">📊 R-07 Costo vs Venta</div>
+    <div class="rtab" onclick="showR('r2',this)">📦 R-09 Contenedores</div>
+    <div class="rtab" onclick="showR('r3',this)">💳 R-08 Pagos Proveedores</div>
+    <div class="rtab" onclick="showR('r4',this)">🔍 Reporte Dinámico</div>
+  </div>
+
+  <!-- R1: COSTO VS VENTA -->
+  <div class="rs on" id="r1">
+    <div class="rf">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-family:Lora,serif;font-size:15px;color:var(--ink)">R-07 — Análisis Costo vs Precio de Venta</div>
+        <div style="display:flex;gap:6px"><button class="eb">📊 Excel</button><button class="eb">📄 PDF</button></div>
+      </div>
+      <div class="rff">
+        <div class="rfg"><div class="rfl">Periodo</div><select class="rfi"><option>Ene–Jul 2025</option><option>Q1 2025</option><option>Q2 2025</option></select></div>
+        <div class="rfg"><div class="rfl">Proveedor</div><select class="rfi"><option>Todos</option><option>Shenzhen Tech</option><option>Guangzhou</option></select></div>
+        <div class="rfg"><div class="rfl">Producto</div><select class="rfi"><option>Todos</option><option>Motores</option><option>Compresores</option></select></div>
+        <div class="rfg"><div class="rfl">Moneda</div><select class="rfi"><option>USD</option><option>CRC ₡</option><option>EUR €</option></select></div>
+        <button class="btn btn-t btn-sm" style="margin-top:17px">Generar</button>
+      </div>
+    </div>
+    <div class="ss">
+      <div class="sb2"><div class="sv" style="color:var(--ink)">$142,650</div><div class="sl">Costo total CR</div></div>
+      <div class="sb2"><div class="sv" style="color:var(--tl)">$198,240</div><div class="sl">Precio venta total</div></div>
+      <div class="sb2"><div class="sv" style="color:var(--sg)">+38.9%</div><div class="sl">Margen promedio</div></div>
+      <div class="sb2"><div class="sv" style="color:var(--gd)">$55,590</div><div class="sl">Utilidad bruta</div></div>
+      <div class="sb2"><div class="sv">47</div><div class="sl">Líneas analizadas</div></div>
+    </div>
+    <div class="g23">
+      <div class="card">
+        <div class="c-hd"><div class="c-ti">Detalle por producto</div><span style="font-size:11px;color:var(--mist)">47 líneas · pág 1/8</span></div>
+        <table class="tbl">
+          <thead><tr><th>Producto</th><th>Pedido</th><th>Costo unit. CR</th><th>P.Venta unit.</th><th>Margen</th><th>Utilidad total</th></tr></thead>
+          <tbody>
+            <tr><td><div style="font-weight:500">Motor HX-200</div><div style="font-size:10.5px;color:var(--mist)">×5 uds</div></td><td><span class="ic">PED-018</span></td><td>$595</td><td style="font-weight:600">$804</td><td><span class="pill pg">+35%</span></td><td style="color:var(--sg);font-weight:600">$1,045</td></tr>
+            <tr><td><div style="font-weight:500">Compresor CR-45A</div><div style="font-size:10.5px;color:var(--am)">×3 ⚠ MINAE</div></td><td><span class="ic">IMP-004</span></td><td>$1,366</td><td style="font-weight:600">$1,844</td><td><span class="pill pg">+35%</span></td><td style="color:var(--sg);font-weight:600">$1,434</td></tr>
+            <tr><td><div style="font-weight:500">Banda RT-08</div><div style="font-size:10.5px;color:var(--mist)">×20 uds</div></td><td><span class="ic">IMP-004</span></td><td>$108</td><td style="font-weight:600">$146</td><td><span class="pill pg">+35%</span></td><td style="color:var(--sg);font-weight:600">$760</td></tr>
+            <tr><td><div style="font-weight:500">Granizadora GR-500</div><div style="font-size:10.5px;color:var(--mist)">×2 uds</div></td><td><span class="ic">PED-015</span></td><td>$3,640</td><td style="font-weight:600">$5,200</td><td><span class="pill pg">+43%</span></td><td style="color:var(--sg);font-weight:600">$3,120</td></tr>
+            <tr><td><div style="font-weight:500">Evaporador EV-20</div><div style="font-size:10.5px;color:var(--mist)">×6 uds</div></td><td><span class="ic">IMP-004</span></td><td>$219</td><td style="font-weight:600">$280</td><td><span class="pill py">+28%</span></td><td style="color:var(--sg);font-weight:600">$366</td></tr>
+            <tr><td><div style="font-weight:500">Termostato TDX-4</div><div style="font-size:10.5px;color:var(--mist)">×15 uds</div></td><td><span class="ic">IMP-004</span></td><td>$48</td><td style="font-weight:600">$95</td><td><span class="pill pg">+97%</span></td><td style="color:var(--sg);font-weight:600">$705</td></tr>
+          </tbody>
+        </table>
+        <div style="display:flex;align-items:center;justify-content:center;gap:7px;padding:9px;border-top:1px solid var(--border-lt)">
+          <button class="btn btn-o btn-sm">‹ Ant.</button><span style="font-size:11px;color:var(--mist)">1 de 8</span><button class="btn btn-o btn-sm">Sig. ›</button>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="card">
+          <div class="c-hd"><div class="c-ti">Por proveedor</div></div>
+          <div class="c-bd"><div style="display:flex;align-items:center;gap:14px"><div class="donut"></div><div class="leg"><div class="li"><div class="ld" style="background:var(--tl)"></div>Shenzhen <strong>42%</strong></div><div class="li"><div class="ld" style="background:var(--gd)"></div>Guangzhou <strong>24%</strong></div><div class="li"><div class="ld" style="background:var(--sg)"></div>BestMach <strong>15%</strong></div><div class="li"><div class="ld" style="background:var(--slate)"></div>Otros <strong>19%</strong></div></div></div></div>
+        </div>
+        <div class="card">
+          <div class="c-hd"><div class="c-ti">Margen mensual</div></div>
+          <div class="c-bd">
+            <div class="bars" style="height:56px"><div class="bar" style="height:58%"></div><div class="bar" style="height:72%"></div><div class="bar" style="height:55%"></div><div class="bar" style="height:80%"></div><div class="bar" style="height:65%"></div><div class="bar on" style="height:90%"></div><div class="bar on" style="height:94%"></div></div>
+            <div class="bls"><div class="bl">E</div><div class="bl">F</div><div class="bl">M</div><div class="bl">A</div><div class="bl">M</div><div class="bl">J</div><div class="bl">J</div></div>
+            <div style="background:var(--sg-l);border-radius:5px;padding:7px 10px;display:flex;justify-content:space-between;align-items:center;margin-top:8px"><span style="font-size:11px;color:var(--sg)">Tendencia</span><span style="font-size:12.5px;font-weight:700;color:var(--sg)">↑ +8.4%</span></div>
+          </div>
+        </div>
+        <div class="card" style="border-color:rgba(217,119,6,.2)">
+          <div class="c-hd" style="background:#FFFBF3"><div class="c-ti" style="color:var(--am)">⚠ Márgenes bajos</div></div>
+          <div class="c-bd">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border-lt)"><div><div style="font-weight:500;font-size:12px">Evaporador EV-20</div><div style="font-size:10px;color:var(--mist)">PED-2025-014</div></div><span class="pill pr">28%</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0"><div><div style="font-weight:500;font-size:12px">Banda RT-08</div><div style="font-size:10px;color:var(--mist)">IMP-2025-004</div></div><span class="pill py">34%</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- R2: CONTENEDORES -->
+  <div class="rs" id="r2">
+    <div class="rf">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-family:Lora,serif;font-size:15px;color:var(--ink)">R-09 — Contenedores Activos en Tránsito</div>
+        <div style="display:flex;gap:6px"><button class="eb">📊 Excel</button><button class="eb">📄 PDF</button></div>
+      </div>
+      <div class="rff">
+        <div class="rfg"><div class="rfl">Estado</div><select class="rfi"><option>Todos</option><option>En tránsito</option><option>En puerto</option><option>En aduana</option></select></div>
+        <div class="rfg"><div class="rfl">Naviera</div><select class="rfi"><option>Todas</option><option>COSCO</option><option>MSC</option><option>Maersk</option></select></div>
+        <div class="rfg"><div class="rfl">Puerto destino</div><select class="rfi"><option>Todos</option><option>Limón</option><option>Puntarenas</option></select></div>
+        <button class="btn btn-t btn-sm" style="margin-top:17px">Generar</button>
+      </div>
+    </div>
+    <div class="ss">
+      <div class="sb2"><div class="sv" style="color:var(--tl)">8</div><div class="sl">Contenedores activos</div></div>
+      <div class="sb2"><div class="sv" style="color:var(--sg)">3</div><div class="sl">En tránsito</div></div>
+      <div class="sb2"><div class="sv" style="color:var(--am)">2</div><div class="sl">En puerto CR</div></div>
+      <div class="sb2"><div class="sv" style="color:var(--rs)">1</div><div class="sl">Alerta aduana</div></div>
+      <div class="sb2"><div class="sv">$184k</div><div class="sl">Valor embarcado</div></div>
+    </div>
+    <div class="card mb14">
+      <div class="c-hd"><div class="c-ti">📦 Detalle de contenedores</div><span style="font-size:11px;color:var(--mist)">8 contenedores</span></div>
+      <table class="tbl">
+        <thead><tr><th></th><th>Contenedor</th><th>Pedido(s)</th><th>Proveedor / Naviera</th><th>P. Origen</th><th>Salida</th><th>ETA CR</th><th>Días rest.</th><th>Puerto CR</th><th>Estado</th><th>Valor CIF</th></tr></thead>
+        <tbody>
+          <tr><td style="padding-left:11px"><span class="s3 s3r"></span></td><td><strong>GZHU-4412301</strong></td><td><span class="ic">PED-021</span></td><td>Guangzhou · COSCO</td><td>Guangzhou</td><td>28 jun</td><td style="font-weight:500;color:var(--rs)">HOY</td><td style="color:var(--rs);font-weight:600">0</td><td>Limón</td><td><span class="pill py">En aduana ⚠</span></td><td style="font-weight:600">$12,240</td></tr>
+          <tr><td style="padding-left:11px"><span class="s3 s3y"></span></td><td><strong>SZTU-2301845</strong></td><td><span class="ic">PED-018</span></td><td>Shenzhen · MSC</td><td>Shanghai</td><td>02 jul</td><td>28 jul</td><td style="color:#92600A;font-weight:600">5</td><td>Limón</td><td><span class="pill pb">En tránsito</span></td><td style="font-weight:600">$10,833</td></tr>
+          <tr><td style="padding-left:11px"><span class="s3 s3y"></span></td><td><strong>SZTU-2301920</strong></td><td><span class="ic">IMP-004</span></td><td>Shanghai · Maersk</td><td>Shanghai</td><td>05 jul</td><td>09 ago</td><td style="color:#92600A;font-weight:600">12</td><td>Limón</td><td><span class="pill pb">En tránsito</span></td><td style="font-weight:600">$11,158</td></tr>
+          <tr><td style="padding-left:11px"><span class="s3 s3g"></span></td><td><strong>MSCU-1187342</strong></td><td><span class="ic">PED-019</span></td><td>Guangzhou · MSC</td><td>Guangzhou</td><td>12 ago</td><td>18 sep</td><td style="color:var(--mist)">—</td><td>Limón</td><td><span class="pill pn">Pre-embarque</span></td><td style="color:var(--mist)">Pend.</td></tr>
+          <tr><td style="padding-left:11px"><span class="s3 s3g"></span></td><td><strong>PPUS-0044123</strong></td><td><span class="ic">PED-024</span></td><td>Miami · Hamburg Süd</td><td>Miami</td><td>25 ago</td><td>15 sep</td><td style="color:var(--mist)">—</td><td>Puntarenas</td><td><span class="pill pgr">Confirmado</span></td><td style="color:var(--mist)">Pend.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="g2">
+      <div class="card">
+        <div class="c-hd"><div class="c-ti">Rutas activas</div></div>
+        <div class="c-bd" style="display:flex;flex-direction:column;gap:9px">
+          <div style="display:flex;align-items:center;gap:9px"><span style="font-size:11.5px;width:195px">🇨🇳 China → 🇨🇷 Limón</span><div class="pt"><div class="pf" style="width:70%;background:var(--tl)"></div></div><span style="font-size:12px;font-weight:600;color:var(--tl)">6</span></div>
+          <div style="display:flex;align-items:center;gap:9px"><span style="font-size:11.5px;width:195px">🇺🇸 USA → 🇨🇷 Puntarenas</span><div class="pt"><div class="pf" style="width:25%;background:var(--gd)"></div></div><span style="font-size:12px;font-weight:600;color:var(--gd)">2</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="c-hd"><div class="c-ti">Valor por naviera</div></div>
+        <div class="c-bd" style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;align-items:center;gap:9px"><span style="font-size:11.5px;width:110px">MSC</span><div class="pt"><div class="pf" style="width:55%;background:var(--tl)"></div></div><span style="font-size:12px;font-weight:600;color:var(--tl)">$58k</span></div>
+          <div style="display:flex;align-items:center;gap:9px"><span style="font-size:11.5px;width:110px">Maersk</span><div class="pt"><div class="pf" style="width:35%;background:var(--gd)"></div></div><span style="font-size:12px;font-weight:600;color:var(--gd)">$38k</span></div>
+          <div style="display:flex;align-items:center;gap:9px"><span style="font-size:11.5px;width:110px">COSCO</span><div class="pt"><div class="pf" style="width:22%;background:var(--vi)"></div></div><span style="font-size:12px;font-weight:600;color:var(--vi)">$24k</span></div>
+          <div style="display:flex;align-items:center;gap:9px"><span style="font-size:11.5px;width:110px">Hamburg Süd</span><div class="pt"><div class="pf" style="width:12%;background:var(--mist)"></div></div><span style="font-size:12px;font-weight:600;color:var(--mist)">$13k</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- R3: PAGOS PROVEEDORES -->
+  <div class="rs" id="r3">
+    <div class="rf">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-family:Lora,serif;font-size:15px;color:var(--ink)">R-08 — Estado de Pagos a Proveedores</div>
+        <div style="display:flex;gap:6px"><button class="eb">📊 Excel</button><button class="eb">📄 PDF</button></div>
+      </div>
+      <div class="rff">
+        <div class="rfg"><div class="rfl">Estado pago</div><select class="rfi"><option>Todos</option><option>Señal pagada</option><option>Saldo pend.</option><option>Pago total</option></select></div>
+        <div class="rfg"><div class="rfl">Proveedor</div><select class="rfi"><option>Todos</option><option>Shenzhen Tech</option><option>Guangzhou</option></select></div>
+        <div class="rfg"><div class="rfl">Periodo</div><select class="rfi"><option>Jul 2025</option><option>Ene–Jul 2025</option></select></div>
+        <div class="rfg"><div class="rfl">Vencimiento</div><select class="rfi"><option>Todos</option><option>Vencidos</option><option>Próx. 7 días</option></select></div>
+        <button class="btn btn-t btn-sm" style="margin-top:17px">Generar</button>
+      </div>
+    </div>
+    <div class="ss">
+      <div class="sb2"><div class="sv" style="color:var(--rs)">$46,280</div><div class="sl">Saldo pendiente</div></div>
+      <div class="sb2"><div class="sv" style="color:var(--am)">$18,340</div><div class="sl">Señales pagadas</div></div>
+      <div class="sb2"><div class="sv" style="color:var(--sg)">$92,600</div><div class="sl">Pagado completo</div></div>
+      <div class="sb2"><div class="sv" style="color:var(--rs)">3</div><div class="sl">Vencen en 7 días</div></div>
+      <div class="sb2"><div class="sv">$157k</div><div class="sl">Total comprometido</div></div>
+    </div>
+    <div class="g23">
+      <div class="card">
+        <div class="c-hd"><div class="c-ti">Pagos por pedido</div></div>
+        <table class="tbl">
+          <thead><tr><th></th><th>Pedido</th><th>Proveedor</th><th>Total pedido</th><th>Señal pagada</th><th>Saldo pendiente</th><th>Fecha límite</th><th>Estado</th></tr></thead>
+          <tbody>
+            <tr><td style="padding-left:11px"><span class="s3 s3r"></span></td><td><strong>PED-2025-018</strong></td><td>Shenzhen Tech</td><td style="font-weight:600">$11,682</td><td style="color:var(--sg)">$3,505 (30%)</td><td style="color:var(--rs);font-weight:600">$8,177</td><td style="color:var(--rs);font-weight:500">HOY</td><td><span class="pill py">Señal pagada</span></td></tr>
+            <tr><td style="padding-left:11px"><span class="s3 s3y"></span></td><td><strong>IMP-2025-004</strong></td><td>3 proveedores</td><td style="font-weight:600">$15,063</td><td style="color:var(--sg)">$4,519 (30%)</td><td style="color:var(--am);font-weight:600">$10,544</td><td style="color:#92600A;font-weight:500">En 3 días</td><td><span class="pill py">Señal pagada</span></td></tr>
+            <tr><td style="padding-left:11px"><span class="s3 s3y"></span></td><td><strong>PED-2025-019</strong></td><td>Sino Import</td><td style="font-weight:600">$8,440</td><td style="color:var(--sg)">$2,532 (30%)</td><td style="color:var(--am);font-weight:600">$5,908</td><td style="color:#92600A;font-weight:500">En 6 días</td><td><span class="pill py">Señal pagada</span></td></tr>
+            <tr><td style="padding-left:11px"><span class="s3 s3g"></span></td><td><strong>PED-2025-024</strong></td><td>ProParts USA</td><td style="font-weight:600">$9,240</td><td style="color:var(--mist)">—</td><td style="color:var(--mist)">$9,240</td><td style="color:var(--mist)">Sin definir</td><td><span class="pill pgr">Sin pago</span></td></tr>
+            <tr><td style="padding-left:11px"><span class="s3 s3g"></span></td><td><strong>PED-2025-021</strong></td><td>Guangzhou Mach.</td><td style="font-weight:600">$16,524</td><td style="color:var(--sg)">$4,957</td><td style="color:var(--sg)">$0</td><td style="color:var(--sg)">✓ Completado</td><td><span class="pill pg">Pago total</span></td></tr>
+          </tbody>
+          <tr class="tbl-tot"><td colspan="2" style="padding:9px 11px;font-size:11px;color:var(--mist)">TOTALES</td><td style="padding:9px 11px;font-weight:700">$60,949</td><td style="padding:9px 11px;color:var(--sg);font-weight:700">$15,513</td><td style="padding:9px 11px;color:var(--rs);font-weight:700">$33,869</td><td colspan="2"></td></tr>
+        </table>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="card">
+          <div class="c-hd"><div class="c-ti">Estado de pagos</div></div>
+          <div class="c-bd" style="display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;align-items:center;gap:9px"><span style="font-size:11.5px;width:110px">Pago total</span><div class="pt"><div class="pf" style="width:58%;background:var(--sg)"></div></div><span style="font-size:12px;font-weight:600;color:var(--sg)">$92k</span></div>
+            <div style="display:flex;align-items:center;gap:9px"><span style="font-size:11.5px;width:110px">Señal pagada</span><div class="pt"><div class="pf" style="width:22%;background:var(--am)"></div></div><span style="font-size:12px;font-weight:600;color:var(--am)">$35k</span></div>
+            <div style="display:flex;align-items:center;gap:9px"><span style="font-size:11.5px;width:110px">Sin pago</span><div class="pt"><div class="pf" style="width:18%;background:var(--mist)"></div></div><span style="font-size:12px;font-weight:600;color:var(--mist)">$29k</span></div>
+          </div>
+        </div>
+        <div class="card" style="border-color:rgba(163,58,54,.2)">
+          <div class="c-hd" style="background:var(--rs-l)"><div class="c-ti" style="color:var(--rs)">🚨 Vencimientos próximos</div></div>
+          <div class="c-bd">
+            <div class="wi"><div class="wd wr"></div><div class="wt"><strong>PED-018</strong> — $8,177 vence HOY. Shenzhen Tech.</div></div>
+            <div class="wi"><div class="wd wo"></div><div class="wt"><strong>IMP-004</strong> — $10,544 vence en 3 días.</div></div>
+            <div class="wi"><div class="wd wo"></div><div class="wt"><strong>PED-019</strong> — $5,908 vence en 6 días.</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- R4: DINÁMICO -->
+  <div class="rs" id="r4">
+    <div class="rf">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-family:Lora,serif;font-size:15px;color:var(--ink)">Reporte Dinámico — Configuración libre</div>
+        <div style="display:flex;gap:6px"><button class="eb">💾 Guardar</button><button class="eb">📊 Excel</button><button class="eb">📄 PDF</button></div>
+      </div>
+      <div class="rff" style="margin-bottom:10px">
+        <div class="rfg" style="min-width:160px"><div class="rfl">Entidad base</div><select class="rfi"><option>Pedidos</option><option>Líneas de producto</option><option>Costos</option><option>Proveedores</option></select></div>
+        <div class="rfg"><div class="rfl">Periodo</div><select class="rfi"><option>Ene–Jul 2025</option></select></div>
+        <div class="rfg"><div class="rfl">Proveedor</div><select class="rfi"><option>Todos</option></select></div>
+        <div class="rfg"><div class="rfl">Estado</div><select class="rfi"><option>Todos</option><option>Activos</option><option>Cerrados</option></select></div>
+        <button class="btn btn-t btn-sm" style="margin-top:17px">Generar</button>
+      </div>
+      <div style="font-size:11px;color:var(--slate);margin-bottom:7px;font-weight:600;text-transform:uppercase;letter-spacing:.05em">Columnas:</div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap">
+        <span style="background:var(--tl-l);border:1px solid rgba(31,122,122,.22);color:var(--tl);font-size:11px;font-weight:500;padding:3px 8px;border-radius:4px;display:flex;align-items:center;gap:4px">N.° pedido <span style="cursor:pointer;opacity:.5">×</span></span>
+        <span style="background:var(--tl-l);border:1px solid rgba(31,122,122,.22);color:var(--tl);font-size:11px;font-weight:500;padding:3px 8px;border-radius:4px;display:flex;align-items:center;gap:4px">Proveedor <span style="cursor:pointer;opacity:.5">×</span></span>
+        <span style="background:var(--tl-l);border:1px solid rgba(31,122,122,.22);color:var(--tl);font-size:11px;font-weight:500;padding:3px 8px;border-radius:4px;display:flex;align-items:center;gap:4px">Costo total CR <span style="cursor:pointer;opacity:.5">×</span></span>
+        <span style="background:var(--tl-l);border:1px solid rgba(31,122,122,.22);color:var(--tl);font-size:11px;font-weight:500;padding:3px 8px;border-radius:4px;display:flex;align-items:center;gap:4px">Precio venta <span style="cursor:pointer;opacity:.5">×</span></span>
+        <span style="background:var(--tl-l);border:1px solid rgba(31,122,122,.22);color:var(--tl);font-size:11px;font-weight:500;padding:3px 8px;border-radius:4px;display:flex;align-items:center;gap:4px">Margen % <span style="cursor:pointer;opacity:.5">×</span></span>
+        <span style="background:var(--sur2);border:1px dashed var(--border);color:var(--mist);font-size:11px;font-weight:500;padding:3px 8px;border-radius:4px;cursor:pointer">＋ Agregar columna</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="c-hd"><div class="c-ti">Resultado</div><span style="font-size:11px;color:var(--mist)">24 registros</span></div>
+      <table class="tbl">
+        <thead><tr><th>N.° Pedido</th><th>Proveedor</th><th>País</th><th>Costo total CR</th><th>Precio venta</th><th>Margen %</th><th>Utilidad bruta</th></tr></thead>
+        <tbody>
+          <tr><td><strong>PED-2025-018</strong></td><td>Shenzhen Tech</td><td>🇨🇳 China</td><td style="font-weight:600">$8,653</td><td style="font-weight:600;color:var(--tl)">$11,682</td><td><span class="pill pg">+35%</span></td><td style="color:var(--sg);font-weight:600">$3,029</td></tr>
+          <tr><td><strong>IMP-2025-004</strong></td><td>Consolidado ×3</td><td>🇨🇳🇺🇸</td><td style="font-weight:600">$11,158</td><td style="font-weight:600;color:var(--tl)">$15,063</td><td><span class="pill pg">+35%</span></td><td style="color:var(--sg);font-weight:600">$3,905</td></tr>
+          <tr><td><strong>PED-2025-021</strong></td><td>Guangzhou Mach.</td><td>🇨🇳 China</td><td style="font-weight:600">$12,240</td><td style="font-weight:600;color:var(--tl)">$16,524</td><td><span class="pill pg">+35%</span></td><td style="color:var(--sg);font-weight:600">$4,284</td></tr>
+          <tr><td><strong>PED-2025-015</strong></td><td>BestMach Ltd.</td><td>🇨🇳 China</td><td style="font-weight:600">$7,280</td><td style="font-weight:600;color:var(--tl)">$10,400</td><td><span class="pill pg">+43%</span></td><td style="color:var(--sg);font-weight:600">$3,120</td></tr>
+          <tr><td><strong>PED-2025-014</strong></td><td>ProParts USA</td><td>🇺🇸 USA</td><td style="font-weight:600">$6,120</td><td style="font-weight:600;color:var(--tl)">$7,833</td><td><span class="pill py">+28%</span></td><td style="color:var(--sg);font-weight:600">$1,713</td></tr>
+          <tr class="tbl-tot"><td colspan="3" style="padding:9px 11px;text-align:right;font-size:11px;color:var(--mist)">TOTALES (5 visibles)</td><td style="padding:9px 11px;font-weight:700">$45,451</td><td style="padding:9px 11px;font-weight:700;color:var(--tl)">$61,502</td><td style="padding:9px 11px">—</td><td style="padding:9px 11px;font-weight:700;color:var(--sg)">$16,051</td></tr>
+        </tbody>
+      </table>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 13px;border-top:1px solid var(--border-lt)">
+        <span style="font-size:11px;color:var(--mist)">Mostrando 5 de 24</span>
+        <div style="display:flex;gap:5px"><button class="btn btn-o btn-sm">‹</button><button class="btn btn-o btn-sm">›</button></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /s-reportes -->
+
+<!-- PLACEHOLDERS -->
+<div class="scr" id="s-seguimiento"><div class="card"><div class="c-hd"><div class="c-ti">◷ Seguimiento Logístico y Deadlines</div></div><div class="c-bd" style="padding:36px;text-align:center;color:var(--mist)">Semáforo de hitos por pedido, deadlines configurables y alertas automáticas por correo.</div></div></div>
+<div class="scr" id="s-aduana"><div class="card"><div class="c-hd"><div class="c-ti">🏛 Trámite Aduanero</div></div><div class="c-bd" style="padding:36px;text-align:center;color:var(--mist)">Registro de DUA, almacén fiscal, permisos especiales MINAE · SENASA · MINSA · SUTEL.</div></div></div>
+<div class="scr" id="s-pagos"><div class="card"><div class="c-hd"><div class="c-ti">💳 Pagos a Proveedores</div></div><div class="c-bd" style="padding:36px;text-align:center;color:var(--mist)">Control de señales, saldos y fechas límite. Registro de transferencias y comprobantes.</div></div></div>
+<div class="scr" id="s-prov"><div class="card"><div class="c-hd"><div class="c-ti">Maestro de Proveedores</div></div><div class="c-bd" style="padding:36px;text-align:center;color:var(--mist)">Catálogo con tiempos de tránsito, puertos, Incoterms y condiciones de pago por proveedor.</div></div></div>
+<div class="scr" id="s-prod"><div class="card"><div class="c-hd"><div class="c-ti">Catálogo de Productos</div></div><div class="c-bd" style="padding:36px;text-align:center;color:var(--mist)">SKUs, pesos, impuestos especiales, código arancelario y precios base de referencia.</div></div></div>
+<div class="scr" id="s-cli"><div class="card"><div class="c-hd"><div class="c-ti">Maestro de Clientes</div></div><div class="c-bd" style="padding:36px;text-align:center;color:var(--mist)">Clientes con condiciones comerciales, moneda de facturación y historial de pedidos.</div></div></div>
+<div class="scr" id="s-norm"><div class="card"><div class="c-hd"><div class="c-ti">📋 Normativa de Importaciones CR</div></div><div class="c-bd" style="padding:36px;text-align:center;color:var(--mist)">Documentos requeridos por tipo de carga con enlaces directos a TICA, SENASA, MINAE, MINSA.</div></div></div>
+<div class="scr" id="s-usr"><div class="card"><div class="c-hd"><div class="c-ti">◎ Gestión de Usuarios y Roles</div></div><div class="c-bd" style="padding:36px;text-align:center;color:var(--mist)">Roles: Administrador · Operador Senior · Operador · Finanzas · Solo consultas.</div></div></div>
+<div class="scr" id="s-audit"><div class="card"><div class="c-hd"><div class="c-ti">◎ Historial de Auditoría</div></div><div class="c-bd" style="padding:36px;text-align:center;color:var(--mist)">Registro inmutable: usuario, fecha, campo modificado, valor anterior y nuevo.</div></div></div>
+
+<script>
+// ── DATA
+const LDATA=[
+  {name:'Motor HX-200',    sku:'MTR-HX200', qty:5,  price:480},
+  {name:'Termostato TDX-4',sku:'TDX-4',     qty:15, price:48},
+  {name:'Evaporador EV-20',sku:'EVP-EV20',  qty:6,  price:293},
+  {name:'Compresor CR-45A',sku:'CMP-CR45',  qty:3,  price:1100},
+  {name:'Banda RT-08',     sku:'RPT-RT08',  qty:20, price:94}
+];
+let lineMargins=[35,35,35,35,35];
+let curMode='usd';
+
+// ── NAV
+const TITLES={
+  dashboard:['Dashboard','Inicio'],pedidos:['Pedidos','Operaciones'],
+  costeo:['Módulo de Costeo','Operaciones › Costeo'],
+  seguimiento:['Seguimiento','Operaciones'],aduana:['Aduana CR','Operaciones'],
+  pagos:['Pagos Proveedores','Operaciones'],prov:['Proveedores','Catálogos'],
+  prod:['Productos','Catálogos'],cli:['Clientes','Catálogos'],
+  reportes:['Reportes','Análisis'],norm:['Normativa CR','Análisis'],
+  usr:['Usuarios','Admin'],audit:['Auditoría','Admin']
+};
+function nav(id,el){
+  document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));
+  const scr=document.getElementById('s-'+id);
+  if(scr) scr.classList.add('on');
+  document.querySelectorAll('.sb-it').forEach(i=>i.classList.remove('on'));
+  if(el) el.classList.add('on');
+  else document.querySelectorAll('.sb-it').forEach(i=>{if(i.textContent.toLowerCase().includes(id.substring(0,5))) i.classList.add('on')});
+  const t=TITLES[id]||[id,''];
+  document.getElementById('tbt').textContent=t[0];
+  document.getElementById('tbb').innerHTML=t[1]+' &rsaquo; <b>'+t[0]+'</b>';
+  if(id==='costeo'){buildMargTable();rc();}
+}
+
+// ── SECTION TOGGLE
+function tg(hd){
+  const bd=hd.nextElementSibling;
+  bd.classList.toggle('hid');
+  hd.querySelector('.chv').classList.toggle('op');
+}
+
+// ── REPORT TABS
+function showR(id,el){
+  document.querySelectorAll('.rs').forEach(r=>r.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  document.querySelectorAll('.rtab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+}
+
+// ── CURRENCY
+function setCur(btn,mode){
+  document.querySelectorAll('.cb').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on'); curMode=mode; rc();
+}
+
+// ── GLOBAL MARGIN
+function applyMG(){
+  const g=parseFloat(document.getElementById('c-mg').value)||35;
+  lineMargins=lineMargins.map(()=>g);
+  document.querySelectorAll('.mni').forEach((inp,i)=>{inp.value=g.toFixed(1);});
+  rc();
+}
+
+// ── BUILD MARGIN TABLE
+function buildMargTable(){
+  const tb=document.getElementById('m-body');
+  if(!tb) return;
+  tb.innerHTML='';
+  LDATA.forEach((ln,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td><div style="font-weight:500;font-size:12px">${ln.name}</div><div style="font-size:10px;color:var(--mist)">${ln.sku}</div></td>
+      <td style="text-align:center;color:var(--mist)">${ln.qty}</td>
+      <td class="co-${i}">—</td>
+      <td class="cd-${i}" style="color:var(--mist)">—</td>
+      <td class="cu-${i}" style="font-weight:600;color:var(--tl)">—</td>
+      <td style="text-align:center">
+        <div style="position:relative;width:54px;margin:0 auto">
+          <input class="mni" value="${(lineMargins[i]||35).toFixed(1)}" oninput="lineMargins[${i}]=parseFloat(this.value)||0;rc()" style="padding-right:14px">
+          <span style="position:absolute;right:3px;top:50%;transform:translateY(-50%);font-size:9.5px;color:var(--mist)">%</span>
+        </div>
+      </td>
+      <td class="pv-${i}" style="font-weight:600;color:var(--gd)">—</td>
+      <td class="pvt-${i}" style="font-weight:600;color:var(--gd)">—</td>
+      <td class="ut-${i}" style="color:var(--sg);font-weight:500">—</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+// ── FORMAT
+function fmt(v,pref='$'){
+  if(!v&&v!==0) return '—';
+  const abs=Math.abs(v);
+  const s=abs.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  return (v<0?'-':'')+pref+s;
+}
+function fmtCur(v){
+  const tc=parseFloat(document.getElementById('c-tc')?.value||520)||520;
+  if(curMode==='crc') return '₡'+(v*tc).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  if(curMode==='eur') return '€'+(v*0.92).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  return '$'+v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+}
+function num(id){return parseFloat((document.getElementById(id)?.value||'0').replace(/[^0-9.-]/g,''))||0;}
+function setT(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
+function setCell(cls,v){const e=document.querySelector('.'+cls);if(e)e.textContent=v;}
+
+// ── MAIN RECALC
+function rc(){
+  // Lines
+  const rows=[...document.querySelectorAll('#c-lines tr')].filter(r=>r.querySelector('.qty'));
+  let subs=[], totalOr=0;
+  rows.forEach(r=>{
+    const q=parseFloat(r.querySelector('.qty').value)||0;
+    const p=parseFloat(r.querySelector('.price').value)||0;
+    const s=q*p; subs.push(s); totalOr+=s;
+    r.querySelector('.sub').textContent='$'+s.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  });
+  // pct chips
+  rows.forEach((r,i)=>{
+    const pct=totalOr>0?(subs[i]/totalOr*100):0;
+    const ch=r.querySelector('.pd'); if(ch) ch.textContent=pct.toFixed(1)+'%';
+  });
+  const totEl=document.getElementById('c-tot');
+  if(totEl) totEl.textContent='$'+totalOr.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  setT('r-or','$'+totalOr.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,','));
+
+  // Transport
+  const fMar=num('c-fmar'),seg=num('c-seg'),fCR=num('c-fcr'),otr=num('c-otr');
+  const bod=num('c-bod'),ocos=num('c-ocos');
+  const cif=totalOr+fMar+seg;
+  const cifEl=document.getElementById('c-iva-ref');
+  if(cifEl) cifEl.textContent='$'+((cif*0.13).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,','));
+  setT('r-fm',fmt(fMar));setT('r-sg',fmt(seg));setT('r-cif',fmt(cif));
+
+  // Customs
+  const arPct=num('c-aran'),arM=cif*arPct/100;
+  const iscPct=num('c-isc'),iscM=cif*iscPct/100;
+  const age=num('c-age');
+  const costoT=cif+arM+iscM+age+fCR+otr+bod+ocos;
+  const costoTEl=document.getElementById('c-costoT');
+  if(costoTEl) costoTEl.textContent='$'+costoT.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  setT('r-ar',fmt(arM));setT('r-ag',fmt(age));setT('r-fc',fmt(fCR));
+  setT('r-bod',fmt(bod));setT('r-ocos',fmt(ocos));
+  setT('r-tot',fmt(costoT));setT('r-iva',fmt(cif*0.13));
+
+  // IVI
+  const iviOn=document.getElementById('c-ivi')?.checked;
+  const mh1=document.getElementById('mh1'),mh2=document.getElementById('mh2');
+  if(mh1) mh1.textContent=iviOn?'P.Venta unit. (IVI)':'P.Venta unit.';
+  if(mh2) mh2.textContent=iviOn?'P.Venta total (IVI)':'P.Venta total';
+
+  // Per-line
+  const extraDist=arM+iscM+age+fCR+otr+bod+ocos+fMar+seg;
+  let grandCR=0,grandPV=0,grandUT=0,totalUnits=0;
+  LDATA.forEach((ln,i)=>{
+    totalUnits+=ln.qty;
+    const pct=totalOr>0?(subs[i]/totalOr):0;
+    const dist=extraDist*pct;
+    const costCRu=(subs[i]+dist)/ln.qty;
+    const mg=lineMargins[i]||35;
+    let pvU=costCRu*(1+mg/100);
+    if(iviOn) pvU*=1.13;
+    const pvT=pvU*ln.qty;
+    const ut=(costCRu*(mg/100))*ln.qty;
+    grandCR+=costCRu*ln.qty; grandPV+=pvT; grandUT+=ut;
+    setCell('co-'+i, fmtCur(subs[i]));
+    setCell('cd-'+i, fmtCur(dist));
+    setCell('cu-'+i, fmtCur(costCRu));
+    setCell('pv-'+i, fmtCur(pvU));
+    setCell('pvt-'+i,fmtCur(pvT));
+    setCell('ut-'+i, fmtCur(ut));
+    const pvEls=document.querySelectorAll('.pv-'+i+',.pvt-'+i);
+    pvEls.forEach(e=>e.style.color=iviOn?'var(--tl)':'var(--gd)');
+  });
+  setT('m-tc', fmtCur(grandCR));
+  setT('m-pv', fmtCur(grandPV/totalUnits));
+  setT('m-pvt',fmtCur(grandPV));
+  setT('m-ut', fmtCur(grandUT));
+
+  // Summary panel
+  const avgMg=lineMargins.reduce((a,b)=>a+b,0)/lineMargins.length;
+  const plbl=document.getElementById('r-plbl');
+  if(plbl) plbl.textContent='Precio venta total ('+avgMg.toFixed(0)+'%)' +(iviOn?' IVI':'');
+  setT('r-pval',fmtCur(grandPV));
+  setT('r-pun',totalUnits+' unidades');
+  setT('r-pch','Utilidad ≈ '+fmtCur(grandUT));
+}
+
+// ── DEL LINE
+function dln(btn){
+  btn.closest('tr').remove();
+  rc();
+}
+
+// ── SIMULATE UPLOAD
+function simUp(){
+  const names=['Packing_List_IMP-2025-004.pdf','CertOrigen_China.pdf','SeguroCargo_Allianz.pdf'];
+  const icons=['📦','📜','🛡️'];
+  const types=['Lista empaque','Cert. origen','Seguro'];
+  const i=Math.floor(Math.random()*3);
+  const d=document.createElement('div');
+  d.className='di';d.style.animation='fu .25s ease';
+  d.innerHTML=`<span style="font-size:17px">${icons[i]}</span><div class="di-in"><div class="di-nm">${names[i]}</div><div class="di-mt">Cargado ahora</div></div><span class="dt dto">${types[i]}</span><span class="del" onclick="this.closest('.di').remove()" style="margin-left:6px">×</span>`;
+  document.getElementById('doc-list').appendChild(d);
+}
+
+// ── INIT
+document.addEventListener('DOMContentLoaded',()=>{
+  buildMargTable();
+  rc();
+});
+</script>
+</body>
+</html>
