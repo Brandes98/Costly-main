@@ -9,7 +9,7 @@ import { sanitize } from './middlewares/sanitize.middleware.js'
 
 // ── Rutas (descomentar conforme se vayan creando)
 import authRoutes from './modules/auth/auth.routes.js'
-// import usuariosRoutes from './modules/usuarios/usuarios.routes.js'
+import usuariosRoutes from './modules/usuarios/usuarios.routes.js'
 // import proveedoresRoutes from './modules/proveedores/proveedores.routes.js'
 // import clientesRoutes from './modules/clientes/clientes.routes.js'
 // import productosRoutes from './modules/productos/productos.routes.js'
@@ -80,7 +80,7 @@ app.get('/health', (req, res) => {
 // ── Rutas API
 const API = '/api/v1'
 app.use(`${API}/auth`, authRoutes)
-// app.use(`${API}/usuarios`,       usuariosRoutes)
+app.use(`${API}/usuarios`, usuariosRoutes)
 // app.use(`${API}/proveedores`,    proveedoresRoutes)
 // app.use(`${API}/clientes`,       clientesRoutes)
 // app.use(`${API}/productos`,      productosRoutes)
