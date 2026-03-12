@@ -54,7 +54,7 @@ export const getAll = async (empresa_id, filters = {}) => {
       ...(filters.importacion_id && { importacion_id: parseInt(filters.importacion_id) }),
     },
     include: { importacion: { select: { codigo: true } } },
-    orderBy: { creado_en: 'desc' },
+    orderBy: { contenedor_id: 'desc' },
   })
 }
 
