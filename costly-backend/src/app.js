@@ -17,7 +17,7 @@ import authRoutes from './modules/auth/auth.routes.js'
 // import importacionesRoutes from './modules/importaciones/importaciones.routes.js'
 // import costeosRoutes from './modules/costeos/costeos.routes.js'
 // import pagosRoutes from './modules/pagos/pagos.routes.js'
-// import hitosRoutes from './modules/hitos/hitos.routes.js'
+import hitosRoutes from './modules/hitos/hitos.routes.js'
 // import contenedoresRoutes from './modules/contenedores/contenedores.routes.js'
 // import tramiteRoutes from './modules/tramite-aduana/tramite.routes.js'
 // import tcRoutes from './modules/tc-historico/tc.routes.js'
@@ -88,7 +88,7 @@ app.use(`${API}/auth`, authRoutes)
 // app.use(`${API}/importaciones`,  importacionesRoutes)
 // app.use(`${API}/costeos`,        costeosRoutes)
 // app.use(`${API}/pagos`,          pagosRoutes)
-// app.use(`${API}/hitos`,          hitosRoutes)
+app.use(`${API}/hitos`, hitosRoutes)
 // app.use(`${API}/contenedores`,   contenedoresRoutes)
 // app.use(`${API}/tramite-aduana`, tramiteRoutes)
 // app.use(`${API}/tc`,             tcRoutes)
