@@ -11,7 +11,7 @@ import { sanitize } from "./middlewares/sanitize.middleware.js";
 import authRoutes from "./modules/auth/auth.routes.js";
 // import usuariosRoutes from './modules/usuarios/usuarios.routes.js'
 // import proveedoresRoutes from './modules/proveedores/proveedores.routes.js'
-// import clientesRoutes from './modules/clientes/clientes.routes.js'
+import clientesRoutes from './modules/clientes/clientes.routes.js'
 // import productosRoutes from './modules/productos/productos.routes.js'
 // import pedidosRoutes from './modules/pedidos/pedidos.routes.js'
 // import importacionesRoutes from './modules/importaciones/importaciones.routes.js'
