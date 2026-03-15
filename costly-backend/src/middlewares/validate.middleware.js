@@ -7,7 +7,12 @@ export const validate = (schema) => (req, res, next) => {
     })
     next()
   } catch (error) {
-    const errores = error.errors.map(e => ({
+    console.log('ERROR NAME:', error.name)
+    console.log('ERROR ERRORS:', error.errors)
+    console.log('ERROR ISSUES:', error.issues)
+    if (error.name !== 'ZodError') return next(error)
+
+    const errores = error.issues.map(e => ({
       campo:   e.path.join('.'),
       mensaje: e.message,
     }))

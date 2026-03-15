@@ -29,7 +29,7 @@ const sanitizeObject = (obj) => {
 }
 
 export const sanitize = (req, res, next) => {
-  if (req.body) req.body = sanitizeObject(req.body)
+  if (req.body) req.body = sanitizeValue(req.body)
 
   // req.query es readonly en Express 4 — sanitizar los valores sin reasignar
   if (req.query) {
