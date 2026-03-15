@@ -14,9 +14,9 @@ import { createDocumentoSchema } from './documentos.schema.js'
 const router = Router()
 router.use(authenticate)
 
-router.get('/',      authorize('consultas', 'operador', 'operador_sr', 'finanzas', 'admin'), controller.getAll)
-router.post('/',     authorize('operador', 'operador_sr', 'admin'), validate(createDocumentoSchema), auditLog('documento', 'INSERT'), controller.create)
-router.delete('/:id',authorize('admin'), auditLog('documento', 'DELETE'), controller.remove)
+router.get('/', authorize('consultas', 'operador', 'operador_sr', 'finanzas', 'admin'), controller.getAll)
+router.post('/', authorize('operador', 'operador_sr', 'admin'), validate(createDocumentoSchema), auditLog('documento', 'INSERT'), controller.create)
+router.delete('/:id', authorize('admin'), auditLog('documento', 'DELETE'), controller.remove)
 
 export default router
 
@@ -48,8 +48,8 @@ export const getAll = async (empresa_id, filters = {}) => {
     where: {
       empresa_id,
       ...(filters.entidad_tipo && { entidad_tipo: filters.entidad_tipo }),
-      ...(filters.entidad_id   && { entidad_id: parseInt(filters.entidad_id) }),
-      ...(filters.tipo_doc     && { tipo_doc: filters.tipo_doc }),
+      ...(filters.entidad_id && { entidad_id: parseInt(filters.entidad_id) }),
+      ...(filters.tipo_doc && { tipo_doc: filters.tipo_doc }),
     },
     include: { subidor: { select: { nombre: true } } },
     orderBy: { subido_en: 'desc' },
@@ -74,11 +74,11 @@ import { z } from 'zod'
 export const createDocumentoSchema = z.object({
   body: z.object({
     entidad_tipo: z.string().max(40),
-    entidad_id:   z.number().int().positive(),
-    tipo_doc:     z.enum(['factura', 'bl', 'dua', 'permiso', 'seguro', 'packing', 'otro']),
-    nombre:       z.string().min(1).max(200),
-    url:          z.string().url().max(500),
-    tamanio_kb:   z.number().int().positive().optional(),
-    mime_type:    z.string().max(80).optional(),
+    entidad_id: z.number().int().positive(),
+    tipo_doc: z.enum(['factura', 'bl', 'dua', 'permiso', 'seguro', 'packing', 'otro']),
+    nombre: z.string().min(1).max(200),
+    url: z.string().url().max(500),
+    tamanio_kb: z.number().int().positive().optional(),
+    mime_type: z.string().max(80).optional(),
   })
 })

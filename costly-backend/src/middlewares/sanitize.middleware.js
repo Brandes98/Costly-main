@@ -8,6 +8,9 @@ const sanitizeValue = (value) => {
       .replace(/\//g, '&#x2F;')
       .trim()
   }
+  if (Array.isArray(value)) {
+    return value.map(sanitizeValue)
+  }
   if (typeof value === 'object' && value !== null) {
     return sanitizeObject(value)
   }
@@ -15,6 +18,9 @@ const sanitizeValue = (value) => {
 }
 
 const sanitizeObject = (obj) => {
+  if (Array.isArray(obj)) {
+    return obj.map(sanitizeValue)
+  }
   const sanitized = {}
   for (const key in obj) {
     sanitized[key] = sanitizeValue(obj[key])
