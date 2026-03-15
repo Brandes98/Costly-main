@@ -9,17 +9,26 @@ import { sanitize } from "./middlewares/sanitize.middleware.js";
 
 // ── Rutas (descomentar conforme se vayan creando)
 import authRoutes from "./modules/auth/auth.routes.js";
+import authRoutes from './modules/auth/auth.routes.js'
+import usuariosRoutes from './modules/usuarios/usuarios.routes.js'
+import empresaRoutes from './modules/empresa/empresa.routes.js'
 // import usuariosRoutes from './modules/usuarios/usuarios.routes.js'
 import proveedoresRoutes from "./modules/proveedores/proveedores.routes.js";
 // import clientesRoutes from './modules/clientes/clientes.routes.js'
 // import productosRoutes from './modules/productos/productos.routes.js'
 // import pedidosRoutes from './modules/pedidos/pedidos.routes.js'
+import importacionesRoutes from './modules/importaciones/importaciones.routes.js'
+import pedidosRoutes from './modules/pedidos/pedidos.routes.js'
 // import importacionesRoutes from './modules/importaciones/importaciones.routes.js'
 // import costeosRoutes from './modules/costeos/costeos.routes.js'
 // import pagosRoutes from './modules/pagos/pagos.routes.js'
+import hitosRoutes from './modules/hitos/hitos.routes.js'
+import pagosRoutes from './modules/pagos/pagos.routes.js'
 // import hitosRoutes from './modules/hitos/hitos.routes.js'
 // import contenedoresRoutes from './modules/contenedores/contenedores.routes.js'
 // import tramiteRoutes from './modules/tramite-aduana/tramite.routes.js'
+import tcRoutes from './modules/tc-historico/tc.routes.js'
+import tramiteRoutes from './modules/tramite-aduana/tramite.routes.js'
 // import tcRoutes from './modules/tc-historico/tc.routes.js'
 // import documentosRoutes from './modules/documentos/documentos.routes.js'
 // import permisosRoutes from './modules/permisos/permisos.routes.js'
@@ -86,17 +95,27 @@ app.get("/health", (req, res) => {
 // ── Rutas API
 const API = "/api/v1";
 app.use(`${API}/auth`, authRoutes);
+const API = '/api/v1'
+app.use(`${API}/auth`, authRoutes)
+app.use(`${API}/usuarios`, usuariosRoutes)
+app.use(`${API}/empresa`, empresaRoutes)
 // app.use(`${API}/usuarios`,       usuariosRoutes)
 app.use(`${API}/proveedores`, proveedoresRoutes);
 // app.use(`${API}/clientes`,       clientesRoutes)
 // app.use(`${API}/productos`,      productosRoutes)
 // app.use(`${API}/pedidos`,        pedidosRoutes)
+app.use(`${API}/importaciones`, importacionesRoutes)
+app.use(`${API}/pedidos`, pedidosRoutes)
 // app.use(`${API}/importaciones`,  importacionesRoutes)
 // app.use(`${API}/costeos`,        costeosRoutes)
 // app.use(`${API}/pagos`,          pagosRoutes)
+app.use(`${API}/hitos`, hitosRoutes)
+app.use(`${API}/pagos`, pagosRoutes)
 // app.use(`${API}/hitos`,          hitosRoutes)
 // app.use(`${API}/contenedores`,   contenedoresRoutes)
 // app.use(`${API}/tramite-aduana`, tramiteRoutes)
+app.use(`${API}/tc`,             tcRoutes)
+app.use(`${API}/tramite-aduana`, tramiteRoutes)
 // app.use(`${API}/tc`,             tcRoutes)
 // app.use(`${API}/documentos`,     documentosRoutes)
 // app.use(`${API}/permisos`,       permisosRoutes)

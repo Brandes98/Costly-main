@@ -12,11 +12,11 @@ import { createUsuarioSchema, updateUsuarioSchema } from './usuarios.schema.js'
 const router = Router()
 router.use(authenticate)
 
-router.get('/',     authorize('admin'), controller.getAll)
-router.get('/:id',  authorize('admin'), controller.getById)
-router.post('/',    authorize('admin'), validate(createUsuarioSchema), auditLog('usuario', 'INSERT'), controller.create)
-router.patch('/:id',authorize('admin'), validate(updateUsuarioSchema), auditLog('usuario', 'UPDATE'), controller.update)
-router.delete('/:id',authorize('admin'), auditLog('usuario', 'DELETE'), controller.deactivate)
+router.get('/', authorize('admin'), controller.getAll)
+router.get('/:id', authorize('admin'), controller.getById)
+router.post('/', authorize('admin'), validate(createUsuarioSchema), auditLog('usuario', 'INSERT'), controller.create)
+router.patch('/:id', authorize('admin'), validate(updateUsuarioSchema), auditLog('usuario', 'UPDATE'), controller.update)
+router.delete('/:id', authorize('admin'), auditLog('usuario', 'DELETE'), controller.deactivate)
 
 export default router
 
@@ -110,11 +110,11 @@ export const create = async (empresa_id, data) => {
   return await prisma.usuario.create({
     data: {
       empresa_id,
-      nombre:        data.nombre,
-      email:         data.email,
+      nombre: data.nombre,
+      email: data.email,
       password_hash,
-      rol:           data.rol,
-      activo:        true,
+      rol: data.rol,
+      activo: true,
     },
     select: SAFE_SELECT,
   })
@@ -128,7 +128,7 @@ export const update = async (empresa_id, usuario_id, data) => {
     where: { usuario_id },
     data: {
       ...(data.nombre && { nombre: data.nombre }),
-      ...(data.rol    && { rol:    data.rol }),
+      ...(data.rol && { rol: data.rol }),
     },
     select: SAFE_SELECT,
   })
@@ -163,9 +163,9 @@ import { z } from 'zod'
 
 export const createUsuarioSchema = z.object({
   body: z.object({
-    nombre:            z.string().min(2).max(100),
-    email:             z.string().email(),
-    rol:               z.enum(['admin', 'operador_sr', 'operador', 'finanzas', 'consultas']),
+    nombre: z.string().min(2).max(100),
+    email: z.string().email(),
+    rol: z.enum(['admin', 'operador_sr', 'operador', 'finanzas', 'consultas']),
     password_temporal: z.string().min(8).optional(),
   })
 })
@@ -174,6 +174,6 @@ export const updateUsuarioSchema = z.object({
   params: z.object({ id: z.string().regex(/^\d+$/) }),
   body: z.object({
     nombre: z.string().min(2).max(100).optional(),
-    rol:    z.enum(['admin', 'operador_sr', 'operador', 'finanzas', 'consultas']).optional(),
+    rol: z.enum(['admin', 'operador_sr', 'operador', 'finanzas', 'consultas']).optional(),
   })
 })

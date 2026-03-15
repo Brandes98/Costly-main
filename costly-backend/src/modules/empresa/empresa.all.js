@@ -12,8 +12,8 @@ import { updateEmpresaSchema } from './empresa.schema.js'
 const router = Router()
 router.use(authenticate)
 
-router.get('/',      authorize('admin'), controller.get)
-router.patch('/',    authorize('admin'), validate(updateEmpresaSchema), auditLog('empresa', 'UPDATE'), controller.update)
+router.get('/', authorize('admin'), controller.get)
+router.patch('/', authorize('admin'), validate(updateEmpresaSchema), auditLog('empresa', 'UPDATE'), controller.update)
 
 export default router
 
@@ -56,13 +56,13 @@ export const update = async (empresa_id, data) => {
   return await prisma.empresa.update({
     where: { empresa_id },
     data: {
-      ...(data.nombre        && { nombre:        data.nombre }),
+      ...(data.nombre && { nombre: data.nombre }),
       ...(data.cedula_juridica && { cedula_juridica: data.cedula_juridica }),
-      ...(data.telefono      && { telefono:      data.telefono }),
-      ...(data.email         && { email:         data.email }),
-      ...(data.direccion     && { direccion:     data.direccion }),
-      ...(data.moneda_base   && { moneda_base:   data.moneda_base }),
-      ...(data.logo_url      && { logo_url:      data.logo_url }),
+      ...(data.telefono && { telefono: data.telefono }),
+      ...(data.email && { email: data.email }),
+      ...(data.direccion && { direccion: data.direccion }),
+      ...(data.moneda_base && { moneda_base: data.moneda_base }),
+      ...(data.logo_url && { logo_url: data.logo_url }),
     }
   })
 }
@@ -75,12 +75,12 @@ import { z } from 'zod'
 
 export const updateEmpresaSchema = z.object({
   body: z.object({
-    nombre:           z.string().min(2).max(150).optional(),
-    cedula_juridica:  z.string().max(20).optional(),
-    telefono:         z.string().max(20).optional(),
-    email:            z.string().email().optional(),
-    direccion:        z.string().max(300).optional(),
-    moneda_base:      z.string().length(3).optional(),
-    logo_url:         z.string().url().optional(),
+    nombre: z.string().min(2).max(150).optional(),
+    cedula_juridica: z.string().max(20).optional(),
+    telefono: z.string().max(20).optional(),
+    email: z.string().email().optional(),
+    direccion: z.string().max(300).optional(),
+    moneda_base: z.string().length(3).optional(),
+    logo_url: z.string().url().optional(),
   })
 })
