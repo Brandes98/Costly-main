@@ -18,6 +18,8 @@ import importacionesRoutes from './modules/importaciones/importaciones.routes.js
 import pedidosRoutes from './modules/pedidos/pedidos.routes.js'
 // import importacionesRoutes from './modules/importaciones/importaciones.routes.js'
 // import costeosRoutes from './modules/costeos/costeos.routes.js'
+// import pagosRoutes from './modules/pagos/pagos.routes.js'
+import hitosRoutes from './modules/hitos/hitos.routes.js'
 import pagosRoutes from './modules/pagos/pagos.routes.js'
 // import hitosRoutes from './modules/hitos/hitos.routes.js'
 // import contenedoresRoutes from './modules/contenedores/contenedores.routes.js'
@@ -93,6 +95,8 @@ app.use(`${API}/importaciones`, importacionesRoutes)
 app.use(`${API}/pedidos`, pedidosRoutes)
 // app.use(`${API}/importaciones`,  importacionesRoutes)
 // app.use(`${API}/costeos`,        costeosRoutes)
+// app.use(`${API}/pagos`,          pagosRoutes)
+app.use(`${API}/hitos`, hitosRoutes)
 app.use(`${API}/pagos`, pagosRoutes)
 // app.use(`${API}/hitos`,          hitosRoutes)
 // app.use(`${API}/contenedores`,   contenedoresRoutes)
