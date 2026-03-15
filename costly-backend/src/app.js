@@ -13,6 +13,8 @@ import authRoutes from './modules/auth/auth.routes.js'
 // import proveedoresRoutes from './modules/proveedores/proveedores.routes.js'
 // import clientesRoutes from './modules/clientes/clientes.routes.js'
 // import productosRoutes from './modules/productos/productos.routes.js'
+// import pedidosRoutes from './modules/pedidos/pedidos.routes.js'
+import importacionesRoutes from './modules/importaciones/importaciones.routes.js'
 import pedidosRoutes from './modules/pedidos/pedidos.routes.js'
 // import importacionesRoutes from './modules/importaciones/importaciones.routes.js'
 // import costeosRoutes from './modules/costeos/costeos.routes.js'
@@ -86,6 +88,8 @@ app.use(`${API}/auth`, authRoutes)
 // app.use(`${API}/proveedores`,    proveedoresRoutes)
 // app.use(`${API}/clientes`,       clientesRoutes)
 // app.use(`${API}/productos`,      productosRoutes)
+// app.use(`${API}/pedidos`,        pedidosRoutes)
+app.use(`${API}/importaciones`, importacionesRoutes)
 app.use(`${API}/pedidos`, pedidosRoutes)
 // app.use(`${API}/importaciones`,  importacionesRoutes)
 // app.use(`${API}/costeos`,        costeosRoutes)
