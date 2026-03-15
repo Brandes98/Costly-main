@@ -1,0 +1,74 @@
+// ============================================================
+// src/modules/pedidos/pedidos.controller.js
+// ============================================================
+import * as service from './pedidos.service.js'
+import * as proyeccionService from './proyeccion.service.js'
+import { successResponse, errorResponse } from '../../utils/response.utils.js'
+
+export const getAll = async (req, res) => {
+  try {
+    return successResponse(res, await service.getAll(req.user.empresa_id, req.query))
+  } catch (error) { return errorResponse(res, error) }
+}
+
+export const getById = async (req, res) => {
+  try {
+    return successResponse(res, await service.getById(req.user.empresa_id, parseInt(req.params.id)))
+  } catch (error) { return errorResponse(res, error) }
+}
+
+export const create = async (req, res) => {
+  try {
+    return successResponse(res, await service.create(req.user.empresa_id, req.user.usuario_id, req.body), 201)
+  } catch (error) { return errorResponse(res, error) }
+}
+
+export const update = async (req, res) => {
+  try {
+    return successResponse(res, await service.update(req.user.empresa_id, parseInt(req.params.id), req.body))
+  } catch (error) { return errorResponse(res, error) }
+}
+
+export const updateEstado = async (req, res) => {
+  try {
+    return successResponse(res, await service.updateEstado(req.user.empresa_id, parseInt(req.params.id), req.body.estado, req.user.usuario_id))
+  } catch (error) { return errorResponse(res, error) }
+}
+
+export const unirPedidos = async (req, res) => {
+  try {
+    return successResponse(res, await service.unirPedidos(req.user.empresa_id, req.user.usuario_id, req.body.pedido_ids, req.body.nota), 201)
+  } catch (error) { return errorResponse(res, error) }
+}
+
+export const separarPedido = async (req, res) => {
+  try {
+    return successResponse(res, await service.separarPedido(req.user.empresa_id, req.user.usuario_id, parseInt(req.params.id), req.body.linea_ids, req.body.nota), 201)
+  } catch (error) { return errorResponse(res, error) }
+}
+
+export const cancel = async (req, res) => {
+  try {
+    await service.cancel(req.user.empresa_id, req.user.usuario_id, parseInt(req.params.id), req.body.motivo)
+    return successResponse(res, { message: 'Pedido cancelado correctamente' })
+  } catch (error) { return errorResponse(res, error) }
+}
+
+// ── Proyección
+export const getProyeccion = async (req, res) => {
+  try {
+    return successResponse(res, await proyeccionService.get(req.user.empresa_id, parseInt(req.params.id)))
+  } catch (error) { return errorResponse(res, error) }
+}
+
+export const calcularProyeccion = async (req, res) => {
+  try {
+    return successResponse(res, await proyeccionService.calcular(req.user.empresa_id, parseInt(req.params.id), req.body))
+  } catch (error) { return errorResponse(res, error) }
+}
+
+export const detalleProyeccion = async (req, res) => {
+  try {
+    return successResponse(res, await proyeccionService.detalle(req.user.empresa_id, parseInt(req.params.id)))
+  } catch (error) { return errorResponse(res, error) }
+}
