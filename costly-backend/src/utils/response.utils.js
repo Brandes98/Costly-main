@@ -8,10 +8,27 @@ export class AppError extends Error {
   }
 }
 
+const isPlainObject = (value) =>
+  Object.prototype.toString.call(value) === '[object Object]'
+
+// JSON.stringify no soporta BigInt: lo convertimos a string de forma segura.
+const sanitizeBigInt = (value) => {
+  if (typeof value === 'bigint') return value.toString()
+  if (Array.isArray(value)) return value.map(sanitizeBigInt)
+  if (isPlainObject(value)) {
+    const out = {}
+    for (const [key, val] of Object.entries(value)) {
+      out[key] = sanitizeBigInt(val)
+    }
+    return out
+  }
+  return value
+}
+
 // Respuesta exitosa estándar
 export const successResponse = (res, data, statusCode = 200, meta = null) => {
-  const response = { ok: true, data }
-  if (meta) response.meta = meta
+  const response = { ok: true, data: sanitizeBigInt(data) }
+  if (meta) response.meta = sanitizeBigInt(meta)
   return res.status(statusCode).json(response)
 }
 

@@ -34,7 +34,7 @@ import tramiteRoutes from './modules/tramite-aduana/tramite.routes.js'
 // import permisosRoutes from './modules/permisos/permisos.routes.js'
 // import proyeccionRoutes from './modules/proyeccion/proyeccion.routes.js'
 // import reportesRoutes from './modules/reportes/reportes.routes.js'
-// import auditoriaRoutes from './modules/auditoria/auditoria.routes.js'
+import auditoriaRoutes from './modules/auditoria/auditoria.routes.js'
 
 const app = express();
 
@@ -121,7 +121,7 @@ app.use(`${API}/tramite-aduana`, tramiteRoutes)
 // app.use(`${API}/permisos`,       permisosRoutes)
 // app.use(`${API}/proyeccion`,     proyeccionRoutes)
 // app.use(`${API}/reportes`,       reportesRoutes)
-// app.use(`${API}/auditoria`,      auditoriaRoutes)
+app.use(`${API}/auditoria`, auditoriaRoutes)
 
 // ── 404
 app.use((req, res) => {
