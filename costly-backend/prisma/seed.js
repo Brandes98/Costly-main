@@ -38,6 +38,24 @@ async function main() {
   })
   console.log(`✅ Usuario admin: ${admin.email}`)
 
+  // ── Clientes de prueba
+  const clientes = [
+    { nombre: 'Ferreteria Central', cedula: '1-1111-0001', tipo: 'nacional', moneda: 'CRC', descuento_pct: '5.00', email: 'compras@ferreteriacentral.test' },
+    { nombre: 'Supermercado La Plaza', cedula: '1-1111-0002', tipo: 'nacional', moneda: 'CRC', descuento_pct: '2.50', email: 'proveedores@laplaza.test' },
+    { nombre: 'Hotel Costa Dorada', cedula: '1-1111-0003', tipo: 'nacional', moneda: 'USD', descuento_pct: '0.00', email: 'abastecimiento@costadorada.test' },
+    { nombre: 'Exportadora Tica SA', cedula: '3-101-000004', tipo: 'exportacion', moneda: 'USD', descuento_pct: '7.00', email: 'purchasing@exportadoratica.test' },
+    { nombre: 'Cliente Interno Bodega', cedula: '2-2222-0001', tipo: 'interno', moneda: 'CRC', descuento_pct: '0.00', email: 'bodega@vadibarot.test' },
+    { nombre: 'Farmacia San Rafael', cedula: '1-1111-0004', tipo: 'nacional', moneda: 'CRC', descuento_pct: '3.00', email: 'compras@farmaciasanrafael.test' },
+    { nombre: 'ElectroHogar CR', cedula: '1-1111-0005', tipo: 'nacional', moneda: 'USD', descuento_pct: '4.25', email: 'supply@electrohogar.test' },
+    { nombre: 'Constructora Valle Verde', cedula: '3-101-000006', tipo: 'nacional', moneda: 'CRC', descuento_pct: '6.00', email: 'compras@valleverde.test' },
+  ]
+
+  await prisma.cliente.createMany({
+    data: clientes.map((c) => ({ empresa_id: empresa.empresa_id, ...c })),
+    skipDuplicates: true,
+  })
+  console.log(`✅ ${clientes.length} clientes de prueba creados (skipDuplicates)`)
+
   // ── Países más comunes para Vadibarot
   const paises = [
     { codigo: 'CR', nombre: 'Costa Rica',      bandera: '🇨🇷' },
