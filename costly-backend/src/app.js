@@ -18,7 +18,7 @@ import empresaRoutes from './modules/empresa/empresa.routes.js'
 // import usuariosRoutes from './modules/usuarios/usuarios.routes.js'
 import proveedoresRoutes from "./modules/proveedores/proveedores.routes.js";
 // import clientesRoutes from './modules/clientes/clientes.routes.js'
-// import productosRoutes from './modules/productos/productos.routes.js'
+import productosRoutes from './modules/productos/productos.routes.js'
 // import pedidosRoutes from './modules/pedidos/pedidos.routes.js'
 import importacionesRoutes from './modules/importaciones/importaciones.routes.js'
 import pedidosRoutes from './modules/pedidos/pedidos.routes.js'
@@ -108,7 +108,7 @@ app.use(`${API}/empresa`, empresaRoutes)
 // app.use(`${API}/usuarios`,       usuariosRoutes)
 app.use(`${API}/proveedores`, proveedoresRoutes);
 // app.use(`${API}/clientes`,       clientesRoutes)
-// app.use(`${API}/productos`,      productosRoutes)
+app.use(`${API}/productos`, productosRoutes);
 // app.use(`${API}/pedidos`,        pedidosRoutes)
 app.use(`${API}/importaciones`, importacionesRoutes)
 app.use(`${API}/pedidos`, pedidosRoutes)
