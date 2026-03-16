@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Costly — Mockups Frontend</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Lora:ital,wght@0,500;1,400&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#1A2433;--slate:#5C7089;--mist:#8FA3B8;
+  --border:#E2E8EF;--border-lt:#EEF1F5;--bg:#F2F5F8;--sur:#FFF;--sur2:#F8FAFB;--sur3:#F0F4F7;
+  --tl:#1F7A7A;--tl-d:#155555;--tl-m:#2A9494;--tl-l:#DFF2F2;--tl-xl:#F0FAFA;
+  --gd:#B8821A;--gd-l:#FBF3E3;--am:#D97706;
+  --rs:#A33A36;--rs-l:#FDF1F0;--sg:#3A6B4A;--sg-l:#E8F4ED;--vi:#5B4FCF;--vi-l:#EEECFB;
+  --op:#9DB3C8;
+  --sh0:0 1px 4px rgba(26,36,51,.07);--sh1:0 3px 14px rgba(26,36,51,.09);
+}
+body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--ink);font-size:13px}
+
+/* NAV SUPERIOR */
+.nav{background:var(--ink);padding:0 24px;height:52px;display:flex;align-items:center;gap:0;position:sticky;top:0;z-index:100}
+.nav-brand{font-family:'Lora',serif;font-size:18px;font-weight:500;color:#fff;margin-right:24px}
+.nav-brand span{color:var(--tl-m)}
+.nav-tabs{display:flex;gap:2px;overflow-x:auto;flex:1}
+.nav-tab{padding:0 14px;height:52px;display:flex;align-items:center;font-size:12px;color:rgba(255,255,255,.45);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .15s}
+.nav-tab:hover{color:rgba(255,255,255,.8);background:rgba(255,255,255,.05)}
+.nav-tab.on{color:#fff;border-bottom-color:var(--tl-m);background:rgba(31,122,122,.15)}
+.nav-grp{font-size:9px;letter-spacing:.1em;color:rgba(255,255,255,.2);padding:0 10px 0 18px;align-self:center;white-space:nowrap}
+
+/* CONTENT */
+.content{display:none;padding:20px 24px;max-width:1200px;margin:0 auto}
+.content.on{display:block;animation:fu .2s ease}
+@keyframes fu{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* COMPONENTS */
+.card{background:var(--sur);border:1px solid var(--border);border-radius:11px;box-shadow:var(--sh0);overflow:hidden}
+.c-hd{padding:11px 16px 10px;border-bottom:1px solid var(--border-lt);display:flex;align-items:center;justify-content:space-between}
+.c-ti{font-size:13px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:6px}
+.c-bd{padding:14px 16px}
+.btn{padding:6px 13px;border-radius:7px;font-family:'Sora',sans-serif;font-size:12px;font-weight:500;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:5px;transition:all .15s}
+.btn-t{background:var(--tl);color:#fff}.btn-t:hover{background:var(--tl-d)}
+.btn-o{background:transparent;color:var(--ink);border:1.5px solid var(--border)}.btn-o:hover{border-color:var(--tl);color:var(--tl)}
+.btn-sm{padding:5px 10px;font-size:11.5px}
+.btn-r{background:var(--rs-l);color:var(--rs);border:1.5px solid rgba(163,58,54,.2)}.btn-r:hover{background:var(--rs);color:#fff}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{text-align:left;font-size:10px;font-weight:600;color:var(--mist);text-transform:uppercase;letter-spacing:.05em;padding:8px 12px;border-bottom:1px solid var(--border);background:var(--sur2)}
+.tbl td{padding:10px 12px;border-bottom:1px solid var(--border-lt);font-size:12px;vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}.tbl tr:hover td{background:#FAFCFD}
+.pill{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap}
+.pill::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.75}
+.pg{background:var(--sg-l);color:var(--sg)}.py{background:#FEF3C7;color:#92600A}
+.pb{background:var(--tl-l);color:var(--tl)}.pgr{background:var(--sur3);color:var(--slate)}
+.pr{background:var(--rs-l);color:var(--rs)}.pv{background:var(--vi-l);color:var(--vi)}
+.s3{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0}
+.s3g{background:#3A6B4A;box-shadow:0 0 0 3px #DFF0E5}
+.s3y{background:#D97706;box-shadow:0 0 0 3px #FEF3C7}
+.s3r{background:#A33A36;box-shadow:0 0 0 3px var(--rs-l);animation:pr 1.5s infinite}
+@keyframes pr{0%,100%{box-shadow:0 0 0 3px var(--rs-l)}50%{box-shadow:0 0 0 6px rgba(163,58,54,.12)}}
+.ic{display:inline-flex;align-items:center;gap:3px;font-size:11px;color:var(--mist);background:var(--sur2);border:1px solid var(--border);border-radius:4px;padding:1px 6px}
+.incb{background:var(--gd-l);color:var(--gd);font-size:10px;font-weight:700;padding:2px 5px;border-radius:3px}
+.fi{height:34px;border:1.5px solid var(--border);border-radius:7px;padding:0 10px;font-family:'Sora',sans-serif;font-size:12.5px;color:var(--ink);background:var(--sur);outline:none;transition:all .15s;width:100%}
+.fi:focus{border-color:var(--tl);box-shadow:0 0 0 3px rgba(31,122,122,.1)}
+select.fi{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238FA3B8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:26px}
+.fll{font-size:10px;font-weight:600;color:var(--slate);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.fg4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px}
+.mb14{margin-bottom:14px}.mb18{margin-bottom:18px}
+.kpi{background:var(--sur);border:1px solid var(--border);border-radius:11px;padding:16px;box-shadow:var(--sh0);position:relative;overflow:hidden}
+.kpi::after{content:'';position:absolute;top:0;right:0;width:52px;height:52px;border-radius:0 11px 0 52px;opacity:.08}
+.kpi.kt::after{background:var(--tl)}.kpi.kg::after{background:var(--gd)}.kpi.kr::after{background:var(--rs)}.kpi.ks::after{background:var(--sg)}
+.k-ic{width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;margin-bottom:10px}
+.kpi.kt .k-ic{background:var(--tl-l)}.kpi.kg .k-ic{background:var(--gd-l)}.kpi.kr .k-ic{background:var(--rs-l)}.kpi.ks .k-ic{background:var(--sg-l)}
+.k-v{font-size:24px;font-weight:700;color:var(--ink);line-height:1}
+.k-l{font-size:11px;color:var(--mist);margin-top:3px}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(26,36,51,.45);z-index:200;align-items:center;justify-content:center}
+.modal-bg.on{display:flex}
+.modal{background:var(--sur);border-radius:12px;width:520px;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-hd{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.modal-ti{font-family:'Lora',serif;font-size:15px;font-weight:500;color:var(--ink)}
+.modal-x{font-size:18px;color:var(--mist);cursor:pointer;line-height:1}.modal-x:hover{color:var(--ink)}
+.modal-bd{padding:18px 20px;overflow-y:auto;flex:1}
+.modal-ft{padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;flex-shrink:0}
+.tag-box{background:var(--tl-xl);border:1px solid rgba(31,122,122,.2);border-radius:7px;padding:10px 14px;margin-bottom:10px;font-size:11.5px;color:var(--slate)}
+.tag-box strong{color:var(--tl)}
+.warn-box{background:var(--gd-l);border:1px solid rgba(184,130,26,.2);border-radius:7px;padding:10px 14px;margin-bottom:10px;font-size:11.5px;color:var(--slate)}
+.warn-box strong{color:var(--gd)}
+.steps{display:flex;align-items:center;margin-bottom:18px}
+.stn{display:flex;flex-direction:column;align-items:center}
+.stb{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;border:2px solid var(--border);background:var(--sur);color:var(--mist)}
+.stn.dn .stb{background:var(--tl);border-color:var(--tl);color:#fff}
+.stn.ac .stb{background:var(--ink);border-color:var(--ink);color:#fff}
+.stl{font-size:9.5px;color:var(--mist);margin-top:3px;white-space:nowrap}
+.stn.dn .stl{color:var(--tl)}.stn.ac .stl{color:var(--ink);font-weight:600}
+.stw{flex:1;height:2px;background:var(--border);margin:0 -1px;padding-bottom:14px}.stw.dn{background:var(--tl)}
+.lt{width:100%;border-collapse:collapse}
+.lt th{font-size:9.5px;font-weight:600;color:var(--mist);text-transform:uppercase;padding:7px 8px;border-bottom:2px solid var(--border);text-align:left;background:var(--sur2)}
+.lt td{padding:7px 8px;border-bottom:1px solid var(--border-lt);vertical-align:middle;font-size:12px}
+.lt tr:last-child td{border-bottom:none}.lt tr:hover td{background:#FAFCFD}
+.lii{border:1.5px solid transparent;background:transparent;font-family:'Sora',sans-serif;font-size:12px;color:var(--ink);border-radius:5px;padding:3px 6px;width:100%;outline:none}
+.lii:focus{border-color:var(--tl);background:var(--tl-xl)}
+.tg{position:relative;display:inline-block;width:36px;height:20px}
+.tg input{opacity:0;width:0;height:0}
+.tg-sl{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:var(--border);border-radius:20px;transition:.3s}
+.tg-sl:before{position:absolute;content:"";height:14px;width:14px;left:3px;bottom:3px;background:white;border-radius:50%;transition:.3s}
+.tg input:checked+.tg-sl{background:var(--tl)}
+.tg input:checked+.tg-sl:before{transform:translateX(16px)}
+code{background:var(--sur2);border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-size:11px;font-family:monospace;color:var(--ink)}
+.section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.section-title{font-family:'Lora',serif;font-size:16px;font-weight:500;color:var(--ink)}
+.tb-search{display:flex;align-items:center;gap:6px;height:32px;padding:0 10px;font-size:12px;color:var(--mist);border:1.5px solid var(--border);border-radius:6px;background:var(--sur2);width:210px}
+.tb-search input{background:transparent;border:none;outline:none;font-family:'Sora',sans-serif;font-size:12px;color:var(--ink);width:100%}
+.hito-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border-lt)}
+.hito-row:last-child{border-bottom:none}
+.prog{height:4px;background:var(--border);border-radius:4px;overflow:hidden;flex:1;margin:0 10px}
+.progf{height:100%;border-radius:4px}
+.rff{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;background:var(--sur2);padding:12px 14px;border-radius:8px;margin-bottom:14px}
+.rfg{display:flex;flex-direction:column;gap:3px;min-width:120px}
+.rfl{font-size:10px;font-weight:600;color:var(--slate);text-transform:uppercase;letter-spacing:.05em}
+.rfi{height:30px;border:1.5px solid var(--border);border-radius:6px;padding:0 8px;font-family:'Sora',sans-serif;font-size:12px;color:var(--ink);background:var(--sur)}
+.ss{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:14px}
+.sb2{background:var(--sur);border:1px solid var(--border);border-radius:9px;padding:12px 14px;box-shadow:var(--sh0)}
+.sv{font-size:22px;font-weight:700;color:var(--ink);line-height:1}
+.sl{font-size:10.5px;color:var(--mist);margin-top:3px}
+.iva-box{background:var(--vi-l);border:1px solid rgba(91,79,207,.18);border-radius:7px;padding:9px 13px;margin:8px 0;font-size:11.5px;color:var(--slate)}
+.calc-fi{background:var(--tl-l);border:1.5px solid rgba(31,122,122,.3);border-radius:7px;padding:6px 10px;font-size:13px;font-weight:700;color:var(--tl);text-align:right}
+.mg-tbl{width:100%;border-collapse:collapse}
+.mg-tbl th{font-size:9.5px;font-weight:600;color:var(--mist);text-transform:uppercase;padding:6px 8px;border-bottom:2px solid var(--border);background:var(--sur2)}
+.mg-tbl td{padding:7px 8px;border-bottom:1px solid var(--border-lt);font-size:12px}
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<div class="nav">
+  <div class="nav-brand">Cost<span>ly</span></div>
+  <div class="nav-tabs">
+    <span class="nav-grp">Catálogos</span>
+    <div class="nav-tab on" onclick="show('clientes',this)">Clientes</div>
+    <div class="nav-tab" onclick="show('productos',this)">Productos</div>
+    <div class="nav-tab" onclick="show('empresa',this)">Empresa</div>
+    <span class="nav-grp">Operaciones</span>
+    <div class="nav-tab" onclick="show('importaciones',this)">Importaciones</div>
+    <div class="nav-tab" onclick="show('seguimiento',this)">Seguimiento</div>
+    <div class="nav-tab" onclick="show('aduana',this)">Aduana</div>
+    <span class="nav-grp">Finanzas</span>
+    <div class="nav-tab" onclick="show('costeo',this)">Costeo</div>
+    <div class="nav-tab" onclick="show('pagos',this)">Pagos</div>
+    <span class="nav-grp">Admin</span>
+    <div class="nav-tab" onclick="show('usuarios',this)">Usuarios</div>
+    <div class="nav-tab" onclick="show('auditoria',this)">Auditoría</div>
+    <div class="nav-tab" onclick="show('reportes',this)">Reportes</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     CLIENTES
+══════════════════════════════════════ -->
+<div class="content on" id="s-clientes">
+  <div class="section-hdr mb14">
+    <div>
+      <div class="section-title">Clientes</div>
+      <div style="font-size:11px;color:var(--mist)">Catálogos › Clientes</div>
+    </div>
+    <button class="btn btn-t btn-sm" onclick="document.getElementById('m-cliente').classList.add('on')">＋ Nuevo cliente</button>
+  </div>
+  <div class="card">
+    <div class="c-hd">
+      <div class="c-ti">🧑‍💼 Clientes</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div class="tb-search"><span>🔍</span><input placeholder="Buscar cliente..."></div>
+        <select class="rfi" style="height:32px"><option>Todos los tipos</option><option>Nacional</option><option>Exportación</option><option>Interno</option></select>
+      </div>
+    </div>
+    <table class="tbl">
+      <thead><tr><th>Nombre</th><th>Cédula/RUC</th><th>Tipo</th><th>Moneda</th><th>Descuento</th><th>Email</th><th>Estado</th><th></th></tr></thead>
+      <tbody>
+        <tr><td><strong>Comercial XYZ S.A.</strong></td><td style="color:var(--mist)">3-101-456789</td><td><span class="pill pb">Nacional</span></td><td>CRC</td><td>5%</td><td style="color:var(--tl)">xyzsa@email.com</td><td><span class="pill pg">Activo</span></td><td><div style="display:flex;gap:4px"><button class="btn btn-o btn-sm">✏️</button><button class="btn btn-r btn-sm">🗑</button></div></td></tr>
+        <tr><td><strong>Dist. Beta Ltda.</strong></td><td style="color:var(--mist)">3-102-112233</td><td><span class="pill pv">Exportación</span></td><td>USD</td><td>—</td><td style="color:var(--tl)">beta@dist.com</td><td><span class="pill pg">Activo</span></td><td><div style="display:flex;gap:4px"><button class="btn btn-o btn-sm">✏️</button><button class="btn btn-r btn-sm">🗑</button></div></td></tr>
+        <tr><td><strong>Corp Gamma</strong></td><td style="color:var(--mist)">—</td><td><span class="pill pgr">Interno</span></td><td>USD</td><td>10%</td><td style="color:var(--mist)">—</td><td><span class="pill pr">Inactivo</span></td><td><div style="display:flex;gap:4px"><button class="btn btn-o btn-sm">✏️</button><button class="btn btn-r btn-sm">🗑</button></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <!-- Modal cliente -->
+  <div class="modal-bg" id="m-cliente">
+    <div class="modal">
+      <div class="modal-hd"><div class="modal-ti">Nuevo cliente</div><span class="modal-x" onclick="document.getElementById('m-cliente').classList.remove('on')">×</span></div>
+      <div class="modal-bd">
+        <div class="fg2 mb14">
+          <div><div class="fll">Nombre / Razón social *</div><input class="fi" placeholder="Ej: Distribuidora XYZ S.A."></div>
+          <div><div class="fll">Cédula / RUC</div><input class="fi" placeholder="3-101-123456"></div>
+        </div>
+        <div class="fg3 mb14">
+          <div><div class="fll">Tipo *</div><select class="fi"><option>Nacional</option><option>Exportación</option><option>Interno</option></select></div>
+          <div><div class="fll">Moneda preferida *</div><select class="fi"><option>CRC — Colón</option><option>USD — Dólar</option><option>EUR — Euro</option></select></div>
+          <div><div class="fll">Descuento %</div><input class="fi" placeholder="0" type="number"></div>
+        </div>
+        <div class="mb14"><div class="fll">Email de contacto</div><input class="fi" placeholder="contacto@empresa.com" type="email"></div>
+      </div>
+      <div class="modal-ft"><button class="btn btn-o" onclick="document.getElementById('m-cliente').classList.remove('on')">Cancelar</button><button class="btn btn-t">Crear cliente</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PRODUCTOS
+══════════════════════════════════════ -->
+<div class="content" id="s-productos">
+  <div class="section-hdr mb14">
+    <div><div class="section-title">Productos</div><div style="font-size:11px;color:var(--mist)">Catálogos › Productos</div></div>
+    <button class="btn btn-t btn-sm" onclick="document.getElementById('m-producto').classList.add('on')">＋ Nuevo producto</button>
+  </div>
+  <div class="card">
+    <div class="c-hd">
+      <div class="c-ti">📦 Catálogo de productos</div>
+      <div class="tb-search"><span>🔍</span><input placeholder="Buscar SKU o nombre..."></div>
+    </div>
+    <table class="tbl">
+      <thead><tr><th>SKU</th><th>Nombre</th><th>Categoría</th><th>Arancel</th><th>Modo volumen</th><th>Permiso</th><th>Estado</th><th></th></tr></thead>
+      <tbody>
+        <tr><td><code>MTR-HX200</code></td><td><strong>Motor HX-200</strong></td><td style="color:var(--mist)">Motores</td><td>1%</td><td><span class="pill pb">Unitario</span></td><td style="color:var(--mist)">—</td><td><span class="pill pg">Activo</span></td><td><div style="display:flex;gap:4px"><button class="btn btn-o btn-sm">✏️</button><button class="btn btn-r btn-sm">🗑</button></div></td></tr>
+        <tr><td><code>CMP-CR45</code></td><td><strong>Compresor CR-45A</strong><div style="font-size:10px;color:var(--am)">⚠ MINAE requerido</div></td><td style="color:var(--mist)">Compresores</td><td>5%</td><td><span class="pill py">Por caja</span></td><td><span class="pill py">MINAE</span></td><td><span class="pill pg">Activo</span></td><td><div style="display:flex;gap:4px"><button class="btn btn-o btn-sm">✏️</button><button class="btn btn-r btn-sm">🗑</button></div></td></tr>
+        <tr><td><code>BND-RT08</code></td><td><strong>Banda RT-08</strong></td><td style="color:var(--mist)">Bandas</td><td>0%</td><td><span class="pill pgr">Sin volumen</span></td><td style="color:var(--mist)">—</td><td><span class="pill pg">Activo</span></td><td><div style="display:flex;gap:4px"><button class="btn btn-o btn-sm">✏️</button><button class="btn btn-r btn-sm">🗑</button></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <!-- Modal producto -->
+  <div class="modal-bg" id="m-producto">
+    <div class="modal" style="width:580px">
+      <div class="modal-hd"><div class="modal-ti">Nuevo producto</div><span class="modal-x" onclick="document.getElementById('m-producto').classList.remove('on')">×</span></div>
+      <div class="modal-bd">
+        <div style="font-size:10px;font-weight:600;color:var(--slate);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Datos básicos</div>
+        <div class="fg2 mb14">
+          <div><div class="fll">SKU *</div><input class="fi" placeholder="Ej: MTR-HX200"></div>
+          <div><div class="fll">Categoría</div><input class="fi" placeholder="Ej: Motores"></div>
+        </div>
+        <div class="mb14"><div class="fll">Nombre *</div><input class="fi" placeholder="Nombre del producto"></div>
+        <div class="fg3 mb14">
+          <div><div class="fll">Cód. arancelario</div><input class="fi" placeholder="8501.10.00"></div>
+          <div><div class="fll">Arancel %</div><input class="fi" type="number" placeholder="0"></div>
+          <div><div class="fll">Peso kg</div><input class="fi" type="number" placeholder="0.000"></div>
+        </div>
+        <div style="font-size:10px;font-weight:600;color:var(--slate);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;padding-top:8px;border-top:1px solid var(--border-lt)">Volumen y empaque</div>
+        <div class="mb14"><div class="fll">Modo de volumen *</div><select class="fi" id="modo-vol" onchange="toggleModo()"><option value="unitario">Unitario — volumen × cantidad</option><option value="por_caja">Por caja — volumen caja × cajas</option><option value="sin_volumen">Sin volumen — solo peso</option></select></div>
+        <div id="vol-unitario" class="mb14"><div class="fll">Volumen m³</div><input class="fi" type="number" placeholder="0.0000"></div>
+        <div id="vol-caja" class="mb14" style="display:none">
+          <div class="fg2">
+            <div><div class="fll">Unidades por caja</div><input class="fi" type="number" placeholder="0"></div>
+            <div><div class="fll">Volumen caja m³</div><input class="fi" type="number" placeholder="0.0000"></div>
+          </div>
+        </div>
+        <div style="font-size:10px;font-weight:600;color:var(--slate);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;padding-top:8px;border-top:1px solid var(--border-lt)">Permisos especiales</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <label class="tg"><input type="checkbox" id="req-perm" onchange="togglePerm()"><span class="tg-sl"></span></label>
+          <span style="font-size:12.5px;color:var(--ink)">Requiere permiso de importación</span>
+        </div>
+        <div id="perm-tipo" style="display:none"><div class="fll">Tipo de permiso</div><select class="fi"><option>MINAE</option><option>SENASA</option><option>MINSA</option><option>SUTEL</option><option>Otro</option></select></div>
+      </div>
+      <div class="modal-ft"><button class="btn btn-o" onclick="document.getElementById('m-producto').classList.remove('on')">Cancelar</button><button class="btn btn-t">Crear producto</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     EMPRESA
+══════════════════════════════════════ -->
+<div class="content" id="s-empresa">
+  <div class="section-hdr mb14">
+    <div><div class="section-title">Datos de la Empresa</div><div style="font-size:11px;color:var(--mist)">Admin › Empresa</div></div>
+    <button class="btn btn-t btn-sm">💾 Guardar cambios</button>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="c-hd"><div class="c-ti">🏢 Información general</div></div>
+      <div class="c-bd">
+        <div class="fg2 mb14">
+          <div><div class="fll">Nombre / Razón social *</div><input class="fi" value="Distribuidora de Servicios Vadibarot Ltda."></div>
+          <div><div class="fll">RUC / Cédula jurídica</div><input class="fi" value="3-102-888888"></div>
+        </div>
+        <div class="fg3 mb14">
+          <div><div class="fll">Moneda base</div><select class="fi"><option>USD</option><option>CRC</option><option>EUR</option></select></div>
+          <div><div class="fll">IVA %</div><input class="fi" value="13" type="number"></div>
+          <div><div class="fll">IVI %</div><input class="fi" value="13" type="number"></div>
+        </div>
+        <div class="fg2 mb14">
+          <div><div class="fll">Margen default %</div><input class="fi" value="35" type="number"></div>
+          <div><div class="fll">Fuente TC</div><select class="fi"><option>BCCR</option><option>Manual</option><option>Hacienda</option></select></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="c-hd"><div class="c-ti">📋 Información de contacto</div></div>
+      <div class="c-bd">
+        <div class="mb14"><div class="fll">Email</div><input class="fi" value="info@vadibarot.com" type="email"></div>
+        <div class="mb14"><div class="fll">Teléfono</div><input class="fi" value="+506 2222-3333"></div>
+        <div class="mb14"><div class="fll">Dirección</div><input class="fi" value="San José, Costa Rica"></div>
+        <div class="mb14"><div class="fll">Logo (URL)</div><input class="fi" placeholder="https://..."></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     IMPORTACIONES
+══════════════════════════════════════ -->
+<div class="content" id="s-importaciones">
+  <div class="section-hdr mb14">
+    <div><div class="section-title">Importaciones</div><div style="font-size:11px;color:var(--mist)">Operaciones › Importaciones</div></div>
+    <div style="display:flex;gap:8px">
+      <select class="rfi" style="height:32px"><option>Todos los estados</option><option>En proceso</option><option>En tránsito</option><option>En aduana</option><option>Cerrada</option></select>
+    </div>
+  </div>
+  <div class="card">
+    <div class="c-hd">
+      <div class="c-ti">🚢 Importaciones consolidadas</div>
+      <span style="font-size:11.5px;color:var(--mist)">4 importaciones activas</span>
+    </div>
+    <table class="tbl">
+      <thead><tr><th></th><th>Código</th><th>Pedidos agrupados</th><th>Pedidos</th><th>Contenedor</th><th>Estado</th><th>Fecha unión</th><th>Costeo</th><th></th></tr></thead>
+      <tbody>
+        <tr>
+          <td style="padding-left:12px"><span class="s3 s3r"></span></td>
+          <td><strong>IMP-2026-004</strong><div style="font-size:10px;color:var(--tl)">PED-026 + 027 + 028</div></td>
+          <td><span class="ic">🇨🇳 Shenzhen</span> <span class="ic">🇺🇸 ProParts</span></td>
+          <td style="text-align:center;font-weight:600">3</td>
+          <td style="font-size:11px;color:var(--mist)">SZTU-2301920</td>
+          <td><span class="pill pb">En tránsito</span></td>
+          <td style="font-size:11px;color:var(--mist)">18 jul 2026</td>
+          <td><span class="pill py">Borrador</span></td>
+          <td><button class="btn btn-o btn-sm">Ver detalle</button></td>
+        </tr>
+        <tr>
+          <td style="padding-left:12px"><span class="s3 s3y"></span></td>
+          <td><strong>IMP-2026-003</strong><div style="font-size:10px;color:var(--tl)">PED-021</div></td>
+          <td><span class="ic">🇨🇳 Guangzhou</span></td>
+          <td style="text-align:center;font-weight:600">1</td>
+          <td style="font-size:11px;color:var(--mist)">GZHU-4412301</td>
+          <td><span class="pill py">En aduana</span></td>
+          <td style="font-size:11px;color:var(--mist)">05 jun 2026</td>
+          <td><span class="pill pg">Aprobado</span></td>
+          <td><button class="btn btn-o btn-sm">Ver detalle</button></td>
+        </tr>
+        <tr>
+          <td style="padding-left:12px"><span class="s3 s3g"></span></td>
+          <td><strong>IMP-2026-002</strong><div style="font-size:10px;color:var(--tl)">PED-018</div></td>
+          <td><span class="ic">🇨🇳 Shenzhen</span></td>
+          <td style="text-align:center;font-weight:600">1</td>
+          <td style="font-size:11px;color:var(--mist)">SZTU-2301845</td>
+          <td><span class="pill pg">En bodega</span></td>
+          <td style="font-size:11px;color:var(--mist)">15 may 2026</td>
+          <td><span class="pill pg">Aprobado</span></td>
+          <td><button class="btn btn-o btn-sm">Ver detalle</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SEGUIMIENTO
+══════════════════════════════════════ -->
+<div class="content" id="s-seguimiento">
+  <div class="section-hdr mb14">
+    <div><div class="section-title">Seguimiento de Hitos</div><div style="font-size:11px;color:var(--mist)">Operaciones › Seguimiento</div></div>
+    <div style="display:flex;gap:8px">
+      <select class="rfi" style="height:32px"><option>Todos los pedidos</option><option>PED-2026-018</option><option>PED-2026-019</option></select>
+      <select class="rfi" style="height:32px"><option>Todos los estados</option><option>Pendiente</option><option>En proceso</option><option>Completado</option><option>Vencido</option></select>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="c-hd"><div class="c-ti">🎯 PED-2026-018 — Shenzhen Tech</div><span class="pill pb">En tránsito</span></div>
+      <div class="c-bd" style="padding:0 16px">
+        <div class="hito-row">
+          <div style="display:flex;align-items:center;gap:8px;flex:1">
+            <span class="s3 s3g"></span>
+            <div>
+              <div style="font-size:12px;font-weight:500">Confirmación de proveedor</div>
+              <div style="font-size:10.5px;color:var(--mist)">Real: 12 mar 2026</div>
+            </div>
+          </div>
+          <span class="pill pg">Completado</span>
+        </div>
+        <div class="hito-row">
+          <div style="display:flex;align-items:center;gap:8px;flex:1">
+            <span class="s3 s3g"></span>
+            <div>
+              <div style="font-size:12px;font-weight:500">Pago de señal (30%)</div>
+              <div style="font-size:10.5px;color:var(--mist)">Real: 15 mar 2026</div>
+            </div>
+          </div>
+          <span class="pill pg">Completado</span>
+        </div>
+        <div class="hito-row">
+          <div style="display:flex;align-items:center;gap:8px;flex:1">
+            <span class="s3 s3y"></span>
+            <div>
+              <div style="font-size:12px;font-weight:500">Listo en fábrica</div>
+              <div style="font-size:10.5px;color:var(--am)">Plan: 20 abr 2026 — En 6 días</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="pill py">En proceso</span>
+            <button class="btn btn-o btn-sm">✓ Completar</button>
+          </div>
+        </div>
+        <div class="hito-row">
+          <div style="display:flex;align-items:center;gap:8px;flex:1">
+            <span class="s3" style="background:var(--border)"></span>
+            <div>
+              <div style="font-size:12px;color:var(--mist)">Embarque</div>
+              <div style="font-size:10.5px;color:var(--mist)">Plan: 25 abr 2026</div>
+            </div>
+          </div>
+          <span class="pill pgr">Pendiente</span>
+        </div>
+        <div class="hito-row">
+          <div style="display:flex;align-items:center;gap:8px;flex:1">
+            <span class="s3" style="background:var(--border)"></span>
+            <div>
+              <div style="font-size:12px;color:var(--mist)">Llegada CR</div>
+              <div style="font-size:10.5px;color:var(--mist)">Plan: 05 jun 2026</div>
+            </div>
+          </div>
+          <span class="pill pgr">Pendiente</span>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="card">
+        <div class="c-hd"><div class="c-ti">🎯 PED-2026-019 — Sino Import</div><span class="pill pv">En producción</span></div>
+        <div class="c-bd" style="padding:0 16px">
+          <div class="hito-row"><div style="display:flex;align-items:center;gap:8px;flex:1"><span class="s3 s3g"></span><div><div style="font-size:12px;font-weight:500">Confirmación</div></div></div><span class="pill pg">Completado</span></div>
+          <div class="hito-row"><div style="display:flex;align-items:center;gap:8px;flex:1"><span class="s3 s3r"></span><div><div style="font-size:12px;font-weight:500">Pago de señal</div><div style="font-size:10.5px;color:var(--rs)">Vencido — 10 mar 2026</div></div></div><span class="pill pr">Vencido</span></div>
+          <div class="hito-row"><div style="display:flex;align-items:center;gap:8px;flex:1"><span class="s3" style="background:var(--border)"></span><div><div style="font-size:12px;color:var(--mist)">Listo en fábrica</div><div style="font-size:10.5px;color:var(--mist)">Plan: 15 may 2026</div></div></div><span class="pill pgr">Pendiente</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="c-hd"><div class="c-ti">➕ Agregar hito</div></div>
+        <div class="c-bd">
+          <div class="fg2 mb14">
+            <div><div class="fll">Pedido</div><select class="fi"><option>PED-2026-018</option><option>PED-2026-019</option></select></div>
+            <div><div class="fll">Tipo de hito</div><select class="fi"><option>Confirmación</option><option>Pago señal</option><option>Producción</option><option>Embarque</option><option>Llegada CR</option><option>Retiro aduana</option><option>Personalizado</option></select></div>
+          </div>
+          <div class="fg2 mb14">
+            <div><div class="fll">Fecha plan</div><input class="fi" type="date"></div>
+            <div><div class="fll">Responsable</div><select class="fi"><option>M. Alvarado</option><option>C. Méndez</option></select></div>
+          </div>
+          <button class="btn btn-t btn-sm" style="width:100%;justify-content:center">Agregar hito</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     ADUANA
+══════════════════════════════════════ -->
+<div class="content" id="s-aduana">
+  <div class="section-hdr mb14">
+    <div><div class="section-title">Trámite Aduanero</div><div style="font-size:11px;color:var(--mist)">Operaciones › Aduana</div></div>
+  </div>
+  <div class="g2">
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="card">
+        <div class="c-hd"><div class="c-ti">🏛 IMP-2026-004 — Trámite DUA</div><span class="pill py">En proceso</span></div>
+        <div class="c-bd">
+          <div class="fg2 mb14">
+            <div><div class="fll">DUA número</div><input class="fi" value="DUA-2026-04-001"></div>
+            <div><div class="fll">Fecha DUA</div><input class="fi" type="date" value="2026-03-15"></div>
+          </div>
+          <div class="fg2 mb14">
+            <div><div class="fll">TC Hacienda (₡)</div><input class="fi" value="518.40" type="number"></div>
+            <div><div class="fll">Almacén fiscal</div><input class="fi" value="Almacén Heredia S.A."></div>
+          </div>
+          <div class="fg2 mb14">
+            <div><div class="fll">Valor CIF CR</div><div class="calc-fi">$12,240.00</div></div>
+            <div><div class="fll">Total tributos</div><div class="calc-fi">$1,651.20</div></div>
+          </div>
+          <div class="mb14">
+            <div class="fll">Agente aduanero</div>
+            <select class="fi"><option>Agentes XYZ S.A.</option><option>— Sin agente —</option></select>
+          </div>
+          <div class="fg2">
+            <div><div class="fll">Estado del trámite</div><select class="fi"><option>Pendiente</option><option>En proceso</option><option>Aprobado</option><option>Objetado</option></select></div>
+            <div style="display:flex;align-items:flex-end"><button class="btn btn-t" style="width:100%;justify-content:center">💾 Guardar</button></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="c-hd"><div class="c-ti">📜 Permisos especiales</div><button class="btn btn-o btn-sm">＋ Agregar</button></div>
+        <table class="tbl">
+          <thead><tr><th>Producto</th><th>Tipo</th><th>Estado</th><th>Vence</th></tr></thead>
+          <tbody>
+            <tr><td>Compresor CR-45A</td><td><span class="pill py">MINAE</span></td><td><span class="pill pb">En trámite</span></td><td style="font-size:11px;color:var(--mist)">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="c-hd"><div class="c-ti">📋 Otras importaciones en aduana</div></div>
+      <table class="tbl">
+        <thead><tr><th></th><th>Código</th><th>DUA</th><th>Estado</th></tr></thead>
+        <tbody>
+          <tr><td><span class="s3 s3r"></span></td><td><strong>IMP-2026-003</strong></td><td style="font-size:11px">DUA-2026-03-001</td><td><span class="pill pr">Objetado</span></td></tr>
+          <tr><td><span class="s3 s3y"></span></td><td><strong>IMP-2026-004</strong></td><td style="font-size:11px">DUA-2026-04-001</td><td><span class="pill py">En proceso</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     COSTEO
+══════════════════════════════════════ -->
+<div class="content" id="s-costeo">
+  <div class="section-hdr mb14">
+    <div><div class="section-title">Módulo de Costeo</div><div style="font-size:11px;color:var(--mist)">IMP-2026-004 · PED-026+027+028</div></div>
+    <div style="display:flex;gap:8px"><button class="btn btn-o btn-sm">← Volver</button><button class="btn btn-t btn-sm">✓ Aprobar costeo</button></div>
+  </div>
+  <div class="steps mb18">
+    <div class="stn dn"><div class="stb">✓</div><div class="stl">Líneas</div></div><div class="stw dn"></div>
+    <div class="stn ac"><div class="stb">2</div><div class="stl">Transporte</div></div><div class="stw"></div>
+    <div class="stn"><div class="stb">3</div><div class="stl">Margen</div></div><div class="stw"></div>
+    <div class="stn"><div class="stb">4</div><div class="stl">Confirmar</div></div>
+  </div>
+  <div class="g2">
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="card">
+        <div class="c-hd"><div class="c-ti">🚢 Transporte y aduana</div></div>
+        <div class="c-bd">
+          <div class="fg4 mb14">
+            <div><div class="fll">Flete marítimo</div><input class="fi" value="680" type="number"></div>
+            <div><div class="fll">Seguro</div><input class="fi" value="95" type="number"></div>
+            <div><div class="fll">Arancel %</div><input class="fi" value="1" type="number"></div>
+            <div><div class="fll">Agente aduana</div><input class="fi" value="120" type="number"></div>
+          </div>
+          <div class="fg4 mb14">
+            <div><div class="fll">Flete CR</div><input class="fi" value="95" type="number"></div>
+            <div><div class="fll">ISC %</div><input class="fi" value="0" type="number"></div>
+            <div><div class="fll">TC USD/CRC ↻</div><input class="fi" value="518.40" type="number"></div>
+            <div><div class="fll">Otros aduana</div><input class="fi" value="0" type="number"></div>
+          </div>
+          <div class="fg2 mb14">
+            <div><div class="fll">Bodega / almacenaje</div><input class="fi" value="0" type="number"></div>
+            <div><div class="fll">Otros costos CR</div><input class="fi" value="0" type="number"></div>
+          </div>
+          <div class="iva-box">
+            <strong style="color:var(--vi)">💼 IVA importación D-150 (referencia, no va al costo):</strong>
+            <span style="font-weight:700;color:var(--gd);font-size:13px;margin-left:8px">$1,408.00</span>
+            <span style="background:#F1F3F6;border:1px solid var(--border);color:var(--mist);font-size:9px;padding:2px 5px;border-radius:3px;font-weight:600;margin-left:6px">NO VA AL COSTO</span>
+          </div>
+          <div style="display:flex;justify-content:flex-end;margin-top:10px">
+            <div style="background:var(--sur2);border:1px solid var(--border);border-radius:6px;padding:8px 14px;display:flex;align-items:center;gap:12px">
+              <span style="font-size:11px;color:var(--mist)">Costo total CR</span>
+              <span style="font-size:16px;font-weight:700;color:var(--ink)">$11,156.00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="c-hd">
+          <div class="c-ti">💰 Margen y precio de venta</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:11px;color:var(--slate);font-weight:600">Margen global:</span>
+            <input style="width:60px;height:30px;border:1.5px solid var(--border);border-radius:6px;text-align:center;font-size:12px;font-family:'Sora',sans-serif;outline:none" value="35">
+            <span style="font-size:11px;color:var(--mist)">%</span>
+            <div style="display:flex;align-items:center;gap:6px;background:var(--tl-l);border:1px solid rgba(31,122,122,.2);border-radius:6px;padding:4px 8px">
+              <label class="tg"><input type="checkbox"><span class="tg-sl"></span></label>
+              <span style="font-size:11px;font-weight:600;color:var(--tl)">Con IVI</span>
+            </div>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="mg-tbl">
+            <thead><tr><th>Producto</th><th>Costo orig.</th><th>Dist. log.</th><th>Costo unit CR</th><th>Margen %</th><th>P.Venta unit.</th><th>P.Venta total</th><th>Utilidad</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Motor HX-200</strong><div style="font-size:10px;color:var(--mist)">×5 uds</div></td><td>$2,400</td><td>$348</td><td style="font-weight:600">$549.60</td><td><input style="width:50px;border:1.5px solid var(--border);border-radius:5px;text-align:center;font-size:11px;padding:2px;outline:none;font-family:'Sora',sans-serif" value="35">%</td><td style="font-weight:600;color:var(--gd)">$741.96</td><td style="font-weight:600;color:var(--tl)">$3,709.80</td><td style="color:var(--sg)">$960.00</td></tr>
+              <tr><td><strong>Termostato TDX-4</strong><div style="font-size:10px;color:var(--mist)">×15 uds</div></td><td>$720</td><td>$104</td><td style="font-weight:600">$54.93</td><td><input style="width:50px;border:1.5px solid var(--border);border-radius:5px;text-align:center;font-size:11px;padding:2px;outline:none;font-family:'Sora',sans-serif" value="35">%</td><td style="font-weight:600;color:var(--gd)">$74.16</td><td style="font-weight:600;color:var(--tl)">$1,112.40</td><td style="color:var(--sg)">$288.00</td></tr>
+              <tr><td><strong>Compresor CR-45A</strong><div style="font-size:10px;color:var(--am)">⚠ MINAE · ×3 uds</div></td><td>$3,300</td><td>$479</td><td style="font-weight:600">$1,259.67</td><td><input style="width:50px;border:1.5px solid var(--border);border-radius:5px;text-align:center;font-size:11px;padding:2px;outline:none;font-family:'Sora',sans-serif" value="40">%</td><td style="font-weight:600;color:var(--gd)">$1,763.54</td><td style="font-weight:600;color:var(--tl)">$5,290.62</td><td style="color:var(--sg)">$1,512.00</td></tr>
+            </tbody>
+            <tfoot><tr style="background:var(--sur2);font-weight:700"><td colspan="6" style="padding:8px;font-size:11px;color:var(--mist)">TOTALES</td><td style="padding:8px;color:var(--tl);font-size:13px">$10,112.82</td><td style="padding:8px;color:var(--sg)">$2,760</td></tr></tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="card">
+        <div class="c-hd"><div class="c-ti">📊 Resumen del costeo</div></div>
+        <div class="c-bd" style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border-lt)"><span style="font-size:12px;color:var(--mist)">Costo origen (FOB)</span><span style="font-weight:600">$10,058</span></div>
+          <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border-lt)"><span style="font-size:12px;color:var(--mist)">Flete + seguro</span><span style="font-weight:600">$775</span></div>
+          <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border-lt)"><span style="font-size:12px;color:var(--mist)">Valor CIF</span><span style="font-weight:600;color:var(--tl)">$10,833</span></div>
+          <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border-lt)"><span style="font-size:12px;color:var(--mist)">Arancel (1%)</span><span style="font-weight:600">$108</span></div>
+          <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border-lt)"><span style="font-size:12px;color:var(--mist)">Agente + flete CR</span><span style="font-weight:600">$215</span></div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-top:2px solid var(--border)"><span style="font-size:13px;font-weight:600">Costo total CR</span><span style="font-size:15px;font-weight:700;color:var(--ink)">$11,156</span></div>
+          <div style="background:var(--gd-l);border-radius:7px;padding:10px;margin-top:4px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:11px;color:var(--gd)">Precio venta total (35%)</span><span style="font-weight:700;color:var(--gd);font-size:13px">$10,112.82</span></div>
+            <div style="display:flex;justify-content:space-between"><span style="font-size:11px;color:var(--mist)">Utilidad bruta</span><span style="font-weight:600;color:var(--sg)">$2,760.00</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="c-hd"><div class="c-ti">💱 Tipo de cambio</div></div>
+        <div class="c-bd" style="display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--mist)">USD/CRC usado</span><span style="font-weight:600">₡518.40</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--mist)">Fuente</span><span class="pill pb">BCCR</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--mist)">Fecha</span><span style="font-size:12px">15 mar 2026</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PAGOS
+══════════════════════════════════════ -->
+<div class="content" id="s-pagos">
+  <div class="section-hdr mb14">
+    <div><div class="section-title">Pagos a Proveedores</div><div style="font-size:11px;color:var(--mist)">Finanzas › Pagos</div></div>
+    <button class="btn btn-t btn-sm" onclick="document.getElementById('m-pago').classList.add('on')">＋ Registrar pago</button>
+  </div>
+  <div class="ss mb14">
+    <div class="sb2"><div class="sv" style="color:var(--rs)">$46,280</div><div class="sl">Saldo pendiente</div></div>
+    <div class="sb2"><div class="sv" style="color:var(--am)">$18,340</div><div class="sl">Señales pagadas</div></div>
+    <div class="sb2"><div class="sv" style="color:var(--sg)">$92,600</div><div class="sl">Pagado completo</div></div>
+    <div class="sb2"><div class="sv" style="color:var(--rs)">3</div><div class="sl">Vencen en 7 días</div></div>
+    <div class="sb2"><div class="sv">$157k</div><div class="sl">Total comprometido</div></div>
+  </div>
+  <div class="card">
+    <div class="c-hd">
+      <div class="c-ti">💳 Pagos registrados</div>
+      <div style="display:flex;gap:8px">
+        <select class="rfi" style="height:32px"><option>Todos los estados</option><option>Programado</option><option>Confirmado</option></select>
+        <select class="rfi" style="height:32px"><option>Todos los proveedores</option></select>
+      </div>
+    </div>
+    <table class="tbl">
+      <thead><tr><th></th><th>Pedido</th><th>Proveedor</th><th>Tipo</th><th>Monto</th><th>Fecha pago</th><th>Fecha límite</th><th>Estado</th><th></th></tr></thead>
+      <tbody>
+        <tr><td style="padding-left:12px"><span class="s3 s3r"></span></td><td><strong>PED-2026-018</strong></td><td><span class="ic">🇨🇳 Shenzhen Tech</span></td><td><span class="incb">Saldo</span></td><td style="font-weight:600">$8,177</td><td style="color:var(--mist);font-size:11px">—</td><td style="color:var(--rs);font-weight:500;font-size:11.5px">HOY</td><td><span class="pill py">Programado</span></td><td><button class="btn btn-t btn-sm">✓ Confirmar</button></td></tr>
+        <tr><td style="padding-left:12px"><span class="s3 s3y"></span></td><td><strong>IMP-2026-004</strong></td><td><span class="ic">🇨🇳🇺🇸 3 proveedores</span></td><td><span class="incb">Señal</span></td><td style="font-weight:600">$4,519</td><td style="color:var(--mist);font-size:11px">—</td><td style="color:#92600A;font-weight:500;font-size:11.5px">En 3 días</td><td><span class="pill py">Programado</span></td><td><button class="btn btn-t btn-sm">✓ Confirmar</button></td></tr>
+        <tr><td style="padding-left:12px"><span class="s3 s3g"></span></td><td><strong>PED-2026-021</strong></td><td><span class="ic">🇨🇳 Guangzhou</span></td><td><span class="incb">Total</span></td><td style="font-weight:600">$16,524</td><td style="font-size:11px">28 feb 2026</td><td style="color:var(--sg);font-size:11px">✓ Completado</td><td><span class="pill pg">Confirmado</span></td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="modal-bg" id="m-pago">
+    <div class="modal">
+      <div class="modal-hd"><div class="modal-ti">Registrar pago</div><span class="modal-x" onclick="document.getElementById('m-pago').classList.remove('on')">×</span></div>
+      <div class="modal-bd">
+        <div class="fg2 mb14">
+          <div><div class="fll">Pedido *</div><select class="fi"><option>PED-2026-018</option><option>IMP-2026-004</option></select></div>
+          <div><div class="fll">Proveedor *</div><select class="fi"><option>Shenzhen Tech</option><option>Guangzhou Mach.</option></select></div>
+        </div>
+        <div class="fg3 mb14">
+          <div><div class="fll">Tipo *</div><select class="fi"><option>Señal</option><option>Saldo</option><option>Total</option><option>Anticipo</option><option>Devolución</option></select></div>
+          <div><div class="fll">Monto *</div><input class="fi" type="number" placeholder="0.00"></div>
+          <div><div class="fll">Moneda *</div><select class="fi"><option>USD</option><option>EUR</option><option>CRC</option></select></div>
+        </div>
+        <div class="fg2 mb14">
+          <div><div class="fll">Fecha de pago *</div><input class="fi" type="date"></div>
+          <div><div class="fll">Fecha límite</div><input class="fi" type="date"></div>
+        </div>
+        <div class="fg2 mb14">
+          <div><div class="fll">Método</div><select class="fi"><option>SWIFT</option><option>Transferencia local</option><option>Cheque</option></select></div>
+          <div><div class="fll">Referencia</div><input class="fi" placeholder="Nro. de transferencia"></div>
+        </div>
+        <div><div class="fll">URL comprobante</div><input class="fi" placeholder="https://drive.google.com/..."></div>
+      </div>
+      <div class="modal-ft"><button class="btn btn-o" onclick="document.getElementById('m-pago').classList.remove('on')">Cancelar</button><button class="btn btn-t">Registrar pago</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     USUARIOS
+══════════════════════════════════════ -->
+<div class="content" id="s-usuarios">
+  <div class="section-hdr mb14">
+    <div><div class="section-title">Usuarios del sistema</div><div style="font-size:11px;color:var(--mist)">Admin › Usuarios</div></div>
+    <button class="btn btn-t btn-sm" onclick="document.getElementById('m-usuario').classList.add('on')">＋ Nuevo usuario</button>
+  </div>
+  <div class="card">
+    <div class="c-hd"><div class="c-ti">👤 Usuarios</div><span style="font-size:11.5px;color:var(--mist)">3 usuarios activos</span></div>
+    <table class="tbl">
+      <thead><tr><th>Usuario</th><th>Email</th><th>Rol</th><th>Último acceso</th><th>Estado</th><th></th></tr></thead>
+      <tbody>
+        <tr><td><div style="display:flex;align-items:center;gap:8px"><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--tl),#0D4A4A);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#fff">MA</div><strong>María Alvarado</strong></div></td><td style="color:var(--tl);font-size:11.5px">m.alvarado@vadibarot.com</td><td><span class="pill pb">operador_sr</span></td><td style="font-size:11px;color:var(--mist)">hace 5 min</td><td><span class="pill pg">Activo</span></td><td><div style="display:flex;gap:4px"><button class="btn btn-o btn-sm">✏️</button><button class="btn btn-r btn-sm">🗑</button></div></td></tr>
+        <tr><td><div style="display:flex;align-items:center;gap:8px"><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--gd),#7A5010);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#fff">CM</div><strong>Carlos Méndez</strong></div></td><td style="color:var(--tl);font-size:11.5px">c.mendez@vadibarot.com</td><td><span class="pill pgr">consultas</span></td><td style="font-size:11px;color:var(--mist)">hace 2h</td><td><span class="pill pg">Activo</span></td><td><div style="display:flex;gap:4px"><button class="btn btn-o btn-sm">✏️</button><button class="btn btn-r btn-sm">🗑</button></div></td></tr>
+        <tr><td><div style="display:flex;align-items:center;gap:8px"><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--vi),#3A2B9A);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#fff">AD</div><strong>Administrador</strong></div></td><td style="color:var(--tl);font-size:11.5px">admin@vadibarot.com</td><td><span class="pill pv">admin</span></td><td style="font-size:11px;color:var(--mist)">hoy 08:00</td><td><span class="pill pg">Activo</span></td><td><div style="display:flex;gap:4px"><button class="btn btn-o btn-sm">✏️</button></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="modal-bg" id="m-usuario">
+    <div class="modal">
+      <div class="modal-hd"><div class="modal-ti">Nuevo usuario</div><span class="modal-x" onclick="document.getElementById('m-usuario').classList.remove('on')">×</span></div>
+      <div class="modal-bd">
+        <div class="mb14"><div class="fll">Nombre completo *</div><input class="fi" placeholder="Ej: María Alvarado"></div>
+        <div class="mb14"><div class="fll">Email *</div><input class="fi" type="email" placeholder="usuario@vadibarot.com"></div>
+        <div class="mb14"><div class="fll">Rol *</div><select class="fi"><option>consultas</option><option>operador</option><option>finanzas</option><option>operador_sr</option><option>admin</option></select></div>
+        <div class="warn-box"><strong>Password temporal:</strong> Se generará automáticamente. El usuario deberá cambiarlo en el primer ingreso.</div>
+      </div>
+      <div class="modal-ft"><button class="btn btn-o" onclick="document.getElementById('m-usuario').classList.remove('on')">Cancelar</button><button class="btn btn-t">Crear usuario</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     AUDITORÍA
+══════════════════════════════════════ -->
+<div class="content" id="s-auditoria">
+  <div class="section-hdr mb14">
+    <div><div class="section-title">Historial de Auditoría</div><div style="font-size:11px;color:var(--mist)">Admin › Auditoría</div></div>
+  </div>
+  <div class="rff mb14">
+    <div class="rfg"><div class="rfl">Entidad</div><select class="rfi"><option>Todas</option><option>pedido</option><option>proveedor</option><option>costeo</option><option>usuario</option></select></div>
+    <div class="rfg"><div class="rfl">Acción</div><select class="rfi"><option>Todas</option><option>INSERT</option><option>UPDATE</option><option>DELETE</option><option>LOGIN</option><option>EXPORT</option></select></div>
+    <div class="rfg"><div class="rfl">Usuario</div><select class="rfi"><option>Todos</option><option>M. Alvarado</option><option>C. Méndez</option></select></div>
+    <div class="rfg"><div class="rfl">Desde</div><input type="date" class="rfi"></div>
+    <div class="rfg"><div class="rfl">Hasta</div><input type="date" class="rfi"></div>
+    <button class="btn btn-t btn-sm" style="align-self:flex-end">Filtrar</button>
+  </div>
+  <div class="card">
+    <div class="c-hd"><div class="c-ti">🔍 Registros de auditoría</div><span style="font-size:11.5px;color:var(--mist)">128 registros</span></div>
+    <table class="tbl">
+      <thead><tr><th>Quién</th><th>Acción</th><th>Entidad</th><th>ID</th><th>Campo</th><th>Antes</th><th>Después</th><th>IP</th><th>Cuándo</th></tr></thead>
+      <tbody>
+        <tr><td><div style="display:flex;align-items:center;gap:6px"><div style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--tl),#0D4A4A);display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff">MA</div>M. Alvarado</div></td><td><span class="pill pb">UPDATE</span></td><td style="color:var(--mist);font-size:11px">pedido</td><td style="font-size:11px">#18</td><td style="font-size:11px;color:var(--mist)">estado</td><td style="font-size:11px;color:var(--mist)">embarcado</td><td style="font-size:11px;color:var(--tl);font-weight:500">en_transito</td><td style="font-size:10px;color:var(--mist)">192.168.1.1</td><td style="font-size:10.5px;color:var(--mist)">hace 2 min</td></tr>
+        <tr><td><div style="display:flex;align-items:center;gap:6px"><div style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--gd),#7A5010);display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff">CM</div>C. Méndez</div></td><td><span class="pill pg">INSERT</span></td><td style="color:var(--mist);font-size:11px">proveedor</td><td style="font-size:11px">#12</td><td style="font-size:11px;color:var(--mist)">—</td><td style="font-size:11px;color:var(--mist)">—</td><td style="font-size:11px;color:var(--tl)">Nuevo proveedor</td><td style="font-size:10px;color:var(--mist)">192.168.1.2</td><td style="font-size:10.5px;color:var(--mist)">hace 1h</td></tr>
+        <tr><td><div style="display:flex;align-items:center;gap:6px"><div style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--vi),#3A2B9A);display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff">AD</div>Admin</div></td><td><span class="pill py">LOGIN</span></td><td style="color:var(--mist);font-size:11px">usuario</td><td style="font-size:11px">#1</td><td style="font-size:11px;color:var(--mist)">—</td><td style="font-size:11px;color:var(--mist)">—</td><td style="font-size:11px;color:var(--mist)">—</td><td style="font-size:10px;color:var(--mist)">192.168.1.5</td><td style="font-size:10.5px;color:var(--mist)">hoy 08:00</td></tr>
+        <tr><td><div style="display:flex;align-items:center;gap:6px"><div style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--tl),#0D4A4A);display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff">MA</div>M. Alvarado</div></td><td><span class="pill pr">DELETE</span></td><td style="color:var(--mist);font-size:11px">documento</td><td style="font-size:11px">#44</td><td style="font-size:11px;color:var(--mist)">—</td><td style="font-size:11px;color:var(--rs)">BL_antiguo.pdf</td><td style="font-size:11px;color:var(--mist)">—</td><td style="font-size:10px;color:var(--mist)">192.168.1.1</td><td style="font-size:10.5px;color:var(--mist)">ayer 16:44</td></tr>
+      </tbody>
+    </table>
+    <div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:10px;border-top:1px solid var(--border-lt)">
+      <button class="btn btn-o btn-sm">‹ Ant.</button>
+      <span style="font-size:11px;color:var(--mist)">Página 1 de 13</span>
+      <button class="btn btn-o btn-sm">Sig. ›</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     REPORTES
+══════════════════════════════════════ -->
+<div class="content" id="s-reportes">
+  <div class="section-hdr mb14">
+    <div><div class="section-title">Reportes y Consultas</div><div style="font-size:11px;color:var(--mist)">Análisis › Reportes</div></div>
+    <button class="btn btn-o btn-sm">💾 Guardar config.</button>
+  </div>
+  <div class="g2 mb14">
+    <div class="card">
+      <div class="c-hd"><div class="c-ti">📊 Reportes predefinidos</div></div>
+      <div class="c-bd" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <button class="btn btn-o" style="justify-content:flex-start;font-size:11.5px" onclick="setReporte('R01 — Pedidos activos','r01')">📋 R01 Pedidos activos</button>
+        <button class="btn btn-o" style="justify-content:flex-start;font-size:11.5px" onclick="setReporte('R02 — Importaciones','r02')">🚢 R02 Importaciones</button>
+        <button class="btn btn-o" style="justify-content:flex-start;font-size:11.5px" onclick="setReporte('R03 — Costeos','r03')">💰 R03 Costeos</button>
+        <button class="btn btn-o" style="justify-content:flex-start;font-size:11.5px" onclick="setReporte('R04 — Pagos pendientes','r04')">💳 R04 Pagos pend.</button>
+        <button class="btn btn-o" style="justify-content:flex-start;font-size:11.5px" onclick="setReporte('R05 — Hitos vencidos','r05')">🎯 R05 Hitos vencidos</button>
+        <button class="btn btn-o" style="justify-content:flex-start;font-size:11.5px" onclick="setReporte('R07 — Top productos','r07')">📦 R07 Top productos</button>
+        <button class="btn btn-o" style="justify-content:flex-start;font-size:11.5px" onclick="setReporte('R09 — Permisos por vencer','r09')">📜 R09 Permisos</button>
+        <button class="btn btn-o" style="justify-content:flex-start;font-size:11.5px" onclick="setReporte('R11 — Utilidad por importación','r11')">📈 R11 Utilidad</button>
+        <button class="btn btn-t" style="justify-content:flex-start;font-size:11.5px;grid-column:1/-1" onclick="setReporte('Reporte Dinámico','dinamico')">⚙ Reporte dinámico</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="c-hd"><div class="c-ti">⚙ Configurar reporte</div></div>
+      <div class="c-bd">
+        <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:12px" id="rep-titulo">Seleccioná un reporte →</div>
+        <div id="rep-filtros" style="display:flex;flex-direction:column;gap:10px">
+          <div><div class="fll">Desde</div><input class="fi" type="date"></div>
+          <div><div class="fll">Hasta</div><input class="fi" type="date"></div>
+          <div><div class="fll">Estado</div><select class="fi"><option>Todos</option><option>Activos</option><option>Cerrados</option></select></div>
+          <div><div class="fll">Proveedor</div><select class="fi"><option>Todos</option><option>Shenzhen Tech</option></select></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:14px">
+          <button class="btn btn-t" style="flex:1;justify-content:center">▶ Generar</button>
+          <button class="btn btn-o btn-sm">📊 Excel</button>
+          <button class="btn btn-o btn-sm">📄 PDF</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card" id="rep-resultado" style="display:none">
+    <div class="c-hd">
+      <div class="c-ti" id="rep-res-title">Resultado</div>
+      <span style="font-size:11.5px;color:var(--mist)" id="rep-res-count">— registros</span>
+    </div>
+    <table class="tbl">
+      <thead><tr><th></th><th>Pedido</th><th>Proveedor</th><th>Estado</th><th>Próx. hito</th><th>Moneda</th></tr></thead>
+      <tbody>
+        <tr><td style="padding-left:12px"><span class="s3 s3r"></span></td><td><strong>PED-2026-018</strong></td><td><span class="ic">🇨🇳 Shenzhen</span></td><td><span class="pill pb">En tránsito</span></td><td style="color:var(--rs);font-size:11.5px;font-weight:500">HOY</td><td>USD</td></tr>
+        <tr><td style="padding-left:12px"><span class="s3 s3y"></span></td><td><strong>PED-2026-019</strong></td><td><span class="ic">🇨🇳 Sino Import</span></td><td><span class="pill pgr">En producción</span></td><td style="color:#92600A;font-size:11.5px;font-weight:500">En 6 días</td><td>USD</td></tr>
+        <tr><td style="padding-left:12px"><span class="s3 s3g"></span></td><td><strong>PED-2026-024</strong></td><td><span class="ic">🇺🇸 ProParts</span></td><td><span class="pill pgr">Confirmado</span></td><td style="color:var(--mist);font-size:11.5px">En 18 días</td><td>USD</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+function show(id, el) {
+  document.querySelectorAll('.content').forEach(c => c.classList.remove('on'))
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('on'))
+  document.getElementById('s-' + id).classList.add('on')
+  el.classList.add('on')
+}
+function toggleModo() {
+  const v = document.getElementById('modo-vol').value
+  document.getElementById('vol-unitario').style.display = v === 'unitario' ? '' : 'none'
+  document.getElementById('vol-caja').style.display     = v === 'por_caja'  ? '' : 'none'
+}
+function togglePerm() {
+  document.getElementById('perm-tipo').style.display = document.getElementById('req-perm').checked ? '' : 'none'
+}
+function setReporte(titulo, tipo) {
+  document.getElementById('rep-titulo').textContent = titulo
+  document.getElementById('rep-resultado').style.display = 'block'
+  document.getElementById('rep-res-title').textContent = titulo + ' — Resultado'
+  document.getElementById('rep-res-count').textContent = '3 registros'
+}
+</script>
+</body>
+</html>

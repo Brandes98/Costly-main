@@ -1,0 +1,117 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Sora', sans-serif;
+    background: #F2F5F8;
+    color: #1A2433;
+    font-size: 13px;
+    overflow: hidden;
+  }
+}
+
+@layer components {
+  /* Semáforo */
+  .s3 { @apply w-2 h-2 rounded-full inline-block flex-shrink-0; }
+  .s3g { background: #3A6B4A; box-shadow: 0 0 0 3px #DFF0E5; }
+  .s3y { background: #D97706; box-shadow: 0 0 0 3px #FEF3C7; }
+  .s3r { background: #A33A36; box-shadow: 0 0 0 3px #FDF1F0; animation: pulse-red 1.5s infinite; }
+
+  /* Pills de estado */
+  .pill {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap;
+  }
+  .pill::before { content: ''; @apply w-1.5 h-1.5 rounded-full bg-current opacity-75; }
+  .pill-green  { @apply bg-sg-l text-sg; }
+  .pill-yellow { @apply bg-yellow-100 text-yellow-800; }
+  .pill-blue   { @apply bg-tl-l text-tl; }
+  .pill-gray   { @apply bg-sur3 text-slate; }
+  .pill-red    { @apply bg-rs-l text-rs; }
+  .pill-violet { @apply bg-vi-l text-vi; }
+
+  /* Card base */
+  .card {
+    @apply bg-sur border border-border rounded-card shadow-sh0 overflow-hidden;
+  }
+  .card-header {
+    @apply px-4 py-3 border-b border-border-lt flex items-center justify-between;
+  }
+  .card-title {
+    @apply text-sm font-semibold text-ink flex items-center gap-1.5;
+  }
+  .card-body { @apply p-4; }
+
+  /* Botones */
+  .btn {
+    @apply px-3 py-1.5 rounded-lg font-sans text-xs font-medium cursor-pointer border-none
+           inline-flex items-center gap-1.5 transition-all duration-150;
+  }
+  .btn-primary { @apply bg-tl text-white hover:bg-tl-d; }
+  .btn-outline {
+    @apply bg-transparent text-ink border border-border
+           hover:border-tl hover:text-tl hover:bg-tl-xl;
+  }
+  .btn-danger { @apply bg-rs-l text-rs hover:bg-rs hover:text-white; }
+
+  /* Inputs */
+  .form-input {
+    @apply h-9 border border-border rounded-lg px-3 font-sans text-sm text-ink bg-sur
+           outline-none transition-all w-full appearance-none
+           focus:border-tl focus:shadow-[0_0_0_3px_rgba(31,122,122,0.1)] focus:bg-tl-xl;
+  }
+  .form-label {
+    @apply text-xs font-semibold text-slate uppercase tracking-wider;
+  }
+  .form-group { @apply flex flex-col gap-1; }
+
+  /* Tabla */
+  .tbl { @apply w-full border-collapse; }
+  .tbl th {
+    @apply text-left text-xs font-semibold text-mist uppercase tracking-wider
+           px-3 py-2 border-b border-border bg-sur2;
+  }
+  .tbl td {
+    @apply px-3 py-2.5 border-b border-border-lt text-xs align-middle;
+  }
+  .tbl tr:last-child td { @apply border-b-0; }
+  .tbl tr:hover td { @apply bg-[#FAFCFD]; }
+
+  /* KPI card */
+  .kpi {
+    @apply bg-sur border border-border rounded-card p-4 shadow-sh0
+           relative overflow-hidden transition-all duration-200 cursor-default
+           hover:-translate-y-0.5 hover:shadow-sh1;
+  }
+
+  /* Chip de incoterm */
+  .incb {
+    @apply bg-gd-l text-gd text-xs font-bold px-1.5 py-0.5 rounded;
+  }
+
+  /* Chip genérico */
+  .ic {
+    @apply inline-flex items-center gap-1 text-xs text-mist
+           bg-sur2 border border-border rounded px-1.5 py-0.5;
+  }
+
+  /* Scrollbar custom */
+  .custom-scroll::-webkit-scrollbar { width: 5px; }
+  .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+  .custom-scroll::-webkit-scrollbar-thumb { background: #C5D0DC; border-radius: 10px; }
+  .custom-scroll::-webkit-scrollbar-thumb:hover { background: #8FA3B8; }
+}
+
+@keyframes pulse-red {
+  0%, 100% { box-shadow: 0 0 0 3px #FDF1F0; }
+  50%       { box-shadow: 0 0 0 6px rgba(163,58,54,.12); }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(7px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.fade-up { animation: fadeUp .22s ease; }
