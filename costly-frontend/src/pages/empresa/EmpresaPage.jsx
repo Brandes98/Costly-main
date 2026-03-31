@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -35,6 +35,8 @@ const emptyToUndefined = (value) => (value === '' || value == null ? undefined :
 
 export default function EmpresaPage() {
   const [error, setError] = useState(null)
+  const [success, setSuccess] = useState(null)
+  const successTimer = useRef(null)
 
   const { data: empresa, isLoading } = useEmpresa()
   const { mutate: guardar, isPending } = useUpdateEmpresa()
@@ -68,6 +70,7 @@ export default function EmpresaPage() {
 
   const onSubmit = (data) => {
     setError(null)
+    setSuccess(null)
     const payload = {
       nombre: data.nombre,
       ruc: emptyToUndefined(data.ruc),
@@ -83,10 +86,22 @@ export default function EmpresaPage() {
     }
 
     guardar(payload, {
-      onSuccess: () => reset(data),
+      onSuccess: () => {
+        reset(data)
+        setSuccess('Se actualizó la empresa correctamente.')
+      },
       onError: (err) => setError(err?.error?.message || 'No se pudo guardar'),
     })
   }
+
+  useEffect(() => {
+    if (!success) return
+    if (successTimer.current) clearTimeout(successTimer.current)
+    successTimer.current = setTimeout(() => setSuccess(null), 3500)
+    return () => {
+      if (successTimer.current) clearTimeout(successTimer.current)
+    }
+  }, [success])
 
   return (
     <div className="space-y-3">
@@ -108,6 +123,12 @@ export default function EmpresaPage() {
       {error && (
         <div className="bg-rs-l text-rs text-xs px-3 py-2 rounded-lg border border-rs/20">
           {error}
+        </div>
+      )}
+
+      {success && (
+        <div className="bg-sg-l text-sg text-xs px-3 py-2 rounded-lg border border-sg/20">
+          {success}
         </div>
       )}
 
