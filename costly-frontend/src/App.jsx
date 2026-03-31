@@ -9,6 +9,7 @@ import NuevoPedido from './pages/pedidos/NuevoPedido';
 import ProveedoresPage from './pages/proveedores/ProveedoresPage';
 import PagosPage from './pages/pagos/PagosPage';
 import ClientesPage      from './pages/clientes/ClientesPage'
+import EmpresaPage from './pages/empresa/EmpresaPage';
 
 import {
   ImportacionesPage,
@@ -19,7 +20,6 @@ import {
   ReportesPage,
   UsuariosPage,
   AuditoriaPage,
-  EmpresaPage,
 } from './pages/placeholders';
 
 const PrivateRoute = ({ children }) => {
