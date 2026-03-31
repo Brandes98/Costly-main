@@ -188,6 +188,14 @@ export const useCreatePago = () => {
   })
 }
 
+export const useConfirmPago = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id) => api.patch(`/pagos/${id}/confirmar`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['pagos'] }),
+  })
+}
+
 // ══════════════════════════════════════════════
 // HITOS
 // ══════════════════════════════════════════════

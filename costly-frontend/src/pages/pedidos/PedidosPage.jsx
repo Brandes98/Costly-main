@@ -1,22 +1,44 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { usePedidos } from '../hooks/useApi'
-import { fmtCurrency, fmtDate, estadoPillClass, estadoLabel, getSemaforo, semaforoClass } from '../lib/utils'
-import Spinner from '../components/ui/Spinner'
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { usePedidos } from '../../hooks/useApi';
+import {
+  fmtCurrency,
+  fmtDate,
+  estadoPillClass,
+  estadoLabel,
+  getSemaforo,
+  semaforoClass,
+} from '../../lib/utils';
+import Spinner from '../../components/ui/Spinner';
 
-const ESTADOS = ['borrador','confirmado','en_produccion','listo_fabrica','embarcado','en_transito','en_puerto_cr','en_aduana','en_bodega','entregado','cerrado','cancelado']
+const ESTADOS = [
+  'borrador',
+  'confirmado',
+  'en_produccion',
+  'listo_fabrica',
+  'embarcado',
+  'en_transito',
+  'en_puerto_cr',
+  'en_aduana',
+  'en_bodega',
+  'entregado',
+  'cerrado',
+  'cancelado',
+];
 
 export default function PedidosPage() {
-  const navigate = useNavigate()
-  const [filters, setFilters] = useState({})
-  const [search, setSearch]   = useState('')
+  const navigate = useNavigate();
+  const [filters, setFilters] = useState({});
+  const [search, setSearch] = useState('');
 
-  const { data: pedidos = [], isLoading } = usePedidos(filters)
+  const { data: pedidos = [], isLoading } = usePedidos(filters);
 
-  const filtered = pedidos.filter(p =>
-    !search || p.codigo.toLowerCase().includes(search.toLowerCase()) ||
-    p.proveedor?.nombre?.toLowerCase().includes(search.toLowerCase())
-  )
+  const filtered = pedidos.filter(
+    (p) =>
+      !search ||
+      p.codigo.toLowerCase().includes(search.toLowerCase()) ||
+      p.proveedor?.nombre?.toLowerCase().includes(search.toLowerCase()),
+  );
 
   return (
     <div className="space-y-3">
@@ -29,24 +51,23 @@ export default function PedidosPage() {
               type="text"
               placeholder="Buscar pedido..."
               value={search}
-              onChange={e => setSearch(e.target.value)}
+              onChange={(e) => setSearch(e.target.value)}
               className="bg-transparent outline-none w-full text-ink placeholder:text-mist"
             />
           </div>
           <select
             className="form-input h-8 text-xs w-40"
-            onChange={e => setFilters(f => ({ ...f, estado: e.target.value || undefined }))}
+            onChange={(e) => setFilters((f) => ({ ...f, estado: e.target.value || undefined }))}
           >
             <option value="">Todos los estados</option>
-            {ESTADOS.map(e => (
-              <option key={e} value={e}>{estadoLabel(e)}</option>
+            {ESTADOS.map((e) => (
+              <option key={e} value={e}>
+                {estadoLabel(e)}
+              </option>
             ))}
           </select>
         </div>
-        <button
-          className="btn btn-primary text-xs"
-          onClick={() => navigate('/pedidos/nuevo')}
-        >
+        <button className="btn btn-primary text-xs" onClick={() => navigate('/pedidos/nuevo')}>
           ＋ Nuevo pedido
         </button>
       </div>
@@ -59,11 +80,11 @@ export default function PedidosPage() {
         </div>
 
         {isLoading ? (
-          <div className="flex justify-center p-12"><Spinner /></div>
-        ) : filtered.length === 0 ? (
-          <div className="p-12 text-center text-xs text-mist">
-            📭 No hay pedidos que mostrar
+          <div className="flex justify-center p-12">
+            <Spinner />
           </div>
+        ) : filtered.length === 0 ? (
+          <div className="p-12 text-center text-xs text-mist">📭 No hay pedidos que mostrar</div>
         ) : (
           <table className="tbl">
             <thead>
@@ -79,9 +100,9 @@ export default function PedidosPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(p => {
-                const hito = p.hitos?.[0]
-                const sem  = hito ? getSemaforo(hito.fecha_plan) : 'green'
+              {filtered.map((p) => {
+                const hito = p.hitos?.[0];
+                const sem = hito ? getSemaforo(hito.fecha_plan) : 'green';
                 return (
                   <tr
                     key={p.pedido_id}
@@ -111,22 +132,31 @@ export default function PedidosPage() {
                       </span>
                     </td>
                     <td className="text-[11px]">
-                      {hito
-                        ? <span className={sem === 'red' ? 'text-rs font-medium' : sem === 'yellow' ? 'text-am font-medium' : 'text-mist'}>
-                            {fmtDate(hito.fecha_plan)}
-                          </span>
-                        : <span className="text-mist">—</span>
-                      }
+                      {hito ? (
+                        <span
+                          className={
+                            sem === 'red'
+                              ? 'text-rs font-medium'
+                              : sem === 'yellow'
+                                ? 'text-am font-medium'
+                                : 'text-mist'
+                          }
+                        >
+                          {fmtDate(hito.fecha_plan)}
+                        </span>
+                      ) : (
+                        <span className="text-mist">—</span>
+                      )}
                     </td>
                     <td className="font-medium text-xs">{p.moneda}</td>
                     <td className="text-mist text-xs">{p._count?.lineas}</td>
                   </tr>
-                )
+                );
               })}
             </tbody>
           </table>
         )}
       </div>
     </div>
-  )
+  );
 }
