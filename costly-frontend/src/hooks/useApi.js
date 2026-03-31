@@ -275,6 +275,14 @@ export const useEmpresa = () =>
     queryFn: () => api.get('/empresa').then(r => r.data),
   })
 
+export const useUpdateEmpresa = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data) => api.patch('/empresa', data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['empresa'] }),
+  })
+}
+
 // ══════════════════════════════════════════════
 // CONTENEDORES
 // ══════════════════════════════════════════════
