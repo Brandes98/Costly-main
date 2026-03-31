@@ -7,10 +7,11 @@ import PedidosPage       from './pages/PedidosPage'
 import PedidoDetalle     from './pages/PedidoDetalle'
 import NuevoPedido       from './pages/NuevoPedido'
 import ProveedoresPage   from './pages/ProveedoresPage'
+import ClientesPage      from './pages/ClientesPage'
 import {
   ImportacionesPage, CosteosPage, PagosPage,
   SeguimientoPage, AduanaPage,
-  ProductosPage, ClientesPage, ReportesPage,
+  ProductosPage, ReportesPage,
   UsuariosPage, AuditoriaPage, EmpresaPage,
 } from './pages/placeholders'
 
