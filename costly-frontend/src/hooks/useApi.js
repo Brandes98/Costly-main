@@ -138,6 +138,14 @@ export const useUpdateCliente = () => {
   })
 }
 
+export const useDeleteCliente = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id) => api.delete(`/clientes/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['clientes'] }),
+  })
+}
+
 // ══════════════════════════════════════════════
 // PRODUCTOS
 // ══════════════════════════════════════════════
