@@ -1,3 +1,5 @@
+import { createPortal } from 'react-dom'
+
 // ── Spinner.jsx
 export default function Spinner({ size = 'md' }) {
   const s = { sm: 'w-4 h-4', md: 'w-6 h-6', lg: 'w-10 h-10' }[size]
@@ -64,7 +66,8 @@ export function KpiCard({ icon, value, label, delta, deltaUp, variant = 'tl' }) 
 // ── Modal.jsx
 export function Modal({ open, onClose, title, children, footer }) {
   if (!open) return null
-  return (
+
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-ink/40 backdrop-blur-sm" onClick={onClose} />
       <div className="relative bg-sur rounded-card shadow-sh2 w-full max-w-lg mx-4 max-h-[90vh] flex flex-col">
@@ -77,7 +80,8 @@ export function Modal({ open, onClose, title, children, footer }) {
           <div className="px-5 py-3 border-t border-border flex justify-end gap-2">{footer}</div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 
