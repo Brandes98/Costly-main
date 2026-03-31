@@ -1,36 +1,40 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { useMutation } from '@tanstack/react-query'
-import api from '../lib/api'
-import { useAuthStore } from '../store/auth.store'
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useMutation } from '@tanstack/react-query';
+import api from '../../lib/api';
+import { useAuthStore } from '../../store/auth.store';
 
 const schema = z.object({
-  email:    z.string().email('Email inválido'),
+  email: z.string().email('Email inválido'),
   password: z.string().min(6, 'Mínimo 6 caracteres'),
-})
+});
 
 export default function LoginPage() {
-  const navigate  = useNavigate()
-  const setAuth   = useAuthStore(s => s.setAuth)
-  const [error, setError] = useState(null)
+  const navigate = useNavigate();
+  const setAuth = useAuthStore((s) => s.setAuth);
+  const [error, setError] = useState(null);
 
-  const { register, handleSubmit, formState: { errors } } = useForm({
-    resolver: zodResolver(schema)
-  })
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(schema),
+  });
 
   const { mutate, isPending } = useMutation({
     mutationFn: (data) => api.post('/auth/login', data),
     onSuccess: (res) => {
-      setAuth(res.data.token, res.data.usuario)
-      navigate('/dashboard')
+      setAuth(res.data.token, res.data.usuario);
+      navigate('/dashboard');
     },
     onError: (err) => {
-      setError(err?.error?.message || 'Credenciales incorrectas')
-    }
-  })
+      setError(err?.error?.message || 'Credenciales incorrectas');
+    },
+  });
 
   return (
     <div className="min-h-screen bg-bg flex items-center justify-center overflow-auto">
@@ -66,9 +70,7 @@ export default function LoginPage() {
                 className="form-input"
                 autoComplete="email"
               />
-              {errors.email && (
-                <span className="text-xs text-rs">{errors.email.message}</span>
-              )}
+              {errors.email && <span className="text-xs text-rs">{errors.email.message}</span>}
             </div>
 
             <div className="form-group">
@@ -101,15 +103,15 @@ export default function LoginPage() {
                   <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   Ingresando...
                 </span>
-              ) : 'Ingresar al sistema'}
+              ) : (
+                'Ingresar al sistema'
+              )}
             </button>
           </form>
         </div>
 
-        <div className="text-center text-xs text-mist mt-4">
-          © 2026 Costly · Vadibarot Ltda.
-        </div>
+        <div className="text-center text-xs text-mist mt-4">© 2026 Costly · Vadibarot Ltda.</div>
       </div>
     </div>
-  )
+  );
 }

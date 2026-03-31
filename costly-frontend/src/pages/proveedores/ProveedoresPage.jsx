@@ -1,118 +1,141 @@
-import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { useProveedores, useCreateProveedor, useUpdateProveedor, useDeleteProveedor } from '../hooks/useApi'
-import { useQuery } from '@tanstack/react-query'
-import api from '../lib/api'
-import Spinner from '../components/ui/Spinner'
-import { Modal, Confirm } from '../components/ui/Spinner'
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import {
+  useProveedores,
+  useCreateProveedor,
+  useUpdateProveedor,
+  useDeleteProveedor,
+} from '../../hooks/useApi';
+import { useQuery } from '@tanstack/react-query';
+import api from '../../lib/api';
+import Spinner from '../../components/ui/Spinner';
+import { Modal, Confirm } from '../../components/ui/Spinner';
 
 // ── Schema
 const schema = z.object({
-  pais_id:          z.coerce.number().int().positive('Requerido'),
-  nombre:           z.string().min(2, 'Mínimo 2 caracteres').max(150),
-  ciudad:           z.string().max(100).optional().or(z.literal('')),
-  incoterm_pref:    z.enum(['EXW','FOB','CIF','DAP','DDP','CFR']).optional().or(z.literal('')),
-  moneda:           z.string().length(3, 'Requerido'),
-  dias_transito:    z.coerce.number().int().positive().optional().or(z.literal('')),
-  puerto_origen:    z.string().max(80).optional().or(z.literal('')),
+  pais_id: z.coerce.number().int().positive('Requerido'),
+  nombre: z.string().min(2, 'Mínimo 2 caracteres').max(150),
+  ciudad: z.string().max(100).optional().or(z.literal('')),
+  incoterm_pref: z.enum(['EXW', 'FOB', 'CIF', 'DAP', 'DDP', 'CFR']).optional().or(z.literal('')),
+  moneda: z.string().length(3, 'Requerido'),
+  dias_transito: z.coerce.number().int().positive().optional().or(z.literal('')),
+  puerto_origen: z.string().max(80).optional().or(z.literal('')),
   condiciones_pago: z.string().max(100).optional().or(z.literal('')),
-  contacto:         z.string().max(100).optional().or(z.literal('')),
-  email:            z.string().email('Email inválido').optional().or(z.literal('')),
-})
+  contacto: z.string().max(100).optional().or(z.literal('')),
+  email: z.string().email('Email inválido').optional().or(z.literal('')),
+});
 
-const INCOTERMS = ['EXW','FOB','CIF','DAP','DDP','CFR']
-const MONEDAS   = ['USD','EUR','CNY','GBP','JPY']
+const INCOTERMS = ['EXW', 'FOB', 'CIF', 'DAP', 'DDP', 'CFR'];
+const MONEDAS = ['USD', 'EUR', 'CNY', 'GBP', 'JPY'];
 
 export default function ProveedoresPage() {
-  const [search,     setSearch]     = useState('')
-  const [modalOpen,  setModalOpen]  = useState(false)
-  const [editando,   setEditando]   = useState(null)
-  const [confirmDel, setConfirmDel] = useState(null)
+  const [search, setSearch] = useState('');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editando, setEditando] = useState(null);
+  const [confirmDel, setConfirmDel] = useState(null);
 
-  const { data: proveedores = [], isLoading } = useProveedores()
-  const { data: paises      = [] } = useQuery({
+  const { data: proveedores = [], isLoading } = useProveedores();
+  const { data: paises = [] } = useQuery({
     queryKey: ['paises'],
-    queryFn: () => api.get('/proveedores').then(() =>
-      // Los países vienen del backend — por ahora usamos los del seed
-      fetch('/api/v1/proveedores').then(r => r.json()).then(r => [])
-    ),
+    queryFn: () =>
+      api.get('/proveedores').then(() =>
+        // Los países vienen del backend — por ahora usamos los del seed
+        fetch('/api/v1/proveedores')
+          .then((r) => r.json())
+          .then((r) => []),
+      ),
     enabled: false,
-  })
+  });
 
   // Usamos los países que vienen en los proveedores + fallback hardcoded
   const paisesComunes = [
-    { pais_id: 1,  nombre: 'Costa Rica',    codigo: 'CR', bandera: '🇨🇷' },
-    { pais_id: 44, nombre: 'China',          codigo: 'CN', bandera: '🇨🇳' },
+    { pais_id: 1, nombre: 'Costa Rica', codigo: 'CR', bandera: '🇨🇷' },
+    { pais_id: 44, nombre: 'China', codigo: 'CN', bandera: '🇨🇳' },
     { pais_id: 84, nombre: 'Estados Unidos', codigo: 'US', bandera: '🇺🇸' },
-    { pais_id: 55, nombre: 'Alemania',       codigo: 'DE', bandera: '🇩🇪' },
-    { pais_id: 77, nombre: 'España',         codigo: 'ES', bandera: '🇪🇸' },
-    { pais_id: 66, nombre: 'México',         codigo: 'MX', bandera: '🇲🇽' },
-    { pais_id: 99, nombre: 'Japón',          codigo: 'JP', bandera: '🇯🇵' },
-  ]
+    { pais_id: 55, nombre: 'Alemania', codigo: 'DE', bandera: '🇩🇪' },
+    { pais_id: 77, nombre: 'España', codigo: 'ES', bandera: '🇪🇸' },
+    { pais_id: 66, nombre: 'México', codigo: 'MX', bandera: '🇲🇽' },
+    { pais_id: 99, nombre: 'Japón', codigo: 'JP', bandera: '🇯🇵' },
+  ];
 
-  const { mutate: crear,    isPending: creando   } = useCreateProveedor()
-  const { mutate: editar,   isPending: editando_ } = useUpdateProveedor()
-  const { mutate: eliminar, isPending: eliminando} = useDeleteProveedor()
+  const { mutate: crear, isPending: creando } = useCreateProveedor();
+  const { mutate: editar, isPending: editando_ } = useUpdateProveedor();
+  const { mutate: eliminar, isPending: eliminando } = useDeleteProveedor();
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm({
     resolver: zodResolver(schema),
-    defaultValues: { moneda: 'USD' }
-  })
+    defaultValues: { moneda: 'USD' },
+  });
 
-  const filtered = proveedores.filter(p =>
-    !search ||
-    p.nombre.toLowerCase().includes(search.toLowerCase()) ||
-    p.pais?.nombre?.toLowerCase().includes(search.toLowerCase())
-  )
+  const filtered = proveedores.filter(
+    (p) =>
+      !search ||
+      p.nombre.toLowerCase().includes(search.toLowerCase()) ||
+      p.pais?.nombre?.toLowerCase().includes(search.toLowerCase()),
+  );
 
   const abrirCrear = () => {
-    setEditando(null)
-    reset({ moneda: 'USD', pais_id: '' })
-    setModalOpen(true)
-  }
+    setEditando(null);
+    reset({ moneda: 'USD', pais_id: '' });
+    setModalOpen(true);
+  };
 
   const abrirEditar = (p) => {
-    setEditando(p)
+    setEditando(p);
     reset({
-      pais_id:          p.pais_id,
-      nombre:           p.nombre,
-      ciudad:           p.ciudad || '',
-      incoterm_pref:    p.incoterm_pref || '',
-      moneda:           p.moneda,
-      dias_transito:    p.dias_transito || '',
-      puerto_origen:    p.puerto_origen || '',
+      pais_id: p.pais_id,
+      nombre: p.nombre,
+      ciudad: p.ciudad || '',
+      incoterm_pref: p.incoterm_pref || '',
+      moneda: p.moneda,
+      dias_transito: p.dias_transito || '',
+      puerto_origen: p.puerto_origen || '',
       condiciones_pago: p.condiciones_pago || '',
-      contacto:         p.contacto || '',
-      email:            p.email || '',
-    })
-    setModalOpen(true)
-  }
+      contacto: p.contacto || '',
+      email: p.email || '',
+    });
+    setModalOpen(true);
+  };
 
   const onSubmit = (data) => {
     const payload = {
       ...data,
-      pais_id:       Number(data.pais_id),
+      pais_id: Number(data.pais_id),
       dias_transito: data.dias_transito ? Number(data.dias_transito) : undefined,
-      ciudad:           data.ciudad        || undefined,
-      incoterm_pref:    data.incoterm_pref || undefined,
-      puerto_origen:    data.puerto_origen || undefined,
+      ciudad: data.ciudad || undefined,
+      incoterm_pref: data.incoterm_pref || undefined,
+      puerto_origen: data.puerto_origen || undefined,
       condiciones_pago: data.condiciones_pago || undefined,
-      contacto:         data.contacto     || undefined,
-      email:            data.email        || undefined,
-    }
+      contacto: data.contacto || undefined,
+      email: data.email || undefined,
+    };
 
     if (editando) {
-      editar({ id: editando.proveedor_id, ...payload }, {
-        onSuccess: () => { setModalOpen(false); reset() }
-      })
+      editar(
+        { id: editando.proveedor_id, ...payload },
+        {
+          onSuccess: () => {
+            setModalOpen(false);
+            reset();
+          },
+        },
+      );
     } else {
       crear(payload, {
-        onSuccess: () => { setModalOpen(false); reset() }
-      })
+        onSuccess: () => {
+          setModalOpen(false);
+          reset();
+        },
+      });
     }
-  }
+  };
 
   return (
     <div className="space-y-3">
@@ -125,7 +148,7 @@ export default function ProveedoresPage() {
               type="text"
               placeholder="Buscar proveedor..."
               value={search}
-              onChange={e => setSearch(e.target.value)}
+              onChange={(e) => setSearch(e.target.value)}
               className="bg-transparent outline-none w-full text-ink placeholder:text-mist"
             />
           </div>
@@ -143,13 +166,17 @@ export default function ProveedoresPage() {
         </div>
 
         {isLoading ? (
-          <div className="flex justify-center p-12"><Spinner /></div>
+          <div className="flex justify-center p-12">
+            <Spinner />
+          </div>
         ) : filtered.length === 0 ? (
           <div className="p-12 text-center">
             <div className="text-4xl mb-3">🏭</div>
             <div className="text-sm font-medium text-ink mb-1">Sin proveedores</div>
             <div className="text-xs text-mist mb-4">Agregá tu primer proveedor para empezar</div>
-            <button className="btn btn-primary text-xs" onClick={abrirCrear}>＋ Crear proveedor</button>
+            <button className="btn btn-primary text-xs" onClick={abrirCrear}>
+              ＋ Crear proveedor
+            </button>
           </div>
         ) : (
           <table className="tbl">
@@ -166,7 +193,7 @@ export default function ProveedoresPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(p => (
+              {filtered.map((p) => (
                 <tr key={p.proveedor_id}>
                   <td>
                     <div className="font-medium text-xs">{p.nombre}</div>
@@ -179,19 +206,23 @@ export default function ProveedoresPage() {
                   </td>
                   <td className="font-medium text-xs">{p.moneda}</td>
                   <td>
-                    {p.incoterm_pref
-                      ? <span className="incb">{p.incoterm_pref}</span>
-                      : <span className="text-mist text-xs">—</span>
-                    }
+                    {p.incoterm_pref ? (
+                      <span className="incb">{p.incoterm_pref}</span>
+                    ) : (
+                      <span className="text-mist text-xs">—</span>
+                    )}
                   </td>
                   <td className="text-xs text-mist">
                     {p.dias_transito ? `${p.dias_transito} días` : '—'}
                   </td>
                   <td className="text-xs">
-                    {p.email
-                      ? <a href={`mailto:${p.email}`} className="text-tl hover:underline">{p.email}</a>
-                      : <span className="text-mist">—</span>
-                    }
+                    {p.email ? (
+                      <a href={`mailto:${p.email}`} className="text-tl hover:underline">
+                        {p.email}
+                      </a>
+                    ) : (
+                      <span className="text-mist">—</span>
+                    )}
                   </td>
                   <td>
                     <span className={`pill ${p.activo ? 'pill-green' : 'pill-red'}`}>
@@ -224,11 +255,20 @@ export default function ProveedoresPage() {
       {/* Modal crear/editar */}
       <Modal
         open={modalOpen}
-        onClose={() => { setModalOpen(false); reset() }}
+        onClose={() => {
+          setModalOpen(false);
+          reset();
+        }}
         title={editando ? `Editar — ${editando.nombre}` : 'Nuevo proveedor'}
         footer={
           <>
-            <button className="btn btn-outline" onClick={() => { setModalOpen(false); reset() }}>
+            <button
+              className="btn btn-outline"
+              onClick={() => {
+                setModalOpen(false);
+                reset();
+              }}
+            >
               Cancelar
             </button>
             <button
@@ -236,7 +276,11 @@ export default function ProveedoresPage() {
               onClick={handleSubmit(onSubmit)}
               disabled={creando || editando_}
             >
-              {creando || editando_ ? 'Guardando...' : editando ? 'Guardar cambios' : 'Crear proveedor'}
+              {creando || editando_
+                ? 'Guardando...'
+                : editando
+                  ? 'Guardar cambios'
+                  : 'Crear proveedor'}
             </button>
           </>
         }
@@ -245,7 +289,11 @@ export default function ProveedoresPage() {
           {/* Nombre */}
           <div className="form-group col-span-2">
             <label className="form-label">Nombre / Razón social *</label>
-            <input {...register('nombre')} className="form-input" placeholder="Ej: Shenzhen Tech Co." />
+            <input
+              {...register('nombre')}
+              className="form-input"
+              placeholder="Ej: Shenzhen Tech Co."
+            />
             {errors.nombre && <span className="text-xs text-rs">{errors.nombre.message}</span>}
           </div>
 
@@ -254,7 +302,7 @@ export default function ProveedoresPage() {
             <label className="form-label">País *</label>
             <select {...register('pais_id')} className="form-input">
               <option value="">Seleccionar...</option>
-              {paisesComunes.map(p => (
+              {paisesComunes.map((p) => (
                 <option key={p.pais_id} value={p.pais_id}>
                   {p.bandera} {p.nombre}
                 </option>
@@ -273,7 +321,11 @@ export default function ProveedoresPage() {
           <div className="form-group">
             <label className="form-label">Moneda habitual *</label>
             <select {...register('moneda')} className="form-input">
-              {MONEDAS.map(m => <option key={m} value={m}>{m}</option>)}
+              {MONEDAS.map((m) => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
+              ))}
             </select>
             {errors.moneda && <span className="text-xs text-rs">{errors.moneda.message}</span>}
           </div>
@@ -283,7 +335,11 @@ export default function ProveedoresPage() {
             <label className="form-label">Incoterm habitual</label>
             <select {...register('incoterm_pref')} className="form-input">
               <option value="">Sin preferencia</option>
-              {INCOTERMS.map(i => <option key={i} value={i}>{i}</option>)}
+              {INCOTERMS.map((i) => (
+                <option key={i} value={i}>
+                  {i}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -301,19 +357,32 @@ export default function ProveedoresPage() {
           {/* Puerto origen */}
           <div className="form-group">
             <label className="form-label">Puerto de salida habitual</label>
-            <input {...register('puerto_origen')} className="form-input" placeholder="Ej: Shanghai" />
+            <input
+              {...register('puerto_origen')}
+              className="form-input"
+              placeholder="Ej: Shanghai"
+            />
           </div>
 
           {/* Contacto */}
           <div className="form-group">
             <label className="form-label">Persona de contacto</label>
-            <input {...register('contacto')} className="form-input" placeholder="Nombre del contacto" />
+            <input
+              {...register('contacto')}
+              className="form-input"
+              placeholder="Nombre del contacto"
+            />
           </div>
 
           {/* Email */}
           <div className="form-group">
             <label className="form-label">Email</label>
-            <input {...register('email')} type="email" className="form-input" placeholder="contact@proveedor.com" />
+            <input
+              {...register('email')}
+              type="email"
+              className="form-input"
+              placeholder="contact@proveedor.com"
+            />
             {errors.email && <span className="text-xs text-rs">{errors.email.message}</span>}
           </div>
 
@@ -339,5 +408,5 @@ export default function ProveedoresPage() {
         danger
       />
     </div>
-  )
+  );
 }
