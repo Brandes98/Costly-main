@@ -6,10 +6,10 @@ import DashboardPage from './pages/dashboard/DashboardPage';
 import PedidosPage from './pages/pedidos/PedidosPage';
 import PedidoDetalle from './pages/pedidos/PedidoDetalle';
 import NuevoPedido from './pages/pedidos/NuevoPedido';
+import ImportacionesPage from './pages/importaciones/ImportacionesPage';
 import ProveedoresPage from './pages/proveedores/ProveedoresPage';
 import PagosPage from './pages/pagos/PagosPage';
 import {
-  ImportacionesPage,
   CosteosPage,
   SeguimientoPage,
   AduanaPage,
