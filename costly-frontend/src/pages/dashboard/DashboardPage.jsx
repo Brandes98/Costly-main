@@ -61,7 +61,7 @@ export default function DashboardPage() {
           variant="rs"
         />
         <KpiCard
-          icon="🏛"
+          icon="🏛️"
           value={enAduana}
           label="En aduana/fiscal"
           delta="Trámite pendiente"
