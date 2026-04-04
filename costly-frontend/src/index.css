@@ -4,12 +4,18 @@
 
 @layer base {
   * { box-sizing: border-box; }
+  html, body, #root {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+  }
   body {
     font-family: 'Sora', sans-serif;
     background: #F2F5F8;
     color: #1A2433;
     font-size: 13px;
     overflow: hidden;
+    min-width: 0;
   }
 }
 
