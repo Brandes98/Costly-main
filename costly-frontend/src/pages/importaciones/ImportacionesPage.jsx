@@ -89,14 +89,6 @@ export default function ImportacionesPage() {
     );
   }, [rows, search]);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Spinner size="lg" />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-4 w-full min-w-0">
       {isError && (

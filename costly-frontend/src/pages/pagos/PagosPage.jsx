@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { EmptyState, Modal } from '../../components/ui/Spinner';
 import Spinner from '../../components/ui/Spinner';
 import Button from '../../components/ui/Button';
+import { TableCard, TableContainer, TableToolbar } from '../../components/ui/Table';
 import {
   useConfirmPago,
   useCreatePago,
@@ -80,6 +81,7 @@ function normalizePago(pago, proveedoresMap) {
 
 export default function PagosPage() {
   const [filters, setFilters] = useState({ estado: '', proveedor_id: '' });
+  const [search, setSearch] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState(initialForm);
 
@@ -137,6 +139,37 @@ export default function PagosPage() {
   }, [pagos]);
 
   const loading = loadingPagos || loadingPedidos || loadingProveedores;
+  const estadoOptions = useMemo(
+    () => [
+      { value: 'programado', label: 'Programado' },
+      { value: 'procesado', label: 'Procesado' },
+      { value: 'confirmado', label: 'Confirmado' },
+      { value: 'devuelto', label: 'Devuelto' },
+    ],
+    [],
+  );
+  const proveedorOptions = useMemo(
+    () =>
+      proveedores.map((proveedor) => ({
+        value: String(proveedor.proveedor_id),
+        label: proveedor.nombre,
+      })),
+    [proveedores],
+  );
+  const filteredPagos = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase();
+
+    if (!normalizedSearch) return pagos;
+
+    return pagos.filter(
+      (pago) =>
+        pago.codigo?.toLowerCase().includes(normalizedSearch) ||
+        pago.proveedor_nombre?.toLowerCase().includes(normalizedSearch) ||
+        (tipoLabel[pago.tipo] || pago.tipo)?.toLowerCase().includes(normalizedSearch) ||
+        (metodoLabel[pago.metodo] || '').toLowerCase().includes(normalizedSearch) ||
+        pago.estado?.toLowerCase().includes(normalizedSearch),
+    );
+  }, [pagos, search]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -184,26 +217,8 @@ export default function PagosPage() {
     (pedido) => String(pedido.pedido_id) === String(form.pedido_id),
   );
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Spinner size="lg" />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="font-serif text-xl font-medium text-ink">Pagos a proveedores</div>
-          <div className="text-[11px] text-mist">Finanzas / Pagos</div>
-        </div>
-        <Button icon="create" onClick={() => setModalOpen(true)}>
-          Registrar pago
-        </Button>
-      </div>
-
       {pagosError && (
         <div className="rounded-card border border-rs/20 bg-rs-l px-4 py-3 text-xs text-rs">
           No pudimos cargar los pagos del backend.
@@ -233,111 +248,100 @@ export default function PagosPage() {
         </div>
       </div>
 
-      <div className="card">
-        <div className="card-header">
-          <div className="card-title">Pagos registrados</div>
-          <div className="flex gap-2">
-            <select
-              className="form-input h-8 min-w-36"
-              value={filters.estado}
-              onChange={(e) => setFilters((current) => ({ ...current, estado: e.target.value }))}
-            >
-              <option value="">Todos los estados</option>
-              <option value="programado">Programado</option>
-              <option value="procesado">Procesado</option>
-              <option value="confirmado">Confirmado</option>
-              <option value="devuelto">Devuelto</option>
-            </select>
-            <select
-              className="form-input h-8 min-w-44"
-              value={filters.proveedor_id}
-              onChange={(e) =>
-                setFilters((current) => ({ ...current, proveedor_id: e.target.value }))
-              }
-            >
-              <option value="">Todos los proveedores</option>
-              {proveedores.map((proveedor) => (
-                <option key={proveedor.proveedor_id} value={proveedor.proveedor_id}>
-                  {proveedor.nombre}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+      <TableToolbar
+        enableSearch
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Buscar pago..."
+        showEstadoFilter
+        estadoValue={filters.estado}
+        onEstadoChange={(value) => setFilters((current) => ({ ...current, estado: value }))}
+        estadoOptions={estadoOptions}
+        showProveedorFilter
+        proveedorValue={filters.proveedor_id}
+        onProveedorChange={(value) =>
+          setFilters((current) => ({ ...current, proveedor_id: value }))
+        }
+        proveedorOptions={proveedorOptions}
+        action={
+          <Button icon="create" onClick={() => setModalOpen(true)}>
+            Registrar pago
+          </Button>
+        }
+      />
 
-        {pagos.length === 0 ? (
-          <EmptyState
-            icon="💳"
-            title="No hay pagos para mostrar"
-            description="Cuando registres pagos en el backend, te van a aparecer acá."
-          />
-        ) : (
-          <table className="tbl">
-            <thead>
-              <tr>
-                <th className="w-6" />
-                <th>Pedido</th>
-                <th>Proveedor</th>
-                <th>Tipo</th>
-                <th>Monto</th>
-                <th>Fecha pago</th>
-                <th>Fecha límite</th>
-                <th>Método</th>
-                <th>Estado</th>
-                <th />
+      <TableCard
+        title="💳 Pagos registrados"
+        countLabel={`${filteredPagos.length} pagos`}
+        loading={loading}
+        isEmpty={filteredPagos.length === 0}
+        emptyMessage="No hay pagos que mostrar"
+      >
+        <TableContainer>
+          <thead>
+            <tr>
+              <th className="w-6" />
+              <th>Pedido</th>
+              <th>Proveedor</th>
+              <th>Tipo</th>
+              <th>Monto</th>
+              <th>Fecha pago</th>
+              <th>Fecha límite</th>
+              <th>Método</th>
+              <th>Estado</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody>
+            {filteredPagos.map((pago) => (
+              <tr key={pago.pago_id}>
+                <td className="pl-3">
+                  <span
+                    className={`s3 ${
+                      pago.estado === 'confirmado'
+                        ? 's3g'
+                        : pago.estado === 'devuelto'
+                          ? 's3r'
+                          : 's3y'
+                    }`}
+                  />
+                </td>
+                <td>
+                  <strong>{pago.codigo}</strong>
+                </td>
+                <td>
+                  <span className="ic">
+                    {pago.proveedor_bandera} {pago.proveedor_nombre}
+                  </span>
+                </td>
+                <td>
+                  <span className="pill pill-gray">{tipoLabel[pago.tipo] || pago.tipo}</span>
+                </td>
+                <td className="font-semibold">{fmtCurrency(pago.monto, pago.moneda)}</td>
+                <td className="text-[11px] text-mist">{fmtDate(pago.fecha_pago)}</td>
+                <td className="text-[11px] font-medium">{daysUntil(pago.fecha_limite)}</td>
+                <td className="text-[11px] text-mist">{metodoLabel[pago.metodo] || '—'}</td>
+                <td>
+                  <span className={`pill ${pillClassByEstado[pago.estado] || 'pill-gray'}`}>
+                    {pago.estado}
+                  </span>
+                </td>
+                <td>
+                  {pago.estado !== 'confirmado' && (
+                    <button
+                      className="btn btn-primary text-xs"
+                      disabled={confirmandoPago}
+                      onClick={() => confirmarPago(pago.pago_id)}
+                    >
+                      Confirmar
+                    </button>
+                  )}
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {pagos.map((pago) => (
-                <tr key={pago.pago_id}>
-                  <td className="pl-3">
-                    <span
-                      className={`s3 ${
-                        pago.estado === 'confirmado'
-                          ? 's3g'
-                          : pago.estado === 'devuelto'
-                            ? 's3r'
-                            : 's3y'
-                      }`}
-                    />
-                  </td>
-                  <td>
-                    <strong>{pago.codigo}</strong>
-                  </td>
-                  <td>
-                    <span className="ic">
-                      {pago.proveedor_bandera} {pago.proveedor_nombre}
-                    </span>
-                  </td>
-                  <td>
-                    <span className="pill pill-gray">{tipoLabel[pago.tipo] || pago.tipo}</span>
-                  </td>
-                  <td className="font-semibold">{fmtCurrency(pago.monto, pago.moneda)}</td>
-                  <td className="text-[11px] text-mist">{fmtDate(pago.fecha_pago)}</td>
-                  <td className="text-[11px] font-medium">{daysUntil(pago.fecha_limite)}</td>
-                  <td className="text-[11px] text-mist">{metodoLabel[pago.metodo] || '—'}</td>
-                  <td>
-                    <span className={`pill ${pillClassByEstado[pago.estado] || 'pill-gray'}`}>
-                      {pago.estado}
-                    </span>
-                  </td>
-                  <td>
-                    {pago.estado !== 'confirmado' && (
-                      <button
-                        className="btn btn-primary text-xs"
-                        disabled={confirmandoPago}
-                        onClick={() => confirmarPago(pago.pago_id)}
-                      >
-                        Confirmar
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+            ))}
+          </tbody>
+        </TableContainer>
+      </TableCard>
 
       <Modal
         open={modalOpen}
