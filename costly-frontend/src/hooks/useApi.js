@@ -163,6 +163,14 @@ export const useUpdateProducto = () => {
   })
 }
 
+export const useDeleteProducto = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id) => api.delete(`/productos/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['productos'] }),
+  })
+}
+
 // ══════════════════════════════════════════════
 // PAGOS
 // ══════════════════════════════════════════════
@@ -266,6 +274,14 @@ export const useEmpresa = () =>
     queryKey: ['empresa'],
     queryFn: () => api.get('/empresa').then(r => r.data),
   })
+
+export const useUpdateEmpresa = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data) => api.patch('/empresa', data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['empresa'] }),
+  })
+}
 
 // ══════════════════════════════════════════════
 // CONTENEDORES
