@@ -1,10 +1,12 @@
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import { FaArrowLeft } from 'react-icons/fa';
 import { TableCard, TableContainer } from '../../components/ui/Table';
 import { usePedido } from '../../hooks/useApi';
 import Spinner from '../../components/ui/Spinner';
 import { estadoPillClass, estadoLabel, fmtDate } from '../../lib/utils';
 
 export default function PedidoDetalle() {
+  const navigate = useNavigate();
   const { id } = useParams();
   const { data: pedido, isLoading } = usePedido(id);
 
@@ -23,10 +25,15 @@ export default function PedidoDetalle() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-serif text-xl font-medium text-ink">{pedido.codigo}</h1>
-          <div className="mt-0.5 text-xs text-mist">
-            {pedido.proveedor?.nombre} · {fmtDate(pedido.fecha_pedido)}
+        <div className="flex items-start gap-3">
+          <button className="btn btn-outline px-2 text-xs" onClick={() => navigate(-1)}>
+            <FaArrowLeft aria-hidden="true" />
+          </button>
+          <div>
+            <h1 className="font-serif text-xl font-medium text-ink">{pedido.codigo}</h1>
+            <div className="mt-0.5 text-xs text-mist">
+              {pedido.proveedor?.nombre} · {fmtDate(pedido.fecha_pedido)}
+            </div>
           </div>
         </div>
         <span className={`pill ${estadoPillClass(pedido.estado)}`}>
