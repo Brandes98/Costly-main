@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { FaBars, FaPlus, FaTimes } from 'react-icons/fa';
+import Button from '../ui/Button';
 
 const TITLES = {
   '/dashboard': { title: 'Dashboard', bc: 'Inicio' },
@@ -59,13 +60,15 @@ export default function Topbar({ isMobile, isSidebarOpen, isSidebarCollapsed, on
         >
           📋 Pedidos
         </button>
-        <button
-          className="btn btn-primary text-xs hidden md:inline-flex"
+        <Button
+          variant="primary"
+          size="xs"
+          className="hidden md:inline-flex"
+          icon={<FaPlus className="text-[0.75rem]" />}
           onClick={() => navigate('/pedidos/nuevo')}
         >
-          <FaPlus className="text-[0.75rem]" />
-          <span>Nuevo pedido</span>
-        </button>
+          Nuevo pedido
+        </Button>
       </div>
     </div>
   );
