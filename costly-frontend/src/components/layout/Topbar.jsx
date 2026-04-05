@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { FaAngleLeft, FaAngleRight, FaBars, FaPlus, FaTimes } from 'react-icons/fa';
+import { FaBars, FaPlus, FaTimes } from 'react-icons/fa';
 
 const TITLES = {
   '/dashboard': { title: 'Dashboard', bc: 'Inicio' },
@@ -31,31 +31,15 @@ export default function Topbar({ isMobile, isSidebarOpen, isSidebarCollapsed, on
 
   return (
     <div className="bg-sur border-b border-border h-[52px] w-full min-w-0 flex items-center px-4 md:px-[22px] gap-3 flex-shrink-0 shadow-sh0">
-      <button
-        className="w-9 h-9 rounded-lg bg-sur2 border border-border flex items-center justify-center cursor-pointer text-sm hover:border-tl hover:bg-tl-xl transition-all flex-shrink-0"
-        onClick={onToggleSidebar}
-        title={
-          isMobile
-            ? isSidebarOpen
-              ? 'Cerrar menu'
-              : 'Abrir menu'
-            : isSidebarCollapsed
-              ? 'Expandir menu'
-              : 'Colapsar menu'
-        }
-      >
-        {isMobile ? (
-          isSidebarOpen ? (
-            <FaTimes />
-          ) : (
-            <FaBars />
-          )
-        ) : isSidebarCollapsed ? (
-          <FaAngleRight />
-        ) : (
-          <FaAngleLeft />
-        )}
-      </button>
+      {isMobile && (
+        <button
+          className="w-9 h-9 rounded-lg bg-sur2 border border-border flex items-center justify-center cursor-pointer text-sm hover:border-tl hover:bg-tl-xl transition-all flex-shrink-0"
+          onClick={onToggleSidebar}
+          title={isSidebarOpen ? 'Cerrar menu' : 'Abrir menu'}
+        >
+          {isSidebarOpen ? <FaTimes /> : <FaBars />}
+        </button>
+      )}
 
       <div className="flex-1 min-w-0">
         <div className="font-serif text-base font-medium text-ink truncate">{title}</div>
