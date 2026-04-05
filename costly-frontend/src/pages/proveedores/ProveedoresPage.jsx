@@ -13,6 +13,7 @@ import api from '../../lib/api';
 import Spinner from '../../components/ui/Spinner';
 import { Modal, Confirm } from '../../components/ui/Spinner';
 import { FaPen, FaTrash } from 'react-icons/fa';
+import Button from '../../components/ui/Button';
 
 // ── Schema
 const schema = z.object({
@@ -154,9 +155,9 @@ export default function ProveedoresPage() {
             />
           </div>
         </div>
-        <button className="btn btn-primary text-xs" onClick={abrirCrear}>
-          ＋ Nuevo proveedor
-        </button>
+        <Button icon="create" onClick={abrirCrear}>
+          Nuevo proveedor
+        </Button>
       </div>
 
       {/* Tabla */}
@@ -175,9 +176,9 @@ export default function ProveedoresPage() {
             <div className="text-4xl mb-3">🏭</div>
             <div className="text-sm font-medium text-ink mb-1">Sin proveedores</div>
             <div className="text-xs text-mist mb-4">Agregá tu primer proveedor para empezar</div>
-            <button className="btn btn-primary text-xs" onClick={abrirCrear}>
-              ＋ Crear proveedor
-            </button>
+            <Button icon="create" onClick={abrirCrear}>
+              Crear proveedor
+            </Button>
           </div>
         ) : (
           <table className="tbl">
