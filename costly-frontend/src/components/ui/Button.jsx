@@ -1,3 +1,5 @@
+import { FaPlus } from 'react-icons/fa';
+
 export default function Button({
   children,
   icon = '',
@@ -12,16 +14,19 @@ export default function Button({
       danger: 'btn-danger',
     }[variant] || 'btn-primary';
 
-  const icon = {
-    create: '<FaPlus className="text-[0.75rem]" />',
+  const icons = {
+    create: FaPlus,
   };
+
+  const IconComponent = typeof icon === 'string' ? icons[icon] : null;
+
   return (
     <button
       type={type}
       className={`btn ${variantClass} text-xs hidden md:inline-flex`.trim()}
       {...props}
     >
-      {icon}
+      {IconComponent ? <IconComponent className="text-[0.75rem]" /> : icon}
       <span>{children}</span>
     </button>
   );
