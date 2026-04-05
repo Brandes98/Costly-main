@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { EmptyState, Modal } from '../../components/ui/Spinner';
 import Spinner from '../../components/ui/Spinner';
+import Button from '../../components/ui/Button';
 import {
   useConfirmPago,
   useCreatePago,
@@ -198,9 +199,9 @@ export default function PagosPage() {
           <div className="font-serif text-xl font-medium text-ink">Pagos a proveedores</div>
           <div className="text-[11px] text-mist">Finanzas / Pagos</div>
         </div>
-        <button className="btn btn-primary text-xs" onClick={() => setModalOpen(true)}>
-          + Registrar pago
-        </button>
+        <Button icon="create" onClick={() => setModalOpen(true)}>
+          Registrar pago
+        </Button>
       </div>
 
       {pagosError && (

@@ -60,7 +60,7 @@ export default function Topbar({ isMobile, isSidebarOpen, isSidebarCollapsed, on
         >
           📋 Pedidos
         </button>
-        <Button variant="primary" icon="create" onClick={() => navigate('/pedidos/nuevo')}>
+        <Button icon="create" onClick={() => navigate('/pedidos/nuevo')}>
           Nuevo pedido
         </Button>
       </div>
