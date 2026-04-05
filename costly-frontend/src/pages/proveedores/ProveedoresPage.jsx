@@ -12,6 +12,7 @@ import { useQuery } from '@tanstack/react-query';
 import api from '../../lib/api';
 import Spinner from '../../components/ui/Spinner';
 import { Modal, Confirm } from '../../components/ui/Spinner';
+import { FaPen, FaTrash } from 'react-icons/fa';
 
 // ── Schema
 const schema = z.object({
@@ -235,13 +236,13 @@ export default function ProveedoresPage() {
                         className="btn btn-outline text-xs px-2 py-1"
                         onClick={() => abrirEditar(p)}
                       >
-                        ✏️
+                        <FaPen />
                       </button>
                       <button
                         className="btn btn-outline text-xs px-2 py-1 hover:border-rs hover:text-rs"
                         onClick={() => setConfirmDel(p)}
                       >
-                        🗑
+                        <FaTrash />
                       </button>
                     </div>
                   </td>
