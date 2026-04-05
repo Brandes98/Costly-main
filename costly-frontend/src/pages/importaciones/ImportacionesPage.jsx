@@ -5,9 +5,10 @@ import { TableCard, TableContainer, TableToolbar } from '../../components/ui/Tab
 import { useImportaciones } from '../../hooks/useApi';
 import {
   fmtDate,
-  importacionEstadoLabel,
+  importacionEstadoOptions,
   importacionEstadoPillClass,
   importacionSemaforoClass,
+  importacionEstadoLabel,
 } from '../../lib/utils';
 
 function resumenPedidos(pedidos = []) {
@@ -29,17 +30,6 @@ export default function ImportacionesPage() {
   } = useImportaciones({
     estado: estado || undefined,
   });
-
-  const estadoOptions = useMemo(
-    () => [
-      { value: 'en_proceso', label: importacionEstadoLabel('en_proceso') },
-      { value: 'en_transito', label: importacionEstadoLabel('en_transito') },
-      { value: 'en_aduana', label: importacionEstadoLabel('en_aduana') },
-      { value: 'en_bodega', label: importacionEstadoLabel('en_bodega') },
-      { value: 'cerrada', label: importacionEstadoLabel('cerrada') },
-    ],
-    [],
-  );
 
   const rows = useMemo(
     () =>
@@ -83,7 +73,7 @@ export default function ImportacionesPage() {
         searchPlaceholder="Buscar importación..."
         estadoValue={estado}
         onEstadoChange={setEstado}
-        estadoOptions={estadoOptions}
+        estadoOptions={importacionEstadoOptions}
       />
 
       <TableCard
