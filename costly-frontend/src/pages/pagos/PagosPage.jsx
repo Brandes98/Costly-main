@@ -14,6 +14,7 @@ import {
   fmtCurrency,
   fmtDate,
   pagoEstadoLabel,
+  pagoEstadoOptions,
   pagoEstadoPillClass,
   pagoMetodoLabel,
   pagoTipoLabel,
@@ -124,15 +125,7 @@ export default function PagosPage() {
   }, [pagos]);
 
   const loading = loadingPagos || loadingPedidos || loadingProveedores;
-  const estadoOptions = useMemo(
-    () => [
-      { value: 'programado', label: pagoEstadoLabel('programado') },
-      { value: 'procesado', label: pagoEstadoLabel('procesado') },
-      { value: 'confirmado', label: pagoEstadoLabel('confirmado') },
-      { value: 'devuelto', label: pagoEstadoLabel('devuelto') },
-    ],
-    [],
-  );
+
   const proveedorOptions = useMemo(
     () =>
       proveedores.map((proveedor) => ({
@@ -240,7 +233,7 @@ export default function PagosPage() {
         searchPlaceholder="Buscar pago..."
         estadoValue={filters.estado}
         onEstadoChange={(value) => setFilters((current) => ({ ...current, estado: value }))}
-        estadoOptions={estadoOptions}
+        estadoOptions={pagoEstadoOptions}
         proveedorValue={filters.proveedor_id}
         onProveedorChange={(value) =>
           setFilters((current) => ({ ...current, proveedor_id: value }))
@@ -372,7 +365,8 @@ export default function PagosPage() {
               <option value="">Seleccionar...</option>
               {pedidosConProveedor.map((pedido) => (
                 <option key={pedido.pedido_id} value={pedido.pedido_id}>
-                  {pedido.codigo} - {pedido.proveedor?.nombre || `Proveedor #${pedido.proveedor_id}`}
+                  {pedido.codigo} -{' '}
+                  {pedido.proveedor?.nombre || `Proveedor #${pedido.proveedor_id}`}
                 </option>
               ))}
             </select>
@@ -499,7 +493,8 @@ export default function PagosPage() {
 
           {pedidoSeleccionado && (
             <div className="md:col-span-2 rounded-lg bg-sur2 px-3 py-2 text-xs text-mist">
-              Pedido seleccionado: <span className="font-medium text-ink">{pedidoSeleccionado.codigo}</span>
+              Pedido seleccionado:{' '}
+              <span className="font-medium text-ink">{pedidoSeleccionado.codigo}</span>
             </div>
           )}
         </form>

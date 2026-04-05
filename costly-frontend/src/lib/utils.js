@@ -112,6 +112,14 @@ export const importacionEstadoLabel = (estado) => ({
   cerrada: 'Cerrada',
 }[estado] || estado)
 
+export const importacionEstadoOptions = [
+  { value: 'en_proceso', label: importacionEstadoLabel('en_proceso') },
+  { value: 'en_transito', label: importacionEstadoLabel('en_transito') },
+  { value: 'en_aduana', label: importacionEstadoLabel('en_aduana') },
+  { value: 'en_bodega', label: importacionEstadoLabel('en_bodega') },
+  { value: 'cerrada', label: importacionEstadoLabel('cerrada') },
+]
+
 export const pagoEstadoPillClass = (estado) => ({
   programado: 'pill-yellow',
   procesado: 'pill-blue',
@@ -125,6 +133,13 @@ export const pagoEstadoLabel = (estado) => ({
   confirmado: 'Confirmado',
   devuelto: 'Devuelto',
 }[estado] || estado)
+
+export const pagoEstadoOptions = [
+  { value: 'programado', label: pagoEstadoLabel('programado') },
+  { value: 'procesado', label: pagoEstadoLabel('procesado') },
+  { value: 'confirmado', label: pagoEstadoLabel('confirmado') },
+  { value: 'devuelto', label: pagoEstadoLabel('devuelto') },
+]
 
 export const pagoTipoLabel = (tipo) => ({
   senal: 'Señal',
