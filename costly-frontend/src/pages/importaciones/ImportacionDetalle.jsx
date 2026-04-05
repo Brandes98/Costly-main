@@ -1,4 +1,5 @@
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import { FaArrowLeft } from 'react-icons/fa';
 import Spinner from '../../components/ui/Spinner';
 import { TableCard, TableContainer } from '../../components/ui/Table';
 import { useImportacion } from '../../hooks/useApi';
@@ -15,6 +16,7 @@ function resumenProveedores(pedidos = []) {
 }
 
 export default function ImportacionDetalle() {
+  const navigate = useNavigate();
   const { id } = useParams();
   const { data: importacion, isLoading } = useImportacion(id);
 
@@ -36,10 +38,15 @@ export default function ImportacionDetalle() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
-        <div>
-          <h1 className="font-serif text-xl font-medium text-ink">{importacion.codigo}</h1>
-          <div className="mt-0.5 text-xs text-mist">
-            {pedidos.length} pedidos · {fmtDate(importacion.fecha_union || importacion.creado_en)}
+        <div className="flex items-start gap-3">
+          <button className="btn btn-outline px-2 text-xs" onClick={() => navigate(-1)}>
+            <FaArrowLeft aria-hidden="true" />
+          </button>
+          <div>
+            <h1 className="font-serif text-xl font-medium text-ink">{importacion.codigo}</h1>
+            <div className="mt-0.5 text-xs text-mist">
+              {pedidos.length} pedidos · {fmtDate(importacion.fecha_union || importacion.creado_en)}
+            </div>
           </div>
         </div>
         <span className={`pill ${importacionEstadoPillClass(importacion.estado)}`}>
