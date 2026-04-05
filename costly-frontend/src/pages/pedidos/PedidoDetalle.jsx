@@ -1,9 +1,5 @@
-// ══════════════════════════════════════════════
-// Páginas placeholder — completar pantalla por pantalla
-// ══════════════════════════════════════════════
-
-// src/pages/PedidoDetalle.jsx
 import { useParams } from 'react-router-dom';
+import { TableCard, TableContainer } from '../../components/ui/Table';
 import { usePedido } from '../../hooks/useApi';
 import Spinner from '../../components/ui/Spinner';
 import { estadoPillClass, estadoLabel, fmtDate } from '../../lib/utils';
@@ -12,20 +8,24 @@ export default function PedidoDetalle() {
   const { id } = useParams();
   const { data: pedido, isLoading } = usePedido(id);
 
-  if (isLoading)
+  if (isLoading) {
     return (
       <div className="flex justify-center p-12">
         <Spinner />
       </div>
     );
-  if (!pedido) return <div className="text-center text-mist p-12">Pedido no encontrado</div>;
+  }
+
+  if (!pedido) {
+    return <div className="p-12 text-center text-mist">Pedido no encontrado</div>;
+  }
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-serif text-xl font-medium text-ink">{pedido.codigo}</h1>
-          <div className="text-xs text-mist mt-0.5">
+          <div className="mt-0.5 text-xs text-mist">
             {pedido.proveedor?.nombre} · {fmtDate(pedido.fecha_pedido)}
           </div>
         </div>
@@ -34,13 +34,13 @@ export default function PedidoDetalle() {
         </span>
       </div>
 
-      {/* Líneas */}
-      <div className="card">
-        <div className="card-header">
-          <div className="card-title">📋 Líneas del pedido</div>
-          <span className="text-xs text-mist">{pedido.lineas?.length} líneas</span>
-        </div>
-        <table className="tbl">
+      <TableCard
+        title="📋 Líneas del pedido"
+        countLabel={`${pedido.lineas?.length || 0} líneas`}
+        isEmpty={!pedido.lineas?.length}
+        emptyMessage="No hay líneas para mostrar"
+      >
+        <TableContainer>
           <thead>
             <tr>
               <th>#</th>
@@ -51,49 +51,45 @@ export default function PedidoDetalle() {
             </tr>
           </thead>
           <tbody>
-            {pedido.lineas?.map((l) => (
-              <tr key={l.linea_id}>
-                <td className="text-mist">{l.numero}</td>
+            {pedido.lineas?.map((linea) => (
+              <tr key={linea.linea_id}>
+                <td className="text-mist">{linea.numero}</td>
                 <td>
-                  <div className="font-medium">{l.producto?.nombre}</div>
-                  <div className="text-[10px] text-mist">{l.producto?.sku}</div>
+                  <div className="font-medium">{linea.producto?.nombre}</div>
+                  <div className="text-[10px] text-mist">{linea.producto?.sku}</div>
                 </td>
-                <td>{Number(l.cantidad).toLocaleString()}</td>
-                <td>${Number(l.precio_unit).toFixed(2)}</td>
+                <td>{Number(linea.cantidad).toLocaleString()}</td>
+                <td>${Number(linea.precio_unit).toFixed(2)}</td>
                 <td className="font-semibold">
-                  ${Number(l.total_linea).toLocaleString('es-CR', { minimumFractionDigits: 2 })}
+                  ${Number(linea.total_linea).toLocaleString('es-CR', { minimumFractionDigits: 2 })}
                 </td>
               </tr>
             ))}
           </tbody>
-        </table>
-      </div>
+        </TableContainer>
+      </TableCard>
 
-      {/* Hitos */}
       {pedido.hitos?.length > 0 && (
-        <div className="card">
-          <div className="card-header">
-            <div className="card-title">🎯 Hitos</div>
-          </div>
+        <TableCard title="🎯 Hitos">
           <div className="card-body flex flex-col gap-2">
-            {pedido.hitos.map((h) => (
+            {pedido.hitos.map((hito) => (
               <div
-                key={h.hito_id}
-                className="flex items-center justify-between py-1.5 border-b border-border-lt last:border-b-0"
+                key={hito.hito_id}
+                className="flex items-center justify-between border-b border-border-lt py-1.5 last:border-b-0"
               >
-                <span className="text-xs">{h.tipo?.replace(/_/g, ' ')}</span>
+                <span className="text-xs">{hito.tipo?.replace(/_/g, ' ')}</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-mist">{fmtDate(h.fecha_plan)}</span>
+                  <span className="text-xs text-mist">{fmtDate(hito.fecha_plan)}</span>
                   <span
-                    className={`pill ${h.estado === 'completado' ? 'pill-green' : 'pill-gray'}`}
+                    className={`pill ${hito.estado === 'completado' ? 'pill-green' : 'pill-gray'}`}
                   >
-                    {h.estado}
+                    {hito.estado}
                   </span>
                 </div>
               </div>
             ))}
           </div>
-        </div>
+        </TableCard>
       )}
     </div>
   );
