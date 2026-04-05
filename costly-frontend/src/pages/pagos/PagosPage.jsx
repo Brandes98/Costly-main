@@ -10,7 +10,14 @@ import {
   usePedidos,
   useProveedores,
 } from '../../hooks/useApi';
-import { fmtCurrency, fmtDate } from '../../lib/utils';
+import {
+  fmtCurrency,
+  fmtDate,
+  pagoEstadoLabel,
+  pagoEstadoPillClass,
+  pagoMetodoLabel,
+  pagoTipoLabel,
+} from '../../lib/utils';
 
 const initialForm = {
   pedido_id: '',
@@ -23,28 +30,6 @@ const initialForm = {
   metodo: 'swift',
   referencia: '',
   comprobante_url: '',
-};
-
-const pillClassByEstado = {
-  programado: 'pill-yellow',
-  procesado: 'pill-blue',
-  confirmado: 'pill-green',
-  devuelto: 'pill-red',
-};
-
-const tipoLabel = {
-  senal: 'Señal',
-  saldo: 'Saldo',
-  total: 'Total',
-  anticipo: 'Anticipo',
-  devolucion: 'Devolución',
-};
-
-const metodoLabel = {
-  swift: 'SWIFT',
-  transferencia_local: 'Transferencia local',
-  cheque: 'Cheque',
-  efectivo: 'Efectivo',
 };
 
 function toIsoDate(dateString) {
@@ -141,10 +126,10 @@ export default function PagosPage() {
   const loading = loadingPagos || loadingPedidos || loadingProveedores;
   const estadoOptions = useMemo(
     () => [
-      { value: 'programado', label: 'Programado' },
-      { value: 'procesado', label: 'Procesado' },
-      { value: 'confirmado', label: 'Confirmado' },
-      { value: 'devuelto', label: 'Devuelto' },
+      { value: 'programado', label: pagoEstadoLabel('programado') },
+      { value: 'procesado', label: pagoEstadoLabel('procesado') },
+      { value: 'confirmado', label: pagoEstadoLabel('confirmado') },
+      { value: 'devuelto', label: pagoEstadoLabel('devuelto') },
     ],
     [],
   );
@@ -156,6 +141,7 @@ export default function PagosPage() {
       })),
     [proveedores],
   );
+
   const filteredPagos = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
 
@@ -165,8 +151,8 @@ export default function PagosPage() {
       (pago) =>
         pago.codigo?.toLowerCase().includes(normalizedSearch) ||
         pago.proveedor_nombre?.toLowerCase().includes(normalizedSearch) ||
-        (tipoLabel[pago.tipo] || pago.tipo)?.toLowerCase().includes(normalizedSearch) ||
-        (metodoLabel[pago.metodo] || '').toLowerCase().includes(normalizedSearch) ||
+        pagoTipoLabel(pago.tipo)?.toLowerCase().includes(normalizedSearch) ||
+        pagoMetodoLabel(pago.metodo).toLowerCase().includes(normalizedSearch) ||
         pago.estado?.toLowerCase().includes(normalizedSearch),
     );
   }, [pagos, search]);
@@ -249,15 +235,12 @@ export default function PagosPage() {
       </div>
 
       <TableToolbar
-        enableSearch
         searchValue={search}
         onSearchChange={setSearch}
         searchPlaceholder="Buscar pago..."
-        showEstadoFilter
         estadoValue={filters.estado}
         onEstadoChange={(value) => setFilters((current) => ({ ...current, estado: value }))}
         estadoOptions={estadoOptions}
-        showProveedorFilter
         proveedorValue={filters.proveedor_id}
         onProveedorChange={(value) =>
           setFilters((current) => ({ ...current, proveedor_id: value }))
@@ -315,15 +298,15 @@ export default function PagosPage() {
                   </span>
                 </td>
                 <td>
-                  <span className="pill pill-gray">{tipoLabel[pago.tipo] || pago.tipo}</span>
+                  <span className="pill pill-gray">{pagoTipoLabel(pago.tipo)}</span>
                 </td>
                 <td className="font-semibold">{fmtCurrency(pago.monto, pago.moneda)}</td>
                 <td className="text-[11px] text-mist">{fmtDate(pago.fecha_pago)}</td>
                 <td className="text-[11px] font-medium">{daysUntil(pago.fecha_limite)}</td>
-                <td className="text-[11px] text-mist">{metodoLabel[pago.metodo] || '—'}</td>
+                <td className="text-[11px] text-mist">{pagoMetodoLabel(pago.metodo)}</td>
                 <td>
-                  <span className={`pill ${pillClassByEstado[pago.estado] || 'pill-gray'}`}>
-                    {pago.estado}
+                  <span className={`pill ${pagoEstadoPillClass(pago.estado)}`}>
+                    {pagoEstadoLabel(pago.estado)}
                   </span>
                 </td>
                 <td>
@@ -389,8 +372,7 @@ export default function PagosPage() {
               <option value="">Seleccionar...</option>
               {pedidosConProveedor.map((pedido) => (
                 <option key={pedido.pedido_id} value={pedido.pedido_id}>
-                  {pedido.codigo} -{' '}
-                  {pedido.proveedor?.nombre || `Proveedor #${pedido.proveedor_id}`}
+                  {pedido.codigo} - {pedido.proveedor?.nombre || `Proveedor #${pedido.proveedor_id}`}
                 </option>
               ))}
             </select>
@@ -417,11 +399,11 @@ export default function PagosPage() {
           <div>
             <div className="mb-1 text-xs text-mist">Tipo</div>
             <select className="form-input" name="tipo" value={form.tipo} onChange={handleChange}>
-              <option value="senal">Señal</option>
-              <option value="saldo">Saldo</option>
-              <option value="total">Total</option>
-              <option value="anticipo">Anticipo</option>
-              <option value="devolucion">Devolución</option>
+              <option value="senal">{pagoTipoLabel('senal')}</option>
+              <option value="saldo">{pagoTipoLabel('saldo')}</option>
+              <option value="total">{pagoTipoLabel('total')}</option>
+              <option value="anticipo">{pagoTipoLabel('anticipo')}</option>
+              <option value="devolucion">{pagoTipoLabel('devolucion')}</option>
             </select>
           </div>
 
@@ -462,10 +444,10 @@ export default function PagosPage() {
               value={form.metodo}
               onChange={handleChange}
             >
-              <option value="swift">SWIFT</option>
-              <option value="transferencia_local">Transferencia local</option>
-              <option value="cheque">Cheque</option>
-              <option value="efectivo">Efectivo</option>
+              <option value="swift">{pagoMetodoLabel('swift')}</option>
+              <option value="transferencia_local">{pagoMetodoLabel('transferencia_local')}</option>
+              <option value="cheque">{pagoMetodoLabel('cheque')}</option>
+              <option value="efectivo">{pagoMetodoLabel('efectivo')}</option>
             </select>
           </div>
 
@@ -517,8 +499,7 @@ export default function PagosPage() {
 
           {pedidoSeleccionado && (
             <div className="md:col-span-2 rounded-lg bg-sur2 px-3 py-2 text-xs text-mist">
-              Pedido seleccionado:{' '}
-              <span className="font-medium text-ink">{pedidoSeleccionado.codigo}</span>
+              Pedido seleccionado: <span className="font-medium text-ink">{pedidoSeleccionado.codigo}</span>
             </div>
           )}
         </form>
