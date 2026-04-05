@@ -81,7 +81,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-[1fr_280px] gap-4">
+      <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
         {/* Tabla de pedidos activos */}
         <div className="card">
           <div className="card-header">
@@ -104,78 +104,80 @@ export default function DashboardPage() {
           {pedidos.length === 0 ? (
             <div className="p-8 text-center text-mist text-xs">No hay pedidos activos</div>
           ) : (
-            <table className="tbl">
-              <thead>
-                <tr>
-                  <th className="w-6" />
-                  <th>Pedido</th>
-                  <th>Proveedor</th>
-                  <th>Estado</th>
-                  <th>Próx. Hito</th>
-                  <th>Moneda</th>
-                  <th>Pago prov.</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pedidos.slice(0, 8).map((p) => {
-                  const hito = p.hitos?.[0];
-                  const sem = hito ? getSemaforo(hito.fecha_plan) : 'green';
-                  return (
-                    <tr
-                      key={p.pedido_id}
-                      className="cursor-pointer"
-                      onClick={() => (window.location.href = `/pedidos/${p.pedido_id}`)}
-                    >
-                      <td className="pl-3">
-                        <span className={`s3 ${semaforoClass(sem)}`} />
-                      </td>
-                      <td>
-                        <strong className="text-xs">{p.codigo}</strong>
-                        {p.codigo_padre && (
-                          <div className="text-[10px] text-tl">{p.codigo_padre}</div>
-                        )}
-                      </td>
-                      <td>
-                        <span className="ic">
-                          {p.proveedor?.pais?.bandera} {p.proveedor?.nombre}
-                        </span>
-                      </td>
-                      <td>
-                        <span className={`pill ${estadoPillClass(p.estado)}`}>
-                          {estadoLabel(p.estado)}
-                        </span>
-                      </td>
-                      <td className="text-[11px]">
-                        {hito ? (
-                          <span
-                            className={
-                              sem === 'red'
-                                ? 'text-rs font-medium'
-                                : sem === 'yellow'
-                                  ? 'text-am font-medium'
-                                  : 'text-mist'
-                            }
-                          >
-                            {fmtDate(hito.fecha_plan)}
+            <div className="overflow-x-auto">
+              <table className="tbl min-w-[720px]">
+                <thead>
+                  <tr>
+                    <th className="w-6" />
+                    <th>Pedido</th>
+                    <th>Proveedor</th>
+                    <th>Estado</th>
+                    <th>Próx. Hito</th>
+                    <th>Moneda</th>
+                    <th>Pago prov.</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pedidos.slice(0, 8).map((p) => {
+                    const hito = p.hitos?.[0];
+                    const sem = hito ? getSemaforo(hito.fecha_plan) : 'green';
+                    return (
+                      <tr
+                        key={p.pedido_id}
+                        className="cursor-pointer"
+                        onClick={() => (window.location.href = `/pedidos/${p.pedido_id}`)}
+                      >
+                        <td className="pl-3">
+                          <span className={`s3 ${semaforoClass(sem)}`} />
+                        </td>
+                        <td>
+                          <strong className="text-xs">{p.codigo}</strong>
+                          {p.codigo_padre && (
+                            <div className="text-[10px] text-tl">{p.codigo_padre}</div>
+                          )}
+                        </td>
+                        <td>
+                          <span className="ic">
+                            {p.proveedor?.pais?.bandera} {p.proveedor?.nombre}
                           </span>
-                        ) : (
-                          <span className="text-mist">—</span>
-                        )}
-                      </td>
-                      <td className="font-medium">{p.moneda}</td>
-                      <td>
-                        <span className="pill pill-gray">{p._count?.lineas} líneas</span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                        </td>
+                        <td>
+                          <span className={`pill ${estadoPillClass(p.estado)}`}>
+                            {estadoLabel(p.estado)}
+                          </span>
+                        </td>
+                        <td className="text-[11px]">
+                          {hito ? (
+                            <span
+                              className={
+                                sem === 'red'
+                                  ? 'text-rs font-medium'
+                                  : sem === 'yellow'
+                                    ? 'text-am font-medium'
+                                    : 'text-mist'
+                              }
+                            >
+                              {fmtDate(hito.fecha_plan)}
+                            </span>
+                          ) : (
+                            <span className="text-mist">—</span>
+                          )}
+                        </td>
+                        <td className="font-medium">{p.moneda}</td>
+                        <td>
+                          <span className="pill pill-gray">{p._count?.lineas} líneas</span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
 
         {/* Panel derecho */}
-        <div className="flex flex-col gap-3">
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-1">
           {/* Alertas */}
           <div className="card">
             <div className="card-header">
