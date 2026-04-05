@@ -1,28 +1,28 @@
 export default function Button({
   children,
-  icon,
-  className = '',
+  icon = '',
   variant = 'primary',
-  size = 'md',
   type = 'button',
   ...props
 }) {
-  const variantClass = {
-    primary: 'btn-primary',
-    outline: 'btn-outline',
-    danger: 'btn-danger',
-  }[variant] || 'btn-primary'
+  const variantClass =
+    {
+      primary: 'btn-primary',
+      outline: 'btn-outline',
+      danger: 'btn-danger',
+    }[variant] || 'btn-primary';
 
-  const sizeClass = {
-    xs: 'text-xs',
-    sm: 'text-sm',
-    md: '',
-  }[size] || ''
-
+  const icon = {
+    create: '<FaPlus className="text-[0.75rem]" />',
+  };
   return (
-    <button type={type} className={`btn ${variantClass} ${sizeClass} ${className}`.trim()} {...props}>
+    <button
+      type={type}
+      className={`btn ${variantClass} text-xs hidden md:inline-flex`.trim()}
+      {...props}
+    >
       {icon}
       <span>{children}</span>
     </button>
-  )
+  );
 }

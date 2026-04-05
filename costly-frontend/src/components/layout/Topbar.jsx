@@ -60,13 +60,7 @@ export default function Topbar({ isMobile, isSidebarOpen, isSidebarCollapsed, on
         >
           📋 Pedidos
         </button>
-        <Button
-          variant="primary"
-          size="xs"
-          className="hidden md:inline-flex"
-          icon={<FaPlus className="text-[0.75rem]" />}
-          onClick={() => navigate('/pedidos/nuevo')}
-        >
+        <Button variant="primary" icon="create" onClick={() => navigate('/pedidos/nuevo')}>
           Nuevo pedido
         </Button>
       </div>
