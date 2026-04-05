@@ -2,22 +2,14 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TableCard, TableContainer, TableToolbar } from '../../components/ui/Table';
 import { usePedidos } from '../../hooks/useApi';
-import { estadoLabel, estadoPillClass, fmtDate, getSemaforo, semaforoClass } from '../../lib/utils';
-
-const ESTADOS = [
-  'borrador',
-  'confirmado',
-  'en_produccion',
-  'listo_fabrica',
-  'embarcado',
-  'en_transito',
-  'en_puerto_cr',
-  'en_aduana',
-  'en_bodega',
-  'entregado',
-  'cerrado',
-  'cancelado',
-];
+import {
+  estadoLabel,
+  estadoPillClass,
+  fmtDate,
+  getSemaforo,
+  pedidoEstadoOptions,
+  semaforoClass,
+} from '../../lib/utils';
 
 export default function PedidosPage() {
   const navigate = useNavigate();
@@ -36,11 +28,9 @@ export default function PedidosPage() {
   return (
     <div className="space-y-3">
       <TableToolbar
-        enableSearch
         searchValue={search}
         onSearchChange={setSearch}
         searchPlaceholder="Buscar pedido..."
-        showEstadoFilter
         estadoValue={filters.estado}
         onEstadoChange={(value) =>
           setFilters((current) => ({
@@ -48,11 +38,10 @@ export default function PedidosPage() {
             estado: value || undefined,
           }))
         }
-        estadoOptions={ESTADOS.map((estado) => ({
+        estadoOptions={pedidoEstadoOptions.map((estado) => ({
           value: estado,
           label: estadoLabel(estado),
         }))}
-        showCreateButton
         createLabel="Nuevo pedido"
         onCreate={() => navigate('/pedidos/nuevo')}
       />

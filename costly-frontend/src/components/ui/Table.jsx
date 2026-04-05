@@ -55,14 +55,21 @@ export function TableToolbar({
   onCreate,
   action,
 }) {
+  const hasSearch = enableSearch || typeof onSearchChange === 'function';
+  const hasEstadoFilter =
+    showEstadoFilter || (typeof onEstadoChange === 'function' && estadoOptions.length > 0);
+  const hasProveedorFilter =
+    showProveedorFilter ||
+    (typeof onProveedorChange === 'function' && proveedorOptions.length > 0);
+  const hasCreateAction = showCreateButton || typeof onCreate === 'function';
   const hasToolbar =
-    enableSearch || showEstadoFilter || showProveedorFilter || showCreateButton || !!action;
+    hasSearch || hasEstadoFilter || hasProveedorFilter || hasCreateAction || !!action;
 
   if (!hasToolbar) return null;
 
   const toolbarAction =
     action ||
-    (showCreateButton ? (
+    (hasCreateAction ? (
       <Button icon="create" onClick={onCreate}>
         {createLabel}
       </Button>
@@ -71,7 +78,7 @@ export function TableToolbar({
   return (
     <div className="flex items-center justify-between gap-3">
       <div className="flex flex-wrap gap-2">
-        {enableSearch && (
+        {hasSearch && (
           <ToolbarSearch
             placeholder={searchPlaceholder}
             value={searchValue}
@@ -79,7 +86,7 @@ export function TableToolbar({
           />
         )}
 
-        {showEstadoFilter && (
+        {hasEstadoFilter && (
           <ToolbarFilter
             value={estadoValue}
             onChange={onEstadoChange}
@@ -88,7 +95,7 @@ export function TableToolbar({
           />
         )}
 
-        {showProveedorFilter && (
+        {hasProveedorFilter && (
           <ToolbarFilter
             value={proveedorValue}
             onChange={onProveedorChange}
