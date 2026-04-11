@@ -38,6 +38,15 @@ export const semaforoClass = (color) => ({
   green:  's3g',
 }[color] || 's3g')
 
+export const importacionSemaforoClass = (estado) => ({
+  borrador: 's3y',
+  en_proceso: 's3y',
+  en_transito: 's3r',
+  en_aduana: 's3y',
+  en_bodega: 's3g',
+  cerrada: 's3g',
+}[estado] || 's3y')
+
 // ── Pill de estado de pedido
 export const estadoPillClass = (estado) => ({
   borrador:      'pill-gray',
@@ -69,6 +78,83 @@ export const estadoLabel = (estado) => ({
   cerrado:       'Cerrado',
   cancelado:     'Cancelado',
 }[estado] || estado)
+
+export const pedidoEstadoOptions = [
+  'borrador',
+  'confirmado',
+  'en_produccion',
+  'listo_fabrica',
+  'embarcado',
+  'en_transito',
+  'en_puerto_cr',
+  'en_aduana',
+  'en_bodega',
+  'entregado',
+  'cerrado',
+  'cancelado',
+]
+
+export const importacionEstadoPillClass = (estado) => ({
+  borrador: 'pill-gray',
+  en_proceso: 'pill-blue',
+  en_transito: 'pill-blue',
+  en_aduana: 'pill-yellow',
+  en_bodega: 'pill-green',
+  cerrada: 'pill-violet',
+}[estado] || 'pill-gray')
+
+export const importacionEstadoLabel = (estado) => ({
+  borrador: 'Borrador',
+  en_proceso: 'En proceso',
+  en_transito: 'En tránsito',
+  en_aduana: 'En aduana',
+  en_bodega: 'En bodega',
+  cerrada: 'Cerrada',
+}[estado] || estado)
+
+export const importacionEstadoOptions = [
+  { value: 'en_proceso', label: importacionEstadoLabel('en_proceso') },
+  { value: 'en_transito', label: importacionEstadoLabel('en_transito') },
+  { value: 'en_aduana', label: importacionEstadoLabel('en_aduana') },
+  { value: 'en_bodega', label: importacionEstadoLabel('en_bodega') },
+  { value: 'cerrada', label: importacionEstadoLabel('cerrada') },
+]
+
+export const pagoEstadoPillClass = (estado) => ({
+  programado: 'pill-yellow',
+  procesado: 'pill-blue',
+  confirmado: 'pill-green',
+  devuelto: 'pill-red',
+}[estado] || 'pill-gray')
+
+export const pagoEstadoLabel = (estado) => ({
+  programado: 'Programado',
+  procesado: 'Procesado',
+  confirmado: 'Confirmado',
+  devuelto: 'Devuelto',
+}[estado] || estado)
+
+export const pagoEstadoOptions = [
+  { value: 'programado', label: pagoEstadoLabel('programado') },
+  { value: 'procesado', label: pagoEstadoLabel('procesado') },
+  { value: 'confirmado', label: pagoEstadoLabel('confirmado') },
+  { value: 'devuelto', label: pagoEstadoLabel('devuelto') },
+]
+
+export const pagoTipoLabel = (tipo) => ({
+  senal: 'Señal',
+  saldo: 'Saldo',
+  total: 'Total',
+  anticipo: 'Anticipo',
+  devolucion: 'Devolución',
+}[tipo] || tipo)
+
+export const pagoMetodoLabel = (metodo) => ({
+  swift: 'SWIFT',
+  transferencia_local: 'Transferencia local',
+  cheque: 'Cheque',
+  efectivo: 'Efectivo',
+}[metodo] || '—')
 
 // ── Truncar texto
 export const truncate = (str, n = 30) =>

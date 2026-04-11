@@ -2,18 +2,21 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useQuery } from '@tanstack/react-query';
+import { FaPen, FaTrash } from 'react-icons/fa';
 import {
   useProveedores,
   useCreateProveedor,
   useUpdateProveedor,
   useDeleteProveedor,
 } from '../../hooks/useApi';
-import { useQuery } from '@tanstack/react-query';
 import api from '../../lib/api';
-import Spinner from '../../components/ui/Spinner';
 import { Modal, Confirm } from '../../components/ui/Spinner';
+import Button from '../../components/ui/Button';
+import { TableCard, TableContainer, TableToolbar } from '../../components/ui/Table';
 
-// ── Schema
+// Schema
+
 const schema = z.object({
   pais_id: z.coerce.number().int().positive('Requerido'),
   nombre: z.string().min(2, 'Mínimo 2 caracteres').max(150),
@@ -37,19 +40,17 @@ export default function ProveedoresPage() {
   const [confirmDel, setConfirmDel] = useState(null);
 
   const { data: proveedores = [], isLoading } = useProveedores();
-  const { data: paises = [] } = useQuery({
+  useQuery({
     queryKey: ['paises'],
     queryFn: () =>
       api.get('/proveedores').then(() =>
-        // Los países vienen del backend — por ahora usamos los del seed
         fetch('/api/v1/proveedores')
           .then((r) => r.json())
-          .then((r) => []),
+          .then(() => []),
       ),
     enabled: false,
   });
 
-  // Usamos los países que vienen en los proveedores + fallback hardcoded
   const paisesComunes = [
     { pais_id: 1, nombre: 'Costa Rica', codigo: 'CR', bandera: '🇨🇷' },
     { pais_id: 44, nombre: 'China', codigo: 'CN', bandera: '🇨🇳' },
@@ -75,10 +76,10 @@ export default function ProveedoresPage() {
   });
 
   const filtered = proveedores.filter(
-    (p) =>
+    (proveedor) =>
       !search ||
-      p.nombre.toLowerCase().includes(search.toLowerCase()) ||
-      p.pais?.nombre?.toLowerCase().includes(search.toLowerCase()),
+      proveedor.nombre.toLowerCase().includes(search.toLowerCase()) ||
+      proveedor.pais?.nombre?.toLowerCase().includes(search.toLowerCase()),
   );
 
   const abrirCrear = () => {
@@ -87,19 +88,19 @@ export default function ProveedoresPage() {
     setModalOpen(true);
   };
 
-  const abrirEditar = (p) => {
-    setEditando(p);
+  const abrirEditar = (proveedor) => {
+    setEditando(proveedor);
     reset({
-      pais_id: p.pais_id,
-      nombre: p.nombre,
-      ciudad: p.ciudad || '',
-      incoterm_pref: p.incoterm_pref || '',
-      moneda: p.moneda,
-      dias_transito: p.dias_transito || '',
-      puerto_origen: p.puerto_origen || '',
-      condiciones_pago: p.condiciones_pago || '',
-      contacto: p.contacto || '',
-      email: p.email || '',
+      pais_id: proveedor.pais_id,
+      nombre: proveedor.nombre,
+      ciudad: proveedor.ciudad || '',
+      incoterm_pref: proveedor.incoterm_pref || '',
+      moneda: proveedor.moneda,
+      dias_transito: proveedor.dias_transito || '',
+      puerto_origen: proveedor.puerto_origen || '',
+      condiciones_pago: proveedor.condiciones_pago || '',
+      contacto: proveedor.contacto || '',
+      email: proveedor.email || '',
     });
     setModalOpen(true);
   };
@@ -140,46 +141,36 @@ export default function ProveedoresPage() {
   return (
     <div className="space-y-3">
       {/* Toolbar */}
-      <div className="flex items-center justify-between">
-        <div className="flex gap-2">
-          <div className="flex items-center gap-2 h-8 px-3 text-xs text-mist border border-border rounded-lg bg-sur2 w-52">
-            <span>🔍</span>
-            <input
-              type="text"
-              placeholder="Buscar proveedor..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="bg-transparent outline-none w-full text-ink placeholder:text-mist"
-            />
-          </div>
-        </div>
-        <button className="btn btn-primary text-xs" onClick={abrirCrear}>
-          ＋ Nuevo proveedor
-        </button>
-      </div>
+      <TableToolbar
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Buscar proveedor..."
+        action={
+          <Button icon="create" onClick={abrirCrear}>
+            Nuevo proveedor
+          </Button>
+        }
+      />
 
       {/* Tabla */}
-      <div className="card">
-        <div className="card-header">
-          <div className="card-title">🏭 Proveedores</div>
-          <span className="text-[11.5px] text-mist">{filtered.length} registros</span>
-        </div>
-
-        {isLoading ? (
-          <div className="flex justify-center p-12">
-            <Spinner />
-          </div>
-        ) : filtered.length === 0 ? (
+      <TableCard
+        title="🏭 Proveedores"
+        countLabel={`${filtered.length} registros`}
+        loading={isLoading}
+        isEmpty={filtered.length === 0}
+        emptyMessage="No hay proveedores que mostrar"
+      >
+        {filtered.length === 0 ? (
           <div className="p-12 text-center">
-            <div className="text-4xl mb-3">🏭</div>
-            <div className="text-sm font-medium text-ink mb-1">Sin proveedores</div>
-            <div className="text-xs text-mist mb-4">Agregá tu primer proveedor para empezar</div>
-            <button className="btn btn-primary text-xs" onClick={abrirCrear}>
-              ＋ Crear proveedor
-            </button>
+            <div className="mb-3 text-4xl">🏭</div>
+            <div className="mb-1 text-sm font-medium text-ink">Sin proveedores</div>
+            <div className="mb-4 text-xs text-mist">Agregá tu primer proveedor para empezar</div>
+            <Button icon="create" onClick={abrirCrear}>
+              Crear proveedor
+            </Button>
           </div>
         ) : (
-          <table className="tbl">
+          <TableContainer>
             <thead>
               <tr>
                 <th>Proveedor</th>
@@ -193,64 +184,66 @@ export default function ProveedoresPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((p) => (
-                <tr key={p.proveedor_id}>
+              {filtered.map((proveedor) => (
+                <tr key={proveedor.proveedor_id}>
                   <td>
-                    <div className="font-medium text-xs">{p.nombre}</div>
-                    {p.ciudad && <div className="text-[10px] text-mist">{p.ciudad}</div>}
+                    <div className="text-xs font-medium">{proveedor.nombre}</div>
+                    {proveedor.ciudad && (
+                      <div className="text-[10px] text-mist">{proveedor.ciudad}</div>
+                    )}
                   </td>
                   <td>
                     <span className="ic">
-                      {p.pais?.bandera} {p.pais?.nombre}
+                      {proveedor.pais?.bandera} {proveedor.pais?.nombre}
                     </span>
                   </td>
-                  <td className="font-medium text-xs">{p.moneda}</td>
+                  <td className="text-xs font-medium">{proveedor.moneda}</td>
                   <td>
-                    {p.incoterm_pref ? (
-                      <span className="incb">{p.incoterm_pref}</span>
+                    {proveedor.incoterm_pref ? (
+                      <span className="incb">{proveedor.incoterm_pref}</span>
                     ) : (
-                      <span className="text-mist text-xs">—</span>
+                      <span className="text-xs text-mist">—</span>
                     )}
                   </td>
                   <td className="text-xs text-mist">
-                    {p.dias_transito ? `${p.dias_transito} días` : '—'}
+                    {proveedor.dias_transito ? `${proveedor.dias_transito} días` : '—'}
                   </td>
                   <td className="text-xs">
-                    {p.email ? (
-                      <a href={`mailto:${p.email}`} className="text-tl hover:underline">
-                        {p.email}
+                    {proveedor.email ? (
+                      <a href={`mailto:${proveedor.email}`} className="text-tl hover:underline">
+                        {proveedor.email}
                       </a>
                     ) : (
                       <span className="text-mist">—</span>
                     )}
                   </td>
                   <td>
-                    <span className={`pill ${p.activo ? 'pill-green' : 'pill-red'}`}>
-                      {p.activo ? 'Activo' : 'Inactivo'}
+                    <span className={`pill ${proveedor.activo ? 'pill-green' : 'pill-red'}`}>
+                      {proveedor.activo ? 'Activo' : 'Inactivo'}
                     </span>
                   </td>
                   <td>
-                    <div className="flex gap-1 justify-end">
+                    <div className="flex justify-end gap-1">
                       <button
-                        className="btn btn-outline text-xs px-2 py-1"
-                        onClick={() => abrirEditar(p)}
+                        className="btn btn-outline px-2 py-1 text-xs"
+                        onClick={() => abrirEditar(proveedor)}
                       >
-                        ✏️
+                        <FaPen />
                       </button>
                       <button
-                        className="btn btn-outline text-xs px-2 py-1 hover:border-rs hover:text-rs"
-                        onClick={() => setConfirmDel(p)}
+                        className="btn btn-outline px-2 py-1 text-xs hover:border-rs hover:text-rs"
+                        onClick={() => setConfirmDel(proveedor)}
                       >
-                        🗑
+                        <FaTrash />
                       </button>
                     </div>
                   </td>
                 </tr>
               ))}
             </tbody>
-          </table>
+          </TableContainer>
         )}
-      </div>
+      </TableCard>
 
       {/* Modal crear/editar */}
       <Modal
@@ -297,14 +290,14 @@ export default function ProveedoresPage() {
             {errors.nombre && <span className="text-xs text-rs">{errors.nombre.message}</span>}
           </div>
 
-          {/* País */}
+          {/* PaÃ­s */}
           <div className="form-group">
             <label className="form-label">País *</label>
             <select {...register('pais_id')} className="form-input">
               <option value="">Seleccionar...</option>
-              {paisesComunes.map((p) => (
-                <option key={p.pais_id} value={p.pais_id}>
-                  {p.bandera} {p.nombre}
+              {paisesComunes.map((pais) => (
+                <option key={pais.pais_id} value={pais.pais_id}>
+                  {pais.bandera} {pais.nombre}
                 </option>
               ))}
             </select>
@@ -321,9 +314,9 @@ export default function ProveedoresPage() {
           <div className="form-group">
             <label className="form-label">Moneda habitual *</label>
             <select {...register('moneda')} className="form-input">
-              {MONEDAS.map((m) => (
-                <option key={m} value={m}>
-                  {m}
+              {MONEDAS.map((moneda) => (
+                <option key={moneda} value={moneda}>
+                  {moneda}
                 </option>
               ))}
             </select>
@@ -335,15 +328,15 @@ export default function ProveedoresPage() {
             <label className="form-label">Incoterm habitual</label>
             <select {...register('incoterm_pref')} className="form-input">
               <option value="">Sin preferencia</option>
-              {INCOTERMS.map((i) => (
-                <option key={i} value={i}>
-                  {i}
+              {INCOTERMS.map((incoterm) => (
+                <option key={incoterm} value={incoterm}>
+                  {incoterm}
                 </option>
               ))}
             </select>
           </div>
 
-          {/* Días tránsito */}
+          {/* DÃ­as trÃ¡nsito */}
           <div className="form-group">
             <label className="form-label">Días de tránsito</label>
             <input
