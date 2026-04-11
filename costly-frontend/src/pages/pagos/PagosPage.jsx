@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { EmptyState, Modal } from '../../components/ui/Spinner';
 import Spinner from '../../components/ui/Spinner';
+import Button from '../../components/ui/Button';
+import { TableCard, TableContainer, TableToolbar } from '../../components/ui/Table';
 import {
   useConfirmPago,
   useCreatePago,
@@ -8,7 +10,15 @@ import {
   usePedidos,
   useProveedores,
 } from '../../hooks/useApi';
-import { fmtCurrency, fmtDate } from '../../lib/utils';
+import {
+  fmtCurrency,
+  fmtDate,
+  pagoEstadoLabel,
+  pagoEstadoOptions,
+  pagoEstadoPillClass,
+  pagoMetodoLabel,
+  pagoTipoLabel,
+} from '../../lib/utils';
 
 const initialForm = {
   pedido_id: '',
@@ -21,28 +31,6 @@ const initialForm = {
   metodo: 'swift',
   referencia: '',
   comprobante_url: '',
-};
-
-const pillClassByEstado = {
-  programado: 'pill-yellow',
-  procesado: 'pill-blue',
-  confirmado: 'pill-green',
-  devuelto: 'pill-red',
-};
-
-const tipoLabel = {
-  senal: 'Señal',
-  saldo: 'Saldo',
-  total: 'Total',
-  anticipo: 'Anticipo',
-  devolucion: 'Devolución',
-};
-
-const metodoLabel = {
-  swift: 'SWIFT',
-  transferencia_local: 'Transferencia local',
-  cheque: 'Cheque',
-  efectivo: 'Efectivo',
 };
 
 function toIsoDate(dateString) {
@@ -79,6 +67,7 @@ function normalizePago(pago, proveedoresMap) {
 
 export default function PagosPage() {
   const [filters, setFilters] = useState({ estado: '', proveedor_id: '' });
+  const [search, setSearch] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState(initialForm);
 
@@ -137,6 +126,30 @@ export default function PagosPage() {
 
   const loading = loadingPagos || loadingPedidos || loadingProveedores;
 
+  const proveedorOptions = useMemo(
+    () =>
+      proveedores.map((proveedor) => ({
+        value: String(proveedor.proveedor_id),
+        label: proveedor.nombre,
+      })),
+    [proveedores],
+  );
+
+  const filteredPagos = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase();
+
+    if (!normalizedSearch) return pagos;
+
+    return pagos.filter(
+      (pago) =>
+        pago.codigo?.toLowerCase().includes(normalizedSearch) ||
+        pago.proveedor_nombre?.toLowerCase().includes(normalizedSearch) ||
+        pagoTipoLabel(pago.tipo)?.toLowerCase().includes(normalizedSearch) ||
+        pagoMetodoLabel(pago.metodo).toLowerCase().includes(normalizedSearch) ||
+        pago.estado?.toLowerCase().includes(normalizedSearch),
+    );
+  }, [pagos, search]);
+
   const handleChange = (event) => {
     const { name, value } = event.target;
 
@@ -183,26 +196,8 @@ export default function PagosPage() {
     (pedido) => String(pedido.pedido_id) === String(form.pedido_id),
   );
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Spinner size="lg" />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="font-serif text-xl font-medium text-ink">Pagos a proveedores</div>
-          <div className="text-[11px] text-mist">Finanzas / Pagos</div>
-        </div>
-        <button className="btn btn-primary text-xs" onClick={() => setModalOpen(true)}>
-          + Registrar pago
-        </button>
-      </div>
-
       {pagosError && (
         <div className="rounded-card border border-rs/20 bg-rs-l px-4 py-3 text-xs text-rs">
           No pudimos cargar los pagos del backend.
@@ -232,111 +227,97 @@ export default function PagosPage() {
         </div>
       </div>
 
-      <div className="card">
-        <div className="card-header">
-          <div className="card-title">Pagos registrados</div>
-          <div className="flex gap-2">
-            <select
-              className="form-input h-8 min-w-36"
-              value={filters.estado}
-              onChange={(e) => setFilters((current) => ({ ...current, estado: e.target.value }))}
-            >
-              <option value="">Todos los estados</option>
-              <option value="programado">Programado</option>
-              <option value="procesado">Procesado</option>
-              <option value="confirmado">Confirmado</option>
-              <option value="devuelto">Devuelto</option>
-            </select>
-            <select
-              className="form-input h-8 min-w-44"
-              value={filters.proveedor_id}
-              onChange={(e) =>
-                setFilters((current) => ({ ...current, proveedor_id: e.target.value }))
-              }
-            >
-              <option value="">Todos los proveedores</option>
-              {proveedores.map((proveedor) => (
-                <option key={proveedor.proveedor_id} value={proveedor.proveedor_id}>
-                  {proveedor.nombre}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+      <TableToolbar
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Buscar pago..."
+        estadoValue={filters.estado}
+        onEstadoChange={(value) => setFilters((current) => ({ ...current, estado: value }))}
+        estadoOptions={pagoEstadoOptions}
+        proveedorValue={filters.proveedor_id}
+        onProveedorChange={(value) =>
+          setFilters((current) => ({ ...current, proveedor_id: value }))
+        }
+        proveedorOptions={proveedorOptions}
+        action={
+          <Button icon="create" onClick={() => setModalOpen(true)}>
+            Registrar pago
+          </Button>
+        }
+      />
 
-        {pagos.length === 0 ? (
-          <EmptyState
-            icon="💳"
-            title="No hay pagos para mostrar"
-            description="Cuando registres pagos en el backend, te van a aparecer acá."
-          />
-        ) : (
-          <table className="tbl">
-            <thead>
-              <tr>
-                <th className="w-6" />
-                <th>Pedido</th>
-                <th>Proveedor</th>
-                <th>Tipo</th>
-                <th>Monto</th>
-                <th>Fecha pago</th>
-                <th>Fecha límite</th>
-                <th>Método</th>
-                <th>Estado</th>
-                <th />
+      <TableCard
+        title="💳 Pagos registrados"
+        countLabel={`${filteredPagos.length} pagos`}
+        loading={loading}
+        isEmpty={filteredPagos.length === 0}
+        emptyMessage="No hay pagos que mostrar"
+      >
+        <TableContainer>
+          <thead>
+            <tr>
+              <th className="w-6" />
+              <th>Pedido</th>
+              <th>Proveedor</th>
+              <th>Tipo</th>
+              <th>Monto</th>
+              <th>Fecha pago</th>
+              <th>Fecha límite</th>
+              <th>Método</th>
+              <th>Estado</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody>
+            {filteredPagos.map((pago) => (
+              <tr key={pago.pago_id}>
+                <td className="pl-3">
+                  <span
+                    className={`s3 ${
+                      pago.estado === 'confirmado'
+                        ? 's3g'
+                        : pago.estado === 'devuelto'
+                          ? 's3r'
+                          : 's3y'
+                    }`}
+                  />
+                </td>
+                <td>
+                  <strong>{pago.codigo}</strong>
+                </td>
+                <td>
+                  <span className="ic">
+                    {pago.proveedor_bandera} {pago.proveedor_nombre}
+                  </span>
+                </td>
+                <td>
+                  <span className="pill pill-gray">{pagoTipoLabel(pago.tipo)}</span>
+                </td>
+                <td className="font-semibold">{fmtCurrency(pago.monto, pago.moneda)}</td>
+                <td className="text-[11px] text-mist">{fmtDate(pago.fecha_pago)}</td>
+                <td className="text-[11px] font-medium">{daysUntil(pago.fecha_limite)}</td>
+                <td className="text-[11px] text-mist">{pagoMetodoLabel(pago.metodo)}</td>
+                <td>
+                  <span className={`pill ${pagoEstadoPillClass(pago.estado)}`}>
+                    {pagoEstadoLabel(pago.estado)}
+                  </span>
+                </td>
+                <td>
+                  {pago.estado !== 'confirmado' && (
+                    <button
+                      className="btn btn-primary text-xs"
+                      disabled={confirmandoPago}
+                      onClick={() => confirmarPago(pago.pago_id)}
+                    >
+                      Confirmar
+                    </button>
+                  )}
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {pagos.map((pago) => (
-                <tr key={pago.pago_id}>
-                  <td className="pl-3">
-                    <span
-                      className={`s3 ${
-                        pago.estado === 'confirmado'
-                          ? 's3g'
-                          : pago.estado === 'devuelto'
-                            ? 's3r'
-                            : 's3y'
-                      }`}
-                    />
-                  </td>
-                  <td>
-                    <strong>{pago.codigo}</strong>
-                  </td>
-                  <td>
-                    <span className="ic">
-                      {pago.proveedor_bandera} {pago.proveedor_nombre}
-                    </span>
-                  </td>
-                  <td>
-                    <span className="pill pill-gray">{tipoLabel[pago.tipo] || pago.tipo}</span>
-                  </td>
-                  <td className="font-semibold">{fmtCurrency(pago.monto, pago.moneda)}</td>
-                  <td className="text-[11px] text-mist">{fmtDate(pago.fecha_pago)}</td>
-                  <td className="text-[11px] font-medium">{daysUntil(pago.fecha_limite)}</td>
-                  <td className="text-[11px] text-mist">{metodoLabel[pago.metodo] || '—'}</td>
-                  <td>
-                    <span className={`pill ${pillClassByEstado[pago.estado] || 'pill-gray'}`}>
-                      {pago.estado}
-                    </span>
-                  </td>
-                  <td>
-                    {pago.estado !== 'confirmado' && (
-                      <button
-                        className="btn btn-primary text-xs"
-                        disabled={confirmandoPago}
-                        onClick={() => confirmarPago(pago.pago_id)}
-                      >
-                        Confirmar
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+            ))}
+          </tbody>
+        </TableContainer>
+      </TableCard>
 
       <Modal
         open={modalOpen}
@@ -412,11 +393,11 @@ export default function PagosPage() {
           <div>
             <div className="mb-1 text-xs text-mist">Tipo</div>
             <select className="form-input" name="tipo" value={form.tipo} onChange={handleChange}>
-              <option value="senal">Señal</option>
-              <option value="saldo">Saldo</option>
-              <option value="total">Total</option>
-              <option value="anticipo">Anticipo</option>
-              <option value="devolucion">Devolución</option>
+              <option value="senal">{pagoTipoLabel('senal')}</option>
+              <option value="saldo">{pagoTipoLabel('saldo')}</option>
+              <option value="total">{pagoTipoLabel('total')}</option>
+              <option value="anticipo">{pagoTipoLabel('anticipo')}</option>
+              <option value="devolucion">{pagoTipoLabel('devolucion')}</option>
             </select>
           </div>
 
@@ -457,10 +438,10 @@ export default function PagosPage() {
               value={form.metodo}
               onChange={handleChange}
             >
-              <option value="swift">SWIFT</option>
-              <option value="transferencia_local">Transferencia local</option>
-              <option value="cheque">Cheque</option>
-              <option value="efectivo">Efectivo</option>
+              <option value="swift">{pagoMetodoLabel('swift')}</option>
+              <option value="transferencia_local">{pagoMetodoLabel('transferencia_local')}</option>
+              <option value="cheque">{pagoMetodoLabel('cheque')}</option>
+              <option value="efectivo">{pagoMetodoLabel('efectivo')}</option>
             </select>
           </div>
 
