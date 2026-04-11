@@ -6,10 +6,10 @@ import { z } from 'zod'
 import {
   useCosteos, useCreateCosteo, useAprobarCosteo,
   useDeleteCosteo, useImportaciones, useCosteo, useTCHoy
-} from '../hooks/useApi'
-import { fmtCurrency, fmtDate } from '../lib/utils'
-import Spinner from '../components/ui/Spinner'
-import { Confirm } from '../components/ui/Modal'
+} from '../../hooks/useApi'
+import { fmtCurrency, fmtDate } from '../../lib/utils'
+import Spinner from '../../components/ui/Spinner'
+import { Confirm } from '../../components/ui/Modal'
 
 // ── Schema
 const schema = z.object({

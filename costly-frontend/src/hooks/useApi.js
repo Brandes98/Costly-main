@@ -300,3 +300,42 @@ export const usePermisos = (filters = {}) =>
     queryKey: ['permisos', filters],
     queryFn: () => api.get('/permisos', { params: filters }).then(r => r.data),
   })
+// ══════════════════════════════════════
+// COSTEOS
+// ══════════════════════════════════════
+export const useCosteos = (filters = {}) =>
+  useQuery({
+    queryKey: ['costeos', filters],
+    queryFn: () => api.get('/costeos', { params: filters }).then(r => r.data),
+  })
+
+export const useCosteo = (id) =>
+  useQuery({
+    queryKey: ['costeo', id],
+    queryFn: () => api.get(`/costeos/${id}`).then(r => r.data),
+    enabled: !!id,
+  })
+
+export const useCreateCosteo = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data) => api.post('/costeos', data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['costeos'] }),
+  })
+}
+
+export const useAprobarCosteo = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id) => api.patch(`/costeos/${id}/aprobar`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['costeos'] }),
+  })
+}
+
+export const useDeleteCosteo = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id) => api.delete(`/costeos/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['costeos'] }),
+  })
+}

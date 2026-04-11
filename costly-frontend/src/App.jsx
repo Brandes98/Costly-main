@@ -10,11 +10,10 @@ import ImportacionesPage from './pages/importaciones/ImportacionesPage';
 import ImportacionDetalle from './pages/importaciones/ImportacionDetalle';
 import ProveedoresPage from './pages/proveedores/ProveedoresPage';
 import PagosPage from './pages/pagos/PagosPage';
-import ClientesPage      from './pages/clientes/ClientesPage'
+import ClientesPage      from './pages/clientes/ClientesPage';
 import EmpresaPage from './pages/empresa/EmpresaPage';
-
+import CosteosPage from './pages/costeos/CosteosPage';
 import {
-  CosteosPage,
   SeguimientoPage,
   AduanaPage,
   ProductosPage,
