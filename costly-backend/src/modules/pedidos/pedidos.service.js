@@ -25,6 +25,7 @@ export const getAll = async (empresa_id, filters = {}) => {
       ...(filters.estado && { estado: filters.estado }),
       ...(filters.proveedor_id && { proveedor_id: parseInt(filters.proveedor_id) }),
       ...(filters.cliente_id && { cliente_id: parseInt(filters.cliente_id) }),
+      ...(filters.sin_importacion === 'true' && { importacion_id: null }),
     },
     include: {
       proveedor: { select: { nombre: true, pais: { select: { bandera: true, nombre: true } } } },
@@ -132,7 +133,7 @@ export const unirPedidos = async (empresa_id, usuario_id, pedido_ids, nota) => {
         empresa_id,
         creado_por: usuario_id,
         codigo,
-        consolidado: true,
+        consolidado: pedido_ids.length > 1,
         fecha_union: new Date(),
         estado: 'en_proceso',
       }
