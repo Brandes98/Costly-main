@@ -33,7 +33,7 @@ export const updatePedidoSchema = z.object({
 
 export const unirPedidosSchema = z.object({
   body: z.object({
-    pedido_ids: z.array(z.number().int().positive()).min(2, 'Se necesitan al menos 2 pedidos para unir'),
+    pedido_ids: z.array(z.number().int().positive()).min(1, 'Se necesita al menos 1 pedido'),
     nota: z.string().max(500).optional(),
   })
 })
