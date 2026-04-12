@@ -205,6 +205,14 @@ export const useHitos = (filters = {}) =>
     queryFn: () => api.get('/hitos', { params: filters }).then(r => r.data),
   })
 
+export const useCreateHito = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data) => api.post('/hitos', data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['hitos'] }),
+  })
+}
+
 export const useUpdateHito = () => {
   const qc = useQueryClient()
   return useMutation({

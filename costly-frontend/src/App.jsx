@@ -13,8 +13,8 @@ import PagosPage from './pages/pagos/PagosPage';
 import ClientesPage      from './pages/clientes/ClientesPage';
 import EmpresaPage from './pages/empresa/EmpresaPage';
 import CosteosPage from './pages/costeos/CosteosPage';
+import SeguimientoPage from './pages/seguimiento/SeguimientoPage';
 import {
-  SeguimientoPage,
   AduanaPage,
   ProductosPage,
   ReportesPage,
