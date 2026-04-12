@@ -3,7 +3,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useQuery } from '@tanstack/react-query';
-import { FaPen, FaTrash } from 'react-icons/fa';
 import {
   useProveedores,
   useCreateProveedor,
@@ -12,7 +11,7 @@ import {
 } from '../../hooks/useApi';
 import api from '../../lib/api';
 import { Modal, Confirm } from '../../components/ui/Spinner';
-import Button from '../../components/ui/Button';
+import Button, { IconButton } from '../../components/ui/Button';
 import { TableCard, TableContainer, TableToolbar } from '../../components/ui/Table';
 
 // Schema
@@ -224,18 +223,16 @@ export default function ProveedoresPage() {
                   </td>
                   <td>
                     <div className="flex justify-end gap-1">
-                      <button
-                        className="btn btn-outline px-2 py-1 text-xs"
+                      <IconButton
+                        variant="edit"
                         onClick={() => abrirEditar(proveedor)}
-                      >
-                        <FaPen />
-                      </button>
-                      <button
-                        className="btn btn-outline px-2 py-1 text-xs hover:border-rs hover:text-rs"
+                        title="Editar"
+                      />
+                      <IconButton
+                        variant="delete"
                         onClick={() => setConfirmDel(proveedor)}
-                      >
-                        <FaTrash />
-                      </button>
+                        title="Eliminar"
+                      />
                     </div>
                   </td>
                 </tr>
