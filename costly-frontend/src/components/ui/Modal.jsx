@@ -1,6 +1,8 @@
+import { createPortal } from 'react-dom'
+
 export function Modal({ open, onClose, title, children, footer }) {
   if (!open) return null
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-ink/40 backdrop-blur-sm" onClick={onClose} />
       <div className="relative bg-sur rounded-card shadow-sh2 w-full max-w-lg mx-4 max-h-[90vh] flex flex-col">
@@ -13,7 +15,8 @@ export function Modal({ open, onClose, title, children, footer }) {
           <div className="px-5 py-3 border-t border-border flex justify-end gap-2">{footer}</div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 
