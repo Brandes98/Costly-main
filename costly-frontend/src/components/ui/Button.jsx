@@ -1,4 +1,25 @@
-import { FaPlus } from 'react-icons/fa';
+import { FaPlus, FaPen, FaTrash } from 'react-icons/fa';
+
+export function IconButton({ variant = 'edit', onClick, disabled, title }) {
+  const styles = {
+    edit:   'text-tl hover:bg-tl hover:text-white hover:border-tl',
+    delete: 'text-mist hover:border-rs hover:text-rs',
+  }[variant] ?? '';
+
+  const Icon = variant === 'edit' ? FaPen : FaTrash;
+
+  return (
+    <button
+      type="button"
+      className={`btn btn-outline px-2 py-1 text-xs ${styles}`}
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+    >
+      <Icon />
+    </button>
+  );
+}
 
 export default function Button({
   children,
