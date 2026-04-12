@@ -1,5 +1,11 @@
 import { useState } from 'react';
-import { useHitos, useCreateHito, useUpdateHito, usePedidos, useUsuarios } from '../../hooks/useApi';
+import {
+  useHitos,
+  useCreateHito,
+  useUpdateHito,
+  usePedidos,
+  useUsuarios,
+} from '../../hooks/useApi';
 import {
   estadoLabel,
   estadoPillClass,
@@ -42,7 +48,7 @@ function HitoRow({ hito, onCompletar }) {
         </span>
         {hito.estado === 'en_proceso' && (
           <button className="btn btn-outline" onClick={() => onCompletar(hito.hito_id)}>
-            ✓ Completar
+            Completar
           </button>
         )}
       </div>
@@ -65,9 +71,7 @@ function PedidoCard({ pedido, hitos, onCompletar }) {
         {hitos.length === 0 ? (
           <p className="py-4 text-xs text-mist">Sin hitos registrados</p>
         ) : (
-          hitos.map((hito) => (
-            <HitoRow key={hito.hito_id} hito={hito} onCompletar={onCompletar} />
-          ))
+          hitos.map((hito) => <HitoRow key={hito.hito_id} hito={hito} onCompletar={onCompletar} />)
         )}
       </div>
     </div>
@@ -127,10 +131,6 @@ export default function SeguimientoPage() {
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between gap-3">
-        <div>
-          <div className="text-sm font-semibold text-ink">Seguimiento de Hitos</div>
-          <div className="text-[11px] text-mist">Operaciones › Seguimiento</div>
-        </div>
         <div className="flex gap-2">
           <select
             className="form-input h-8 text-xs w-44"
