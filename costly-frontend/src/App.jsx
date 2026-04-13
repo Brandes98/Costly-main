@@ -14,8 +14,8 @@ import ClientesPage      from './pages/clientes/ClientesPage';
 import EmpresaPage from './pages/empresa/EmpresaPage';
 import CosteosPage from './pages/costeos/CosteosPage';
 import SeguimientoPage from './pages/seguimiento/SeguimientoPage';
+import AduanasPage from './pages/aduanas/AduanasPage';
 import {
-  AduanaPage,
   ProductosPage,
   ReportesPage,
   UsuariosPage,
@@ -50,7 +50,7 @@ export default function App() {
           <Route path="costeos" element={<CosteosPage />} />
           <Route path="pagos" element={<PagosPage />} />
           <Route path="seguimiento" element={<SeguimientoPage />} />
-          <Route path="aduana" element={<AduanaPage />} />
+          <Route path="aduana" element={<AduanasPage />} />
           <Route path="proveedores" element={<ProveedoresPage />} />
           <Route path="productos" element={<ProductosPage />} />
           <Route path="clientes" element={<ClientesPage />} />

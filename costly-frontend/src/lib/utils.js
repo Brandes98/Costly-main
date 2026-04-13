@@ -188,6 +188,27 @@ export const hitoSubtitulo = (hito) => {
 }
 
 // ══════════════════════════════════════════════
+// TRÁMITE ADUANA
+// ══════════════════════════════════════════════
+export const tramiteEstadoLabel = (estado) => ({
+  pendiente:  'Pendiente',
+  en_proceso: 'En proceso',
+  aprobado:   'Aprobado',
+  objetado:   'Objetado',
+}[estado] ?? estado)
+
+export const tramiteEstadoPillClass = (estado) => ({
+  pendiente:  'pill-gray',
+  en_proceso: 'pill-yellow',
+  aprobado:   'pill-green',
+  objetado:   'pill-red',
+}[estado] ?? 'pill-gray')
+
+export const tramiteEstadoOptions = [
+  'pendiente', 'en_proceso', 'aprobado', 'objetado',
+].map((value) => ({ value, label: tramiteEstadoLabel(value) }))
+
+// ══════════════════════════════════════════════
 // PAGOS
 // ══════════════════════════════════════════════
 export const pagoEstadoOptions = [

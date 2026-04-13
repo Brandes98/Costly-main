@@ -225,6 +225,27 @@ export const useUpdateHito = () => {
 }
 
 // ══════════════════════════════════════════════
+// TRAMITE ADUANA
+// ══════════════════════════════════════════════
+export const useTramiteAduana = (importacion_id) =>
+  useQuery({
+    queryKey: ['tramite-aduana', importacion_id],
+    queryFn: () => api.get(`/tramite-aduana/${importacion_id}`).then(r => r.data),
+    enabled: !!importacion_id,
+  })
+
+export const useUpsertTramiteAduana = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ importacion_id, ...data }) => api.put(`/tramite-aduana/${importacion_id}`, data),
+    onSuccess: (_, { importacion_id }) => {
+      qc.invalidateQueries({ queryKey: ['tramite-aduana', importacion_id] })
+      qc.invalidateQueries({ queryKey: ['importaciones'] })
+    },
+  })
+}
+
+// ══════════════════════════════════════════════
 // TC HISTORICO
 // ══════════════════════════════════════════════
 export const useTCHoy = () =>
