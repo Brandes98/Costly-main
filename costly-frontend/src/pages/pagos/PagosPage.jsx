@@ -231,14 +231,21 @@ export default function PagosPage() {
         searchValue={search}
         onSearchChange={setSearch}
         searchPlaceholder="Buscar pago..."
-        estadoValue={filters.estado}
-        onEstadoChange={(value) => setFilters((current) => ({ ...current, estado: value }))}
-        estadoOptions={pagoEstadoOptions}
-        proveedorValue={filters.proveedor_id}
-        onProveedorChange={(value) =>
-          setFilters((current) => ({ ...current, proveedor_id: value }))
-        }
-        proveedorOptions={proveedorOptions}
+        filters={[
+          {
+            value: filters.estado ?? '',
+            onChange: (value) => setFilters((current) => ({ ...current, estado: value })),
+            options: pagoEstadoOptions,
+            placeholder: 'Todos los estados',
+          },
+          {
+            value: filters.proveedor_id ?? '',
+            onChange: (value) => setFilters((current) => ({ ...current, proveedor_id: value })),
+            options: proveedorOptions,
+            placeholder: 'Todos los proveedores',
+            className: 'w-52',
+          },
+        ]}
         action={
           <Button icon="create" onClick={() => setModalOpen(true)}>
             Registrar pago

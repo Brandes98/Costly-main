@@ -3,7 +3,12 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuthStore } from '../../store/auth.store';
-import { useClientes, useCreateCliente, useUpdateCliente, useDeleteCliente } from '../../hooks/useApi';
+import {
+  useClientes,
+  useCreateCliente,
+  useUpdateCliente,
+  useDeleteCliente,
+} from '../../hooks/useApi';
 import { Modal, Confirm } from '../../components/ui/Spinner';
 import Button, { IconButton } from '../../components/ui/Button';
 import { TableCard, TableContainer, TableToolbar } from '../../components/ui/Table';
@@ -34,11 +39,15 @@ export default function ClientesPage() {
 
   const [search, setSearch] = useState('');
   const [tipo, setTipo] = useState('');
+  const [showInactivos, setShowInactivos] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editando, setEditando] = useState(null);
   const [confirmDel, setConfirmDel] = useState(null);
 
-  const filters = tipo ? { tipo } : {};
+  const filters = {
+    ...(tipo && { tipo }),
+    ...(!showInactivos && { activo: 'true' }),
+  };
   const { data: clientes = [], isLoading } = useClientes(filters);
 
   const { mutate: crear, isPending: creando } = useCreateCliente();
@@ -68,7 +77,14 @@ export default function ClientesPage() {
 
   const abrirCrear = () => {
     setEditando(null);
-    reset({ nombre: '', cedula: '', tipo: 'nacional', moneda: 'CRC', descuento_pct: '', email: '' });
+    reset({
+      nombre: '',
+      cedula: '',
+      tipo: 'nacional',
+      moneda: 'CRC',
+      descuento_pct: '',
+      email: '',
+    });
     setModalOpen(true);
   };
 
@@ -122,15 +138,14 @@ export default function ClientesPage() {
         searchValue={search}
         onSearchChange={setSearch}
         searchPlaceholder="Buscar cliente..."
-        estadoValue={tipo}
-        onEstadoChange={setTipo}
-        estadoOptions={TIPOS}
-        estadoPlaceholder="Todos los tipos"
-        action={
-          <Button icon="create" onClick={abrirCrear}>
-            Nuevo cliente
-          </Button>
-        }
+        filters={[
+          { value: tipo, onChange: setTipo, options: TIPOS, placeholder: 'Todos los tipos' },
+        ]}
+        switches={[
+          { label: 'Ver inactivos', value: showInactivos, onChange: setShowInactivos },
+        ]}
+        createLabel="Nuevo cliente"
+        onCreate={abrirCrear}
       />
 
       {/* Tabla */}
@@ -188,7 +203,7 @@ export default function ClientesPage() {
                     )}
                   </td>
                   <td>
-                    <span className={`pill ${c.activo ? 'pill-green' : 'pill-red'}`}>
+                    <span className={`pill ${c.activo ? 'pill-green' : 'pill-gray'}`}>
                       {c.activo ? 'Activo' : 'Inactivo'}
                     </span>
                   </td>
@@ -235,7 +250,11 @@ export default function ClientesPage() {
               onClick={handleSubmit(onSubmit)}
               disabled={creando || editando_}
             >
-              {creando || editando_ ? 'Guardando...' : editando ? 'Guardar cambios' : 'Crear cliente'}
+              {creando || editando_
+                ? 'Guardando...'
+                : editando
+                  ? 'Guardar cambios'
+                  : 'Crear cliente'}
             </button>
           </>
         }
@@ -243,7 +262,11 @@ export default function ClientesPage() {
         <div className="grid grid-cols-2 gap-3">
           <div className="form-group col-span-2">
             <label className="form-label">Nombre / Razón social *</label>
-            <input {...register('nombre')} className="form-input" placeholder="Ej: Distribuidora XYZ S.A." />
+            <input
+              {...register('nombre')}
+              className="form-input"
+              placeholder="Ej: Distribuidora XYZ S.A."
+            />
             {errors.nombre && <span className="text-xs text-rs">{errors.nombre.message}</span>}
           </div>
 

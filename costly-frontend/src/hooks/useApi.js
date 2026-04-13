@@ -288,10 +288,10 @@ export const useReportes = () =>
 // ══════════════════════════════════════════════
 // USUARIOS
 // ══════════════════════════════════════════════
-export const useUsuarios = () =>
+export const useUsuarios = (filters = {}) =>
   useQuery({
-    queryKey: ['usuarios'],
-    queryFn: () => api.get('/usuarios').then(r => r.data),
+    queryKey: ['usuarios', filters],
+    queryFn: () => api.get('/usuarios', { params: filters }).then(r => r.data),
   })
 
 export const useCreateUsuario = () => {

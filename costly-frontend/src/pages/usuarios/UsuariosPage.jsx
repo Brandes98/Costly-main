@@ -57,13 +57,15 @@ function Avatar({ nombre, rol }) {
 const EMPTY_FORM = { nombre: '', email: '', rol: 'operador' };
 
 export default function UsuariosPage() {
+  const [search, setSearch] = useState('');
   const [showCreate, setShowCreate] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
   const [confirmTarget, setConfirmTarget] = useState(null);
+  const [showInactivos, setShowInactivos] = useState(true);
   const [form, setForm] = useState(EMPTY_FORM);
   const [editForm, setEditForm] = useState({ nombre: '', rol: '' });
 
-  const { data: usuarios = [], isLoading } = useUsuarios();
+  const { data: usuarios = [], isLoading } = useUsuarios(showInactivos ? {} : { activo: 'true' });
   const { data: meData } = useMe();
   const myId = meData?.data?.usuario_id ?? meData?.usuario_id;
 
@@ -106,10 +108,22 @@ export default function UsuariosPage() {
 
   const activos = usuarios.filter((u) => u.activo).length;
 
+  const filtered = search.trim()
+    ? usuarios.filter((u) =>
+        u.nombre.toLowerCase().includes(search.toLowerCase()) ||
+        u.email.toLowerCase().includes(search.toLowerCase()),
+      )
+    : usuarios;
+
   return (
     <div className="space-y-4">
       <TableToolbar
-        showCreateButton
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Buscar usuario..."
+        switches={[
+          { label: 'Ver inactivos', value: showInactivos, onChange: setShowInactivos },
+        ]}
         createLabel="Nuevo usuario"
         onCreate={() => setShowCreate(true)}
       />
@@ -118,7 +132,7 @@ export default function UsuariosPage() {
         title="👤 Usuarios"
         countLabel={`${activos} activos`}
         loading={isLoading}
-        isEmpty={usuarios.length === 0}
+        isEmpty={filtered.length === 0}
         emptyMessage="No hay usuarios registrados"
       >
         <TableContainer>
@@ -133,7 +147,7 @@ export default function UsuariosPage() {
             </tr>
           </thead>
           <tbody>
-            {usuarios.map((u) => (
+            {filtered.map((u) => (
               <tr key={u.usuario_id}>
                 <td>
                   <div className="flex items-center gap-2">

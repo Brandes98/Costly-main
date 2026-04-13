@@ -101,9 +101,14 @@ export default function ImportacionesPage() {
             searchValue={search}
             onSearchChange={setSearch}
             searchPlaceholder="Buscar importación..."
-            estadoValue={estado}
-            onEstadoChange={setEstado}
-            estadoOptions={importacionEstadoOptions}
+            filters={[
+              {
+                value: estado,
+                onChange: setEstado,
+                options: importacionEstadoOptions,
+                placeholder: 'Todos los estados',
+              },
+            ]}
             createLabel="Nueva importación"
             onCreate={() => setModalOpen(true)}
           />

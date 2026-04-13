@@ -31,17 +31,14 @@ export default function PedidosPage() {
         searchValue={search}
         onSearchChange={setSearch}
         searchPlaceholder="Buscar pedido..."
-        estadoValue={filters.estado}
-        onEstadoChange={(value) =>
-          setFilters((current) => ({
-            ...current,
-            estado: value || undefined,
-          }))
-        }
-        estadoOptions={pedidoEstadoOptions.map((estado) => ({
-          value: estado,
-          label: estadoLabel(estado),
-        }))}
+        filters={[
+          {
+            value: filters.estado ?? '',
+            onChange: (value) => setFilters((current) => ({ ...current, estado: value || undefined })),
+            options: pedidoEstadoOptions.map((estado) => ({ value: estado, label: estadoLabel(estado) })),
+            placeholder: 'Todos los estados',
+          },
+        ]}
         createLabel="Nuevo pedido"
         onCreate={() => navigate('/pedidos/nuevo')}
       />

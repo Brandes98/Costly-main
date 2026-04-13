@@ -5,8 +5,8 @@ export const getAll = async (empresa_id, filters = {}) => {
   return await prisma.cliente.findMany({
     where: {
       empresa_id,
-      activo: true,
       ...(filters.tipo && { tipo: filters.tipo }),
+      ...(filters.activo !== undefined && { activo: filters.activo === 'true' }),
     },
     orderBy: { nombre: 'asc' },
   })

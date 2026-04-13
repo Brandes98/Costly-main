@@ -17,6 +17,20 @@ function ToolbarSearch({ placeholder, value, onChange }) {
   );
 }
 
+function ToolbarSwitch({ label, value, onChange }) {
+  return (
+    <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-mist">
+      <div
+        className={`relative w-8 h-4 rounded-full transition-colors ${value ? 'bg-tl' : 'bg-border'}`}
+        onClick={() => onChange(!value)}
+      >
+        <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white shadow transition-transform ${value ? 'translate-x-4' : 'translate-x-0.5'}`} />
+      </div>
+      {label}
+    </label>
+  );
+}
+
 function ToolbarFilter({ value, onChange, placeholder, options, className = 'w-40' }) {
   return (
     <select
@@ -35,38 +49,22 @@ function ToolbarFilter({ value, onChange, placeholder, options, className = 'w-4
 }
 
 export function TableToolbar({
-  enableSearch = false,
-  searchPlaceholder = 'Buscar...',
   searchValue = '',
   onSearchChange,
+  searchPlaceholder = 'Buscar...',
 
-  showEstadoFilter = false,
-  estadoValue = '',
-  onEstadoChange,
-  estadoOptions = [],
-  estadoPlaceholder = 'Todos los estados',
+  // [{ value, onChange, options, placeholder, className? }]
+  filters = [],
 
-  showProveedorFilter = false,
-  proveedorValue = '',
-  onProveedorChange,
-  proveedorOptions = [],
+  // [{ label, value, onChange }]
+  switches = [],
 
-  showCreateButton = false,
   createLabel = 'Crear',
   onCreate,
   action,
 }) {
-  const hasSearch = enableSearch || typeof onSearchChange === 'function';
-  const hasEstadoFilter =
-    showEstadoFilter || (typeof onEstadoChange === 'function' && estadoOptions.length > 0);
-  const hasProveedorFilter =
-    showProveedorFilter ||
-    (typeof onProveedorChange === 'function' && proveedorOptions.length > 0);
-  const hasCreateAction = showCreateButton || typeof onCreate === 'function';
-  const hasToolbar =
-    hasSearch || hasEstadoFilter || hasProveedorFilter || hasCreateAction || !!action;
-
-  if (!hasToolbar) return null;
+  const hasSearch = typeof onSearchChange === 'function';
+  const hasCreateAction = typeof onCreate === 'function';
 
   const toolbarAction =
     action ||
@@ -78,7 +76,7 @@ export function TableToolbar({
 
   return (
     <div className="flex items-center justify-between gap-3">
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {hasSearch && (
           <ToolbarSearch
             placeholder={searchPlaceholder}
@@ -87,24 +85,20 @@ export function TableToolbar({
           />
         )}
 
-        {hasEstadoFilter && (
+        {filters.map((f, i) => (
           <ToolbarFilter
-            value={estadoValue}
-            onChange={onEstadoChange}
-            placeholder={estadoPlaceholder}
-            options={estadoOptions}
+            key={i}
+            value={f.value}
+            onChange={f.onChange}
+            placeholder={f.placeholder ?? 'Todos'}
+            options={f.options}
+            className={f.className}
           />
-        )}
+        ))}
 
-        {hasProveedorFilter && (
-          <ToolbarFilter
-            value={proveedorValue}
-            onChange={onProveedorChange}
-            placeholder="Todos los proveedores"
-            options={proveedorOptions}
-            className="w-52"
-          />
-        )}
+        {switches.map((s, i) => (
+          <ToolbarSwitch key={i} label={s.label} value={s.value} onChange={s.onChange} />
+        ))}
       </div>
 
       {toolbarAction}
