@@ -286,6 +286,22 @@ export const useCreateUsuario = () => {
   })
 }
 
+export const useUpdateUsuario = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...data }) => api.patch(`/usuarios/${id}`, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['usuarios'] }),
+  })
+}
+
+export const useDeactivateUsuario = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id) => api.delete(`/usuarios/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['usuarios'] }),
+  })
+}
+
 // ══════════════════════════════════════════════
 // AUDITORIA
 // ══════════════════════════════════════════════

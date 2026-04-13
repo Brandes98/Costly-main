@@ -15,10 +15,10 @@ import EmpresaPage from './pages/empresa/EmpresaPage';
 import CosteosPage from './pages/costeos/CosteosPage';
 import SeguimientoPage from './pages/seguimiento/SeguimientoPage';
 import AduanasPage from './pages/aduanas/AduanasPage';
+import UsuariosPage from './pages/usuarios/UsuariosPage';
 import {
   ProductosPage,
   ReportesPage,
-  UsuariosPage,
   AuditoriaPage,
 } from './pages/placeholders';
 
