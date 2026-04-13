@@ -44,6 +44,7 @@ export function TableToolbar({
   estadoValue = '',
   onEstadoChange,
   estadoOptions = [],
+  estadoPlaceholder = 'Todos los estados',
 
   showProveedorFilter = false,
   proveedorValue = '',
@@ -90,7 +91,7 @@ export function TableToolbar({
           <ToolbarFilter
             value={estadoValue}
             onChange={onEstadoChange}
-            placeholder="Todos los estados"
+            placeholder={estadoPlaceholder}
             options={estadoOptions}
           />
         )}
