@@ -8,13 +8,14 @@ import PedidoDetalle from './pages/pedidos/PedidoDetalle';
 import NuevoPedido from './pages/pedidos/NuevoPedido';
 import ImportacionesPage from './pages/importaciones/ImportacionesPage';
 import ImportacionDetalle from './pages/importaciones/ImportacionDetalle';
+import CosteosPage from './pages/costeos/CosteosPage';
+import SeguimientoPage from './pages/seguimiento/SeguimientoPage';
 import ProveedoresPage from './pages/proveedores/ProveedoresPage';
 import PagosPage from './pages/pagos/PagosPage';
-import ClientesPage      from './pages/clientes/ClientesPage';
+import ClientesPage from './pages/clientes/ClientesPage';
 import EmpresaPage from './pages/empresa/EmpresaPage';
-import CosteosPage from './pages/costeos/CosteosPage';
+
 import {
-  SeguimientoPage,
   AduanaPage,
   ProductosPage,
   ReportesPage,
@@ -48,8 +49,8 @@ export default function App() {
           <Route path="importaciones" element={<ImportacionesPage />} />
           <Route path="importaciones/:id" element={<ImportacionDetalle />} />
           <Route path="costeos" element={<CosteosPage />} />
-          <Route path="pagos" element={<PagosPage />} />
           <Route path="seguimiento" element={<SeguimientoPage />} />
+          <Route path="pagos" element={<PagosPage />} />
           <Route path="aduana" element={<AduanaPage />} />
           <Route path="proveedores" element={<ProveedoresPage />} />
           <Route path="productos" element={<ProductosPage />} />
