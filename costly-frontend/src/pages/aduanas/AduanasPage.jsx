@@ -94,7 +94,7 @@ export default function AduanasPage() {
             ) : (
               <div className="card">
                 <div className="card-header">
-                  <div className="card-title">🏛 {selImp?.codigo} — Trámite DUA</div>
+                  <div className="card-title">🏛️ {selImp?.codigo} — Trámite DUA</div>
                   <span className={`pill ${tramiteEstadoPillClass(form.estado)}`}>
                     {tramiteEstadoLabel(form.estado)}
                   </span>
@@ -198,6 +198,17 @@ export default function AduanasPage() {
                   >
                     {upsert.isPending ? 'Guardando...' : '💾 Guardar trámite'}
                   </button>
+
+                  {upsert.isSuccess && (
+                    <div className="rounded-card border border-sg/30 bg-sg-l px-3 py-2 text-xs text-sg font-medium">
+                      ✓ Trámite guardado correctamente
+                    </div>
+                  )}
+                  {upsert.isError && (
+                    <div className="rounded-card border border-rs/30 bg-rs-l px-3 py-2 text-xs text-rs font-medium">
+                      Error al guardar — {upsert.error?.message ?? 'Intentá de nuevo'}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
