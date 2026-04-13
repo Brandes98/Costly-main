@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useGenerar, useSaveReporte, useProveedores, useClientes } from '../../hooks/useApi';
+import { useGenerar, useSaveReporte, useDeleteReporte, useReportes, useProveedores, useClientes } from '../../hooks/useApi';
 import { TableCard, TableContainer } from '../../components/ui/Table';
 import { Modal } from '../../components/ui/Modal';
 import { exportExcel, exportPdf } from '../../lib/export';
@@ -278,10 +278,12 @@ export default function ReportesPage() {
   const [showSave, setShowSave] = useState(false);
   const [saveNombre, setSaveNombre] = useState('');
 
-  const generar = useGenerar();
-  const saveReporte = useSaveReporte();
+  const generar        = useGenerar();
+  const saveReporte    = useSaveReporte();
+  const deleteReporte  = useDeleteReporte();
+  const { data: reportesGuardados = [] } = useReportes();
   const { data: proveedores = [] } = useProveedores();
-  const { data: clientes = [] } = useClientes();
+  const { data: clientes    = [] } = useClientes();
 
   const fieldDefs = buildConfigFieldDefs(proveedores, clientes);
 
@@ -295,6 +297,14 @@ export default function ReportesPage() {
   const handleSelect = (def) => {
     setSelected(def);
     setConfig({});
+    generar.reset();
+  };
+
+  const handleLoadSaved = (reporte) => {
+    const def = REPORT_DEFS.find((d) => d.tipo === reporte.tipo);
+    if (!def) return;
+    setSelected(def);
+    setConfig(reporte.config_json ?? {});
     generar.reset();
   };
 
@@ -338,6 +348,34 @@ export default function ReportesPage() {
               </button>
             ))}
           </div>
+
+          {reportesGuardados.length > 0 && (
+            <>
+              <div className="border-t border-border mx-3" />
+              <div className="px-3 py-2">
+                <div className="text-[11px] text-mist mb-2">Guardados</div>
+                <div className="flex flex-col gap-1">
+                  {reportesGuardados.map((r) => (
+                    <div key={r.reporte_id} className="flex items-center gap-1">
+                      <button
+                        className={`btn btn-sm text-left justify-start text-[11.5px] flex-1 ${selected?.tipo === r.tipo && JSON.stringify(config) === JSON.stringify(r.config_json) ? 'btn-primary' : 'btn-outline'}`}
+                        onClick={() => handleLoadSaved(r)}
+                      >
+                        {REPORT_DEFS.find((d) => d.tipo === r.tipo)?.icon ?? '📄'} {r.nombre}
+                      </button>
+                      <button
+                        className="text-mist hover:text-rs text-sm leading-none px-1"
+                        title="Eliminar"
+                        onClick={() => deleteReporte.mutate(r.reporte_id)}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Configurar reporte */}

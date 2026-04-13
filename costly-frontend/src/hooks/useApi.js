@@ -271,6 +271,14 @@ export const useSaveReporte = () => {
   })
 }
 
+export const useDeleteReporte = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id) => api.delete(`/reportes/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['reportes'] }),
+  })
+}
+
 export const useReportes = () =>
   useQuery({
     queryKey: ['reportes'],
