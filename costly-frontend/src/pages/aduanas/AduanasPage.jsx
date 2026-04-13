@@ -11,6 +11,68 @@ import {
 } from '../../lib/utils';
 import Spinner from '../../components/ui/Spinner';
 
+const NORMATIVA = [
+  {
+    tipo: 'General (maquinaria, equipos)',
+    documentos: 'Factura comercial, BL, DUA, lista de empaque, póliza de seguro',
+    entidad: 'TICA / Hacienda CR',
+    url: 'https://tica.hacienda.go.cr/',
+  },
+  {
+    tipo: 'Alimentos y bebidas',
+    documentos: 'Factura comercial, BL, DUA, registro sanitario MINSA, certificado de origen, certificado sanitario del país de origen',
+    entidad: 'MINSA CR / SENASA',
+    url: 'https://www.senasa.go.cr/',
+  },
+  {
+    tipo: 'Químicos y sustancias controladas',
+    documentos: 'Factura comercial, BL, DUA, ficha técnica SDS/MSDS, permiso Ministerio de Salud o SETENA',
+    entidad: 'Ministerio de Salud CR',
+    url: 'https://www.ministeriodesalud.go.cr/',
+  },
+  {
+    tipo: 'Carga peligrosa (IMDG / ADR)',
+    documentos: 'Factura comercial, BL, DUA, declaración de mercancías peligrosas, etiquetado IMDG, certificados de embalaje',
+    entidad: 'MOPT / IMO',
+    url: 'https://www.mopt.go.cr/',
+  },
+  {
+    tipo: 'Productos con refrigerantes',
+    documentos: 'Factura comercial, BL, DUA, permiso especial del MINAE (sustancias que agotan la capa de ozono)',
+    entidad: 'MINAE CR',
+    url: 'https://minae.go.cr/',
+  },
+  {
+    tipo: 'Electrónica y telecomunicaciones',
+    documentos: 'Factura comercial, BL, DUA, certificación SUTEL si el equipo requiere homologación en CR',
+    entidad: 'SUTEL CR',
+    url: 'https://sutel.go.cr/',
+  },
+  {
+    tipo: 'Vehículos y maquinaria autopropulsada',
+    documentos: 'Factura comercial, BL, DUA, certificado de origen, VIN, inspección COSEVI',
+    entidad: 'COSEVI CR',
+    url: 'https://www.cosevi.go.cr/',
+  },
+  {
+    tipo: 'Medicamentos y dispositivos médicos',
+    documentos: 'Factura comercial, BL, DUA, registro en CCSS o Ministerio de Salud, certificado de origen',
+    entidad: 'MINSA CR',
+    url: 'https://www.ministeriodesalud.go.cr/',
+  },
+];
+
+const ENLACES = [
+  { label: 'Sistema TICA — Ministerio de Hacienda CR', url: 'https://tica.hacienda.go.cr/' },
+  { label: 'Arancel Centroamericano (SAC) — COMEX', url: 'https://www.comex.go.cr/' },
+  { label: 'SENASA', url: 'https://www.senasa.go.cr/' },
+  { label: 'Ministerio de Salud CR', url: 'https://www.ministeriodesalud.go.cr/' },
+  { label: 'SETENA', url: 'https://www.setena.go.cr/' },
+  { label: 'MINAE', url: 'https://minae.go.cr/' },
+  { label: 'SUTEL', url: 'https://sutel.go.cr/' },
+  { label: 'INCOTERMS 2020 — ICC', url: 'https://iccwbo.org/business-solutions/incoterms-rules/incoterms-2020/' },
+];
+
 const EMPTY_FORM = {
   dua_numero: '',
   fecha_dua: '',
@@ -78,6 +140,7 @@ export default function AduanasPage() {
           <Spinner />
         </div>
       ) : (
+        <div className="space-y-4">
         <div className="flex gap-4 items-start">
           {/* ── Left: DUA form ── */}
           <div className="flex-1 min-w-0">
@@ -253,6 +316,60 @@ export default function AduanasPage() {
                   })}
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+
+          {/* ── Normativa de importaciones ── */}
+          <div className="card">
+            <div className="card-header">
+              <div className="card-title">📄 Normativa de importaciones</div>
+              <span className="text-[11px] text-mist">Referencia general — puede variar según partida arancelaria</span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="tbl">
+                <thead>
+                  <tr>
+                    <th>Tipo de carga</th>
+                    <th>Documentos / permisos principales requeridos en CR</th>
+                    <th>Fuente</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {NORMATIVA.map((row) => (
+                    <tr key={row.tipo}>
+                      <td className="font-medium whitespace-nowrap">{row.tipo}</td>
+                      <td className="text-mist">{row.documentos}</td>
+                      <td className="whitespace-nowrap">
+                        <a
+                          href={row.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-tl hover:underline text-xs"
+                        >
+                          {row.entidad}
+                        </a>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="card-body border-t border-border-lt pt-3">
+              <p className="text-[11px] text-mist mb-2 font-medium">Enlaces a fuentes oficiales</p>
+              <div className="flex flex-wrap gap-2">
+                {ENLACES.map((e) => (
+                  <a
+                    key={e.label}
+                    href={e.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="pill pill-gray hover:bg-tl hover:text-white transition-colors cursor-pointer"
+                  >
+                    {e.label}
+                  </a>
+                ))}
+              </div>
             </div>
           </div>
         </div>
