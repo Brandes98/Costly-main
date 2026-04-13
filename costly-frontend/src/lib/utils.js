@@ -93,7 +93,6 @@ export const estadoPillClass = (estado) => ({
   cancelado: 'pill-red',
 }[estado] || 'pill-gray')
 
-
 // ══════════════════════════════════════════════
 // IMPORTACIONES
 // ══════════════════════════════════════════════
