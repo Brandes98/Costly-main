@@ -247,6 +247,36 @@ export const pagoMetodoLabel = (metodo) => ({
 }[metodo] || '—')
 
 // ══════════════════════════════════════════════
+// COSTEOS
+// ══════════════════════════════════════════════
+export const costeoEstadoLabel = (estado) => ({
+  borrador:   'Borrador',
+  confirmado: 'Confirmado',
+  aprobado:   'Aprobado',
+}[estado] ?? estado)
+
+export const costeoEstadoPillClass = (estado) => ({
+  borrador:   'pill-gray',
+  confirmado: 'pill-yellow',
+  aprobado:   'pill-green',
+}[estado] ?? 'pill-gray')
+
+export const costeoEstadoOptions = ['borrador', 'confirmado', 'aprobado'].map(
+  (value) => ({ value, label: costeoEstadoLabel(value) }),
+)
+
+// ══════════════════════════════════════════════
+// PERMISOS
+// ══════════════════════════════════════════════
+export const permisoTipoLabel = (tipo) => ({
+  minae:  'MINAE',
+  senasa: 'SENASA',
+  minsa:  'Min. Salud',
+  sutel:  'SUTEL',
+  otro:   'Otro',
+}[tipo] ?? tipo)
+
+// ══════════════════════════════════════════════
 // AUDITORIA
 // ══════════════════════════════════════════════
 export const accionAuditoriaLabel = (accion) => ({

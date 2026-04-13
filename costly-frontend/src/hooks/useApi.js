@@ -263,6 +263,14 @@ export const useGenerar = () =>
     mutationFn: ({ tipo, config }) => api.post('/reportes/generar', { tipo, config }),
   })
 
+export const useSaveReporte = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data) => api.post('/reportes', data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['reportes'] }),
+  })
+}
+
 export const useReportes = () =>
   useQuery({
     queryKey: ['reportes'],
