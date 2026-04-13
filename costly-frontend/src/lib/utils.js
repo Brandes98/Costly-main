@@ -245,3 +245,51 @@ export const pagoMetodoLabel = (metodo) => ({
   cheque: 'Cheque',
   efectivo: 'Efectivo',
 }[metodo] || '—')
+
+// ══════════════════════════════════════════════
+// AUDITORIA
+// ══════════════════════════════════════════════
+export const accionAuditoriaLabel = (accion) => ({
+  INSERT: 'Crear',
+  UPDATE: 'Editar',
+  DELETE: 'Eliminar',
+  LOGIN:  'Ingreso',
+  EXPORT: 'Exportar',
+}[accion] ?? accion)
+
+export const accionAuditoriaPillClass = (accion) => ({
+  INSERT: 'pill-green',
+  UPDATE: 'pill-blue',
+  DELETE: 'pill-red',
+  LOGIN:  'pill-yellow',
+  EXPORT: 'pill-gray',
+}[accion] ?? 'pill-gray')
+
+export const auditoriaAccionOptions = ['INSERT', 'UPDATE', 'DELETE', 'LOGIN', 'EXPORT'].map(
+  (value) => ({ value, label: accionAuditoriaLabel(value) }),
+)
+
+export const entidadTipoLabel = (tipo) => ({
+  pedido:       'Pedido',
+  proveedor:    'Proveedor',
+  costeo:       'Costeo',
+  usuario:      'Usuario',
+  documento:    'Documento',
+  importacion:  'Importación',
+  pago:         'Pago',
+  hito:         'Hito',
+  contenedor:   'Contenedor',
+  permiso:      'Permiso',
+}[tipo] ?? tipo)
+
+export const auditoriaEntidadOptions = [
+  'pedido', 'proveedor', 'costeo', 'usuario',
+  'documento', 'importacion', 'pago', 'hito', 'contenedor', 'permiso',
+].map((value) => ({ value, label: entidadTipoLabel(value) }))
+
+export const fmtJsonValue = (val) => {
+  if (val === null || val === undefined) return '—'
+  if (typeof val === 'string') return val || '—'
+  if (typeof val === 'number' || typeof val === 'boolean') return String(val)
+  return JSON.stringify(val)
+}

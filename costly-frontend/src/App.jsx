@@ -16,10 +16,10 @@ import CosteosPage from './pages/costeos/CosteosPage';
 import SeguimientoPage from './pages/seguimiento/SeguimientoPage';
 import AduanasPage from './pages/aduanas/AduanasPage';
 import UsuariosPage from './pages/usuarios/UsuariosPage';
+import AuditoriaPage from './pages/auditoria/AuditoriaPages';
 import {
   ProductosPage,
   ReportesPage,
-  AuditoriaPage,
 } from './pages/placeholders';
 
 const PrivateRoute = ({ children }) => {
