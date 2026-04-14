@@ -18,7 +18,7 @@ import AduanasPage from './pages/aduanas/AduanasPage';
 import UsuariosPage from './pages/usuarios/UsuariosPage';
 import AuditoriaPage from './pages/auditoria/AuditoriaPages';
 import ReportesPage from './pages/reportes/ReportesPage';
-import { ProductosPage } from './pages/placeholders';
+import ProductosPage from './pages/productos/ProductosPage';
 
 const PrivateRoute = ({ children }) => {
   const token = useAuthStore((s) => s.token);

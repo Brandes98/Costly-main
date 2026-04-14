@@ -171,6 +171,14 @@ export const useUpdateProducto = () => {
   })
 }
 
+export const useDeleteProducto = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id) => api.delete(`/productos/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['productos'] }),
+  })
+}
+
 // ══════════════════════════════════════════════
 // PAGOS
 // ══════════════════════════════════════════════
