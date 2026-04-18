@@ -3,9 +3,15 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuthStore } from '../../store/auth.store';
-import { useClientes, useCreateCliente, useUpdateCliente, useDeleteCliente } from '../../hooks/useApi';
-import Spinner from '../../components/ui/Spinner';
+import {
+  useClientes,
+  useCreateCliente,
+  useUpdateCliente,
+  useDeleteCliente,
+} from '../../hooks/useApi';
 import { Modal, Confirm } from '../../components/ui/Spinner';
+import Button, { IconButton } from '../../components/ui/Button';
+import { TableCard, TableContainer, TableToolbar } from '../../components/ui/Table';
 
 const schema = z.object({
   nombre: z.string().min(2, 'Mínimo 2 caracteres').max(150),
@@ -33,16 +39,20 @@ export default function ClientesPage() {
 
   const [search, setSearch] = useState('');
   const [tipo, setTipo] = useState('');
+  const [showInactivos, setShowInactivos] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editando, setEditando] = useState(null);
   const [confirmDel, setConfirmDel] = useState(null);
 
-  const filters = useMemo(() => (tipo ? { tipo } : {}), [tipo]);
+  const filters = {
+    ...(tipo && { tipo }),
+    ...(!showInactivos && { activo: 'true' }),
+  };
   const { data: clientes = [], isLoading } = useClientes(filters);
 
   const { mutate: crear, isPending: creando } = useCreateCliente();
   const { mutate: editar, isPending: editando_ } = useUpdateCliente();
-  const { mutate: eliminar, isPending: eliminando } = useDeleteCliente();
+  const { mutate: eliminar } = useDeleteCliente();
 
   const {
     register,
@@ -67,7 +77,14 @@ export default function ClientesPage() {
 
   const abrirCrear = () => {
     setEditando(null);
-    reset({ nombre: '', cedula: '', tipo: 'nacional', moneda: 'CRC', descuento_pct: '', email: '' });
+    reset({
+      nombre: '',
+      cedula: '',
+      tipo: 'nacional',
+      moneda: 'CRC',
+      descuento_pct: '',
+      email: '',
+    });
     setModalOpen(true);
   };
 
@@ -116,62 +133,44 @@ export default function ClientesPage() {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <div className="flex gap-2">
-          <div className="flex items-center gap-2 h-8 px-3 text-xs text-mist border border-border rounded-lg bg-sur2 w-56">
-            <span>🔍</span>
-            <input
-              type="text"
-              placeholder="Buscar cliente..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="bg-transparent outline-none w-full text-ink placeholder:text-mist"
-            />
-          </div>
-          <select
-            value={tipo}
-            onChange={(e) => setTipo(e.target.value)}
-            className="h-8 px-3 text-xs border border-border rounded-lg bg-sur2 text-ink"
-          >
-            <option value="">Todos los tipos</option>
-            {TIPOS.map((t) => (
-              <option key={t.value} value={t.value}>
-                {t.label}
-              </option>
-            ))}
-          </select>
-        </div>
+      {/* Toolbar */}
+      <TableToolbar
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Buscar cliente..."
+        filters={[
+          { value: tipo, onChange: setTipo, options: TIPOS, placeholder: 'Todos los tipos' },
+        ]}
+        switches={[
+          { label: 'Ver inactivos', value: showInactivos, onChange: setShowInactivos },
+        ]}
+        createLabel="Nuevo cliente"
+        onCreate={abrirCrear}
+      />
 
-        <button className="btn btn-primary text-xs" onClick={abrirCrear}>
-          ＋ Nuevo cliente
-        </button>
-      </div>
-
-      <div className="card">
-        <div className="card-header">
-          <div className="card-title">🧑‍💼 Clientes</div>
-          <span className="text-[11.5px] text-mist">{filtered.length} registros</span>
-        </div>
-
-        {isLoading ? (
-          <div className="flex justify-center p-12">
-            <Spinner />
-          </div>
-        ) : filtered.length === 0 ? (
+      {/* Tabla */}
+      <TableCard
+        title="🧑‍💼 Clientes"
+        countLabel={`${filtered.length} registros`}
+        loading={isLoading}
+        isEmpty={filtered.length === 0}
+        emptyMessage="No hay clientes que mostrar"
+      >
+        {filtered.length === 0 ? (
           <div className="p-12 text-center">
-            <div className="text-4xl mb-3">🧑‍💼</div>
-            <div className="text-sm font-medium text-ink mb-1">Sin clientes</div>
-            <div className="text-xs text-mist mb-4">Agregá tu primer cliente para empezar</div>
-            <button className="btn btn-primary text-xs" onClick={abrirCrear}>
-              ＋ Crear cliente
-            </button>
+            <div className="mb-3 text-4xl">🧑‍💼</div>
+            <div className="mb-1 text-sm font-medium text-ink">Sin clientes</div>
+            <div className="mb-4 text-xs text-mist">Agregá tu primer cliente para empezar</div>
+            <Button icon="create" onClick={abrirCrear}>
+              Crear cliente
+            </Button>
           </div>
         ) : (
-          <table className="tbl">
+          <TableContainer>
             <thead>
               <tr>
                 <th>Nombre</th>
-                <th>Cédula/RUC</th>
+                <th>Cédula / RUC</th>
                 <th>Tipo</th>
                 <th>Moneda</th>
                 <th>Descuento</th>
@@ -184,13 +183,13 @@ export default function ClientesPage() {
               {filtered.map((c) => (
                 <tr key={c.cliente_id}>
                   <td>
-                    <div className="font-medium text-xs">{c.nombre}</div>
+                    <div className="text-xs font-medium">{c.nombre}</div>
                   </td>
                   <td className="text-xs text-mist">{c.cedula || '—'}</td>
                   <td>
                     <span className={`pill ${tipoPillClass(c.tipo)}`}>{tipoLabel(c.tipo)}</span>
                   </td>
-                  <td className="font-medium text-xs">{c.moneda}</td>
+                  <td className="text-xs font-medium">{c.moneda}</td>
                   <td className="text-xs text-mist">
                     {c.descuento_pct != null ? `${Number(c.descuento_pct).toFixed(2)}%` : '—'}
                   </td>
@@ -204,35 +203,30 @@ export default function ClientesPage() {
                     )}
                   </td>
                   <td>
-                    <span className={`pill ${c.activo ? 'pill-green' : 'pill-red'}`}>
+                    <span className={`pill ${c.activo ? 'pill-green' : 'pill-gray'}`}>
                       {c.activo ? 'Activo' : 'Inactivo'}
                     </span>
                   </td>
                   <td>
-                    <div className="flex gap-1 justify-end">
-                      <button
-                        className="btn btn-outline text-xs px-2 py-1"
-                        onClick={() => abrirEditar(c)}
-                      >
-                        ✏️
-                      </button>
+                    <div className="flex justify-end gap-1">
+                      <IconButton variant="edit" onClick={() => abrirEditar(c)} title="Editar" />
                       {isAdmin && (
-                        <button
-                          className="btn btn-outline text-xs px-2 py-1 hover:border-rs hover:text-rs"
+                        <IconButton
+                          variant="delete"
                           onClick={() => setConfirmDel(c)}
-                        >
-                          🗑
-                        </button>
+                          title="Desactivar"
+                        />
                       )}
                     </div>
                   </td>
                 </tr>
               ))}
             </tbody>
-          </table>
+          </TableContainer>
         )}
-      </div>
+      </TableCard>
 
+      {/* Modal crear/editar */}
       <Modal
         open={modalOpen}
         onClose={() => {
@@ -251,8 +245,16 @@ export default function ClientesPage() {
             >
               Cancelar
             </button>
-            <button className="btn btn-primary" onClick={handleSubmit(onSubmit)} disabled={creando || editando_}>
-              {creando || editando_ ? 'Guardando...' : editando ? 'Guardar cambios' : 'Crear cliente'}
+            <button
+              className="btn btn-primary"
+              onClick={handleSubmit(onSubmit)}
+              disabled={creando || editando_}
+            >
+              {creando || editando_
+                ? 'Guardando...'
+                : editando
+                  ? 'Guardar cambios'
+                  : 'Crear cliente'}
             </button>
           </>
         }
@@ -260,7 +262,11 @@ export default function ClientesPage() {
         <div className="grid grid-cols-2 gap-3">
           <div className="form-group col-span-2">
             <label className="form-label">Nombre / Razón social *</label>
-            <input {...register('nombre')} className="form-input" placeholder="Ej: Distribuidora XYZ S.A." />
+            <input
+              {...register('nombre')}
+              className="form-input"
+              placeholder="Ej: Distribuidora XYZ S.A."
+            />
             {errors.nombre && <span className="text-xs text-rs">{errors.nombre.message}</span>}
           </div>
 
@@ -296,18 +302,34 @@ export default function ClientesPage() {
 
           <div className="form-group">
             <label className="form-label">Descuento %</label>
-            <input {...register('descuento_pct')} className="form-input" placeholder="0" type="number" step="0.01" min="0" max="100" />
-            {errors.descuento_pct && <span className="text-xs text-rs">{errors.descuento_pct.message}</span>}
+            <input
+              {...register('descuento_pct')}
+              className="form-input"
+              placeholder="0"
+              type="number"
+              step="0.01"
+              min="0"
+              max="100"
+            />
+            {errors.descuento_pct && (
+              <span className="text-xs text-rs">{errors.descuento_pct.message}</span>
+            )}
           </div>
 
           <div className="form-group col-span-2">
             <label className="form-label">Email de contacto</label>
-            <input {...register('email')} className="form-input" placeholder="contacto@empresa.com" type="email" />
+            <input
+              {...register('email')}
+              className="form-input"
+              placeholder="contacto@empresa.com"
+              type="email"
+            />
             {errors.email && <span className="text-xs text-rs">{errors.email.message}</span>}
           </div>
         </div>
       </Modal>
 
+      {/* Confirmar desactivar */}
       <Confirm
         open={!!confirmDel}
         onClose={() => setConfirmDel(null)}
@@ -316,13 +338,6 @@ export default function ClientesPage() {
         message={`¿Seguro que querés desactivar a "${confirmDel?.nombre}"? No se borrará, solo quedará inactivo.`}
         danger
       />
-
-      {eliminando && (
-        <div className="fixed bottom-4 right-4 bg-sur border border-border rounded-lg px-3 py-2 text-xs text-mist shadow-sh2">
-          Desactivando...
-        </div>
-      )}
     </div>
   );
 }
-

@@ -171,6 +171,14 @@ export const useUpdateProducto = () => {
   })
 }
 
+export const useDeleteProducto = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id) => api.delete(`/productos/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['productos'] }),
+  })
+}
+
 // ══════════════════════════════════════════════
 // PAGOS
 // ══════════════════════════════════════════════
@@ -205,6 +213,14 @@ export const useHitos = (filters = {}) =>
     queryFn: () => api.get('/hitos', { params: filters }).then(r => r.data),
   })
 
+export const useCreateHito = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data) => api.post('/hitos', data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['hitos'] }),
+  })
+}
+
 export const useUpdateHito = () => {
   const qc = useQueryClient()
   return useMutation({
@@ -212,6 +228,27 @@ export const useUpdateHito = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['hitos'] })
       qc.invalidateQueries({ queryKey: ['pedidos'] })
+    },
+  })
+}
+
+// ══════════════════════════════════════════════
+// TRAMITE ADUANA
+// ══════════════════════════════════════════════
+export const useTramiteAduana = (importacion_id) =>
+  useQuery({
+    queryKey: ['tramite-aduana', importacion_id],
+    queryFn: () => api.get(`/tramite-aduana/${importacion_id}`).then(r => r.data),
+    enabled: !!importacion_id,
+  })
+
+export const useUpsertTramiteAduana = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ importacion_id, ...data }) => api.put(`/tramite-aduana/${importacion_id}`, data),
+    onSuccess: (_, { importacion_id }) => {
+      qc.invalidateQueries({ queryKey: ['tramite-aduana', importacion_id] })
+      qc.invalidateQueries({ queryKey: ['importaciones'] })
     },
   })
 }
@@ -234,6 +271,22 @@ export const useGenerar = () =>
     mutationFn: ({ tipo, config }) => api.post('/reportes/generar', { tipo, config }),
   })
 
+export const useSaveReporte = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data) => api.post('/reportes', data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['reportes'] }),
+  })
+}
+
+export const useDeleteReporte = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id) => api.delete(`/reportes/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['reportes'] }),
+  })
+}
+
 export const useReportes = () =>
   useQuery({
     queryKey: ['reportes'],
@@ -243,16 +296,32 @@ export const useReportes = () =>
 // ══════════════════════════════════════════════
 // USUARIOS
 // ══════════════════════════════════════════════
-export const useUsuarios = () =>
+export const useUsuarios = (filters = {}) =>
   useQuery({
-    queryKey: ['usuarios'],
-    queryFn: () => api.get('/usuarios').then(r => r.data),
+    queryKey: ['usuarios', filters],
+    queryFn: () => api.get('/usuarios', { params: filters }).then(r => r.data),
   })
 
 export const useCreateUsuario = () => {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (data) => api.post('/usuarios', data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['usuarios'] }),
+  })
+}
+
+export const useUpdateUsuario = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...data }) => api.patch(`/usuarios/${id}`, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['usuarios'] }),
+  })
+}
+
+export const useDeactivateUsuario = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id) => api.delete(`/usuarios/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['usuarios'] }),
   })
 }

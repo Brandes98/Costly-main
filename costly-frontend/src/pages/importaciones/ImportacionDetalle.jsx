@@ -2,13 +2,16 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { FaArrowLeft } from 'react-icons/fa';
 import Spinner from '../../components/ui/Spinner';
 import { TableCard, TableContainer } from '../../components/ui/Table';
-import { useImportacion } from '../../hooks/useApi';
+import { useImportacion, useTramiteAduana } from '../../hooks/useApi';
 import {
   estadoLabel,
   estadoPillClass,
+  fmtCurrency,
   fmtDate,
   importacionEstadoLabel,
   importacionEstadoPillClass,
+  tramiteEstadoLabel,
+  tramiteEstadoPillClass,
 } from '../../lib/utils';
 
 function resumenProveedores(pedidos = []) {
@@ -19,6 +22,7 @@ export default function ImportacionDetalle() {
   const navigate = useNavigate();
   const { id } = useParams();
   const { data: importacion, isLoading } = useImportacion(id);
+  const { data: tramite } = useTramiteAduana(id);
 
   if (isLoading) {
     return (
@@ -72,6 +76,49 @@ export default function ImportacionDetalle() {
           <div className="text-[11px] text-mist">Contenedor</div>
         </div>
       </div>
+
+      {tramite && (
+        <div className="card">
+          <div className="card-header">
+            <div className="card-title">🏛️ Trámite DUA</div>
+            <span className={`pill ${tramiteEstadoPillClass(tramite.estado)}`}>
+              {tramiteEstadoLabel(tramite.estado)}
+            </span>
+          </div>
+          <div className="card-body grid grid-cols-2 gap-3 md:grid-cols-3 text-xs">
+            <div>
+              <div className="text-mist mb-0.5">DUA número</div>
+              <div className="font-medium text-ink">{tramite.dua_numero || '—'}</div>
+            </div>
+            <div>
+              <div className="text-mist mb-0.5">Fecha DUA</div>
+              <div className="font-medium text-ink">{fmtDate(tramite.fecha_dua)}</div>
+            </div>
+            <div>
+              <div className="text-mist mb-0.5">TC Hacienda</div>
+              <div className="font-medium text-ink">
+                {tramite.tc_hacienda ? `₡${Number(tramite.tc_hacienda).toFixed(2)}` : '—'}
+              </div>
+            </div>
+            <div>
+              <div className="text-mist mb-0.5">Almacén fiscal</div>
+              <div className="font-medium text-ink">{tramite.almacen_fiscal || '—'}</div>
+            </div>
+            <div>
+              <div className="text-mist mb-0.5">Valor CIF CR</div>
+              <div className="font-medium text-ink">
+                {tramite.valor_cif_cr ? fmtCurrency(Number(tramite.valor_cif_cr), 'USD') : '—'}
+              </div>
+            </div>
+            <div>
+              <div className="text-mist mb-0.5">Total tributos</div>
+              <div className="font-semibold text-rs">
+                {tramite.total_tributos ? fmtCurrency(Number(tramite.total_tributos), 'USD') : '—'}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <TableCard
         title="Pedidos de la importación"

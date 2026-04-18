@@ -14,14 +14,11 @@ import ProveedoresPage from './pages/proveedores/ProveedoresPage';
 import PagosPage from './pages/pagos/PagosPage';
 import ClientesPage from './pages/clientes/ClientesPage';
 import EmpresaPage from './pages/empresa/EmpresaPage';
-
-import {
-  AduanaPage,
-  ProductosPage,
-  ReportesPage,
-  UsuariosPage,
-  AuditoriaPage,
-} from './pages/placeholders';
+import AduanasPage from './pages/aduanas/AduanasPage';
+import UsuariosPage from './pages/usuarios/UsuariosPage';
+import AuditoriaPage from './pages/auditoria/AuditoriaPages';
+import ReportesPage from './pages/reportes/ReportesPage';
+import ProductosPage from './pages/productos/ProductosPage';
 
 const PrivateRoute = ({ children }) => {
   const token = useAuthStore((s) => s.token);
@@ -51,7 +48,7 @@ export default function App() {
           <Route path="costeos" element={<CosteosPage />} />
           <Route path="seguimiento" element={<SeguimientoPage />} />
           <Route path="pagos" element={<PagosPage />} />
-          <Route path="aduana" element={<AduanaPage />} />
+          <Route path="aduana" element={<AduanasPage />} />
           <Route path="proveedores" element={<ProveedoresPage />} />
           <Route path="productos" element={<ProductosPage />} />
           <Route path="clientes" element={<ClientesPage />} />
