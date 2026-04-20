@@ -21,4 +21,10 @@ router.get('/:id', authorize('consultas', 'operador', 'operador_sr', 'finanzas',
 // PATCH /api/v1/importaciones/:id
 router.patch('/:id', authorize('operador', 'operador_sr', 'admin'), validate(updateImportacionSchema), auditLog('importacion', 'UPDATE'), controller.update)
 
+router.delete('/:id', authorize('operador_sr','admin'), auditLog('importacion','DELETE'), controller.remove)
+
+router.post('/:id/pedidos',          authorize('operador_sr','admin'), auditLog('importacion','UPDATE'), controller.addPedido)
+
+router.delete('/:id/pedidos/:pedido_id', authorize('operador_sr','admin'), auditLog('importacion','UPDATE'), controller.removePedido)
+
 export default router

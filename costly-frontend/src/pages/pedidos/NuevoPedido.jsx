@@ -7,66 +7,51 @@ import { useCreatePedido, useProveedores, useClientes, useProductos } from '../.
 
 const schema = z.object({
   proveedor_id: z.coerce.number().int().positive('Requerido'),
-  cliente_id: z.coerce
-    .number()
-    .int()
-    .positive()
-    .optional()
-    .or(z.literal('').transform(() => undefined)),
+  cliente_id:   z.coerce.number().int().positive().optional().or(z.literal('').transform(() => undefined)),
   fecha_pedido: z.string().min(1, 'Requerido'),
-  incoterm: z.enum(['EXW', 'FOB', 'CIF', 'DAP', 'DDP', 'CFR']),
-  moneda: z.string().length(3),
-  lineas: z
-    .array(
-      z.object({
-        producto_id: z.coerce.number().int().positive('Requerido'),
-        cantidad: z.coerce.number().positive('Requerido'),
-        precio_unit: z.coerce.number().positive('Requerido'),
-        nota: z.string().optional(),
-      }),
-    )
-    .min(1, 'Agregá al menos una línea'),
+  incoterm:     z.enum(['EXW','FOB','CIF','DAP','DDP','CFR']),
+  moneda:       z.string().length(3),
+  nota:         z.string().max(300).optional(),
+  lineas: z.array(z.object({
+    producto_id: z.coerce.number().int().positive('Requerido'),
+    cantidad:    z.coerce.number().positive('Requerido'),
+    precio_unit: z.coerce.number().positive('Requerido'),
+    nota:        z.string().max(200).optional(),
+  })).min(1, 'Agregá al menos una línea'),
 });
 
 export default function NuevoPedido() {
   const navigate = useNavigate();
   const { data: proveedores = [] } = useProveedores();
-  const { data: clientes = [] } = useClientes();
-  const { data: productos = [] } = useProductos();
+  const { data: clientes    = [] } = useClientes();
+  const { data: productos   = [] } = useProductos();
   const { mutate, isPending, error } = useCreatePedido();
 
-  const {
-    register,
-    control,
-    handleSubmit,
-    watch,
-    formState: { errors },
-  } = useForm({
+  const { register, control, handleSubmit, watch, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
       incoterm: 'FOB',
-      moneda: 'USD',
-      lineas: [{ producto_id: '', cantidad: '', precio_unit: '', nota: '' }],
+      moneda:   'USD',
+      nota:     '',
+      lineas:   [{ producto_id: '', cantidad: '', precio_unit: '', nota: '' }],
     },
   });
 
   const { fields, append, remove } = useFieldArray({ control, name: 'lineas' });
   const lineas = watch('lineas');
-  const total = lineas.reduce(
-    (acc, l) => acc + (Number(l.cantidad) * Number(l.precio_unit) || 0),
-    0,
-  );
+  const total  = lineas.reduce((acc, l) => acc + (Number(l.cantidad) * Number(l.precio_unit) || 0), 0);
 
   const onSubmit = (data) => {
     const payload = {
       ...data,
-      cliente_id: data.cliente_id ? Number(data.cliente_id) : undefined, // ← fix
+      cliente_id:   data.cliente_id ? Number(data.cliente_id) : undefined,
+      nota:         data.nota || undefined,
       fecha_pedido: new Date(data.fecha_pedido).toISOString(),
       lineas: data.lineas.map((l) => ({
         producto_id: Number(l.producto_id),
-        cantidad: Number(l.cantidad),
+        cantidad:    Number(l.cantidad),
         precio_unit: Number(l.precio_unit),
-        nota: l.nota || undefined,
+        nota:        l.nota || undefined,
       })),
     };
     mutate(payload, { onSuccess: () => navigate('/pedidos') });
@@ -74,6 +59,7 @@ export default function NuevoPedido() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-w-4xl">
+
       {/* Cabecera */}
       <div className="card">
         <div className="card-header">
@@ -84,25 +70,19 @@ export default function NuevoPedido() {
             <label className="form-label">Proveedor *</label>
             <select {...register('proveedor_id')} className="form-input">
               <option value="">Seleccionar...</option>
-              {proveedores.map((p) => (
-                <option key={p.proveedor_id} value={p.proveedor_id}>
-                  {p.nombre}
-                </option>
+              {proveedores.map(p => (
+                <option key={p.proveedor_id} value={p.proveedor_id}>{p.nombre}</option>
               ))}
             </select>
-            {errors.proveedor_id && (
-              <span className="text-xs text-rs">{errors.proveedor_id.message}</span>
-            )}
+            {errors.proveedor_id && <span className="text-xs text-rs">{errors.proveedor_id.message}</span>}
           </div>
 
           <div className="form-group">
             <label className="form-label">Cliente</label>
             <select {...register('cliente_id')} className="form-input">
               <option value="">Sin cliente asociado</option>
-              {clientes.map((c) => (
-                <option key={c.cliente_id} value={c.cliente_id}>
-                  {c.nombre}
-                </option>
+              {clientes.map(c => (
+                <option key={c.cliente_id} value={c.cliente_id}>{c.nombre}</option>
               ))}
             </select>
           </div>
@@ -110,18 +90,14 @@ export default function NuevoPedido() {
           <div className="form-group">
             <label className="form-label">Fecha del pedido *</label>
             <input type="date" {...register('fecha_pedido')} className="form-input" />
-            {errors.fecha_pedido && (
-              <span className="text-xs text-rs">{errors.fecha_pedido.message}</span>
-            )}
+            {errors.fecha_pedido && <span className="text-xs text-rs">{errors.fecha_pedido.message}</span>}
           </div>
 
           <div className="form-group">
             <label className="form-label">Incoterm *</label>
             <select {...register('incoterm')} className="form-input">
-              {['EXW', 'FOB', 'CIF', 'DAP', 'DDP', 'CFR'].map((i) => (
-                <option key={i} value={i}>
-                  {i}
-                </option>
+              {['EXW','FOB','CIF','DAP','DDP','CFR'].map(i => (
+                <option key={i} value={i}>{i}</option>
               ))}
             </select>
           </div>
@@ -134,6 +110,16 @@ export default function NuevoPedido() {
               <option value="CNY">CNY — Yuan</option>
               <option value="CRC">CRC — Colón</option>
             </select>
+          </div>
+
+          {/* ── Nota del pedido */}
+          <div className="form-group col-span-2">
+            <label className="form-label">Nota del pedido</label>
+            <input
+              {...register('nota')}
+              className="form-input"
+              placeholder="Observaciones generales del pedido (opcional)"
+            />
           </div>
         </div>
       </div>
@@ -158,6 +144,7 @@ export default function NuevoPedido() {
                 <th className="w-24">Cantidad</th>
                 <th className="w-28">Precio unit.</th>
                 <th className="w-28">Subtotal</th>
+                <th>Nota</th>
                 <th className="w-8" />
               </tr>
             </thead>
@@ -167,27 +154,19 @@ export default function NuevoPedido() {
                 return (
                   <tr key={field.id}>
                     <td>
-                      <select
-                        {...register(`lineas.${i}.producto_id`)}
-                        className="form-input h-8 text-xs"
-                      >
+                      <select {...register(`lineas.${i}.producto_id`)} className="form-input h-8 text-xs">
                         <option value="">Seleccionar producto...</option>
-                        {productos.map((p) => (
-                          <option key={p.producto_id} value={p.producto_id}>
-                            [{p.sku}] {p.nombre}
-                          </option>
+                        {productos.map(p => (
+                          <option key={p.producto_id} value={p.producto_id}>[{p.sku}] {p.nombre}</option>
                         ))}
                       </select>
                       {errors.lineas?.[i]?.producto_id && (
-                        <span className="text-[10px] text-rs">
-                          {errors.lineas[i].producto_id.message}
-                        </span>
+                        <span className="text-[10px] text-rs">{errors.lineas[i].producto_id.message}</span>
                       )}
                     </td>
                     <td>
                       <input
-                        type="number"
-                        step="0.001"
+                        type="number" step="0.001"
                         {...register(`lineas.${i}.cantidad`)}
                         className="form-input h-8 text-xs"
                         placeholder="0"
@@ -195,8 +174,7 @@ export default function NuevoPedido() {
                     </td>
                     <td>
                       <input
-                        type="number"
-                        step="0.01"
+                        type="number" step="0.01"
                         {...register(`lineas.${i}.precio_unit`)}
                         className="form-input h-8 text-xs"
                         placeholder="0.00"
@@ -204,6 +182,15 @@ export default function NuevoPedido() {
                     </td>
                     <td className="font-semibold text-xs">
                       ${sub.toLocaleString('en', { minimumFractionDigits: 2 })}
+                    </td>
+                    {/* ── Nota por línea */}
+                    <td>
+                      <input
+                        type="text"
+                        {...register(`lineas.${i}.nota`)}
+                        className="form-input h-8 text-xs"
+                        placeholder="Nota opcional..."
+                      />
                     </td>
                     <td>
                       {fields.length > 1 && (
@@ -222,21 +209,16 @@ export default function NuevoPedido() {
             </tbody>
             <tfoot>
               <tr className="bg-sur2">
-                <td
-                  colSpan={3}
-                  className="px-3 py-2.5 text-xs text-mist font-semibold uppercase tracking-wider"
-                >
-                  Total
-                </td>
+                <td colSpan={3} className="px-3 py-2.5 text-xs text-mist font-semibold uppercase tracking-wider">Total</td>
                 <td className="px-3 py-2.5 font-bold text-ink">
                   ${total.toLocaleString('en', { minimumFractionDigits: 2 })}
                 </td>
-                <td />
+                <td colSpan={2} />
               </tr>
             </tfoot>
           </table>
         </div>
-        {errors.lineas && typeof errors.lineas === 'object' && errors.lineas.message && (
+        {errors.lineas?.message && (
           <div className="px-4 py-2 text-xs text-rs">{errors.lineas.message}</div>
         )}
       </div>

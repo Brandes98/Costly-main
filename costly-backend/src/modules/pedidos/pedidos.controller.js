@@ -25,10 +25,15 @@ export const create = async (req, res) => {
 
 export const update = async (req, res) => {
   try {
-    return successResponse(res, await service.update(req.user.empresa_id, parseInt(req.params.id), req.body))
+    return successResponse(res, await service.update(
+      req.user.empresa_id,
+      parseInt(req.params.id),
+      req.body,
+      req.user.usuario_id,  // ← agregar
+      req.ip,               // ← agregar
+    ))
   } catch (error) { return errorResponse(res, error) }
 }
-
 export const updateEstado = async (req, res) => {
   try {
     return successResponse(res, await service.updateEstado(req.user.empresa_id, parseInt(req.params.id), req.body.estado, req.user.usuario_id))
@@ -72,3 +77,22 @@ export const detalleProyeccion = async (req, res) => {
     return successResponse(res, await proyeccionService.detalle(req.user.empresa_id, parseInt(req.params.id)))
   } catch (error) { return errorResponse(res, error) }
 }
+
+export const addLinea = async (req, res) => {
+  try {
+    return successResponse(res, await service.addLinea(req.user.empresa_id, parseInt(req.params.id), req.body), 201)
+  } catch (error) { return errorResponse(res, error) }
+}
+ 
+export const updateLinea = async (req, res) => {
+  try {
+    return successResponse(res, await service.updateLinea(req.user.empresa_id, parseInt(req.params.id), parseInt(req.params.linea_id), req.body))
+  } catch (error) { return errorResponse(res, error) }
+}
+ 
+export const deleteLinea = async (req, res) => {
+  try {
+    return successResponse(res, await service.deleteLinea(req.user.empresa_id, parseInt(req.params.id), parseInt(req.params.linea_id)))
+  } catch (error) { return errorResponse(res, error) }
+}
+ 

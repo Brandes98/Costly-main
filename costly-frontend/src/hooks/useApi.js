@@ -64,6 +64,16 @@ export const useUpdateEstadoPedido = () => {
   })
 }
 
+export const useUpdatePedido = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...data }) => api.patch(`/pedidos/${id}`, data),
+    onSuccess: (_, { id }) => {
+      qc.invalidateQueries({ queryKey: ['pedidos'] })
+      qc.invalidateQueries({ queryKey: ['pedido', String(id)] })
+    },
+  })
+}
 // ══════════════════════════════════════════════
 // IMPORTACIONES
 // ══════════════════════════════════════════════
@@ -405,6 +415,14 @@ export const useDeleteCosteo = () => {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id) => api.delete(`/costeos/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['costeos'] }),
+  })
+}
+
+export const useEditarCosteo = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }) => api.patch(`/costeos/${id}`, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['costeos'] }),
   })
 }

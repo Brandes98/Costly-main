@@ -293,18 +293,38 @@ model proveedor {
   dias_transito     Int?     @db.SmallInt
   puerto_origen     String?  @db.VarChar(80)
   condiciones_pago  String?  @db.VarChar(100)
+  // Campos legacy — mantenidos para compatibilidad
   contacto          String?  @db.VarChar(100)
   email             String?  @db.VarChar(150)
   activo            Boolean  @default(true)
 
   // Relaciones
-  empresa        empresa         @relation(fields: [empresa_id], references: [empresa_id])
-  pais           pais            @relation(fields: [pais_id], references: [pais_id])
+  empresa        empresa              @relation(fields: [empresa_id], references: [empresa_id])
+  pais           pais                 @relation(fields: [pais_id], references: [pais_id])
   pedidos        pedido[]
   facturas       factura_prov[]
   pagos          pago[]
   tramites       tramite_aduana[]
+  contactos      contacto_proveedor[]
 }
+
+// ------------------------------------------------------------
+// 4b. CONTACTOS DE PROVEEDOR
+// ------------------------------------------------------------
+model contacto_proveedor {
+  contacto_id    Int      @id @default(autoincrement())
+  proveedor_id   Int
+  nombre         String   @db.VarChar(100)
+  cargo          String?  @db.VarChar(80)
+  email          String?  @db.VarChar(150)
+  telefono       String?  @db.VarChar(50)
+  predeterminado Boolean  @default(false)
+  activo         Boolean  @default(true)
+  creado_en      DateTime @default(now())
+
+  proveedor      proveedor @relation(fields: [proveedor_id], references: [proveedor_id])
+}
+
 
 // ------------------------------------------------------------
 // 5. CLIENTES

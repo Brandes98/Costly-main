@@ -32,3 +32,10 @@ router.post('/:id/proyeccion/calcular', authorize('operador', 'operador_sr', 'ad
 router.get('/:id/proyeccion/detalle', authorize('consultas', 'operador', 'operador_sr', 'finanzas', 'admin'), controller.detalleProyeccion)
 
 export default router
+
+// -- Edicion --------------
+
+router.post('/:id/lineas',                 authorize('operador','operador_sr','admin'), auditLog('linea_pedido','INSERT'), controller.addLinea)
+router.patch('/:id/lineas/:linea_id',      authorize('operador','operador_sr','admin'), auditLog('linea_pedido','UPDATE'), controller.updateLinea)
+router.delete('/:id/lineas/:linea_id',     authorize('operador','operador_sr','admin'), auditLog('linea_pedido','DELETE'), controller.deleteLinea)
+ 
