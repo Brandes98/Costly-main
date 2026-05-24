@@ -10,6 +10,7 @@ import {
   useDeleteCliente,
 } from '../../hooks/useApi';
 import { Modal, Confirm } from '../../components/ui/Spinner';
+import ImportarExcelModal from '../../components/ui/ImportarExcelModal';
 import Button, { IconButton } from '../../components/ui/Button';
 import { TableCard, TableContainer, TableToolbar } from '../../components/ui/Table';
 
@@ -38,6 +39,7 @@ export default function ClientesPage() {
   const isAdmin = usuario?.rol === 'admin';
 
   const [search, setSearch] = useState('');
+  const [modalImport, setModalImport] = useState(false);
   const [tipo, setTipo] = useState('');
   const [showInactivos, setShowInactivos] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -134,6 +136,9 @@ export default function ClientesPage() {
   return (
     <div className="space-y-3">
       {/* Toolbar */}
+      <div className="flex justify-end mb-1">
+        <button className="btn btn-outline text-xs" onClick={() => setModalImport(true)}>📥 Importar Excel</button>
+      </div>
       <TableToolbar
         searchValue={search}
         onSearchChange={setSearch}
@@ -338,6 +343,13 @@ export default function ClientesPage() {
         message={`¿Seguro que querés desactivar a "${confirmDel?.nombre}"? No se borrará, solo quedará inactivo.`}
         danger
       />
+      {modalImport && (
+        <ImportarExcelModal
+          entidad="clientes"
+          queryKey="clientes"
+          onClose={() => setModalImport(false)}
+        />
+      )}
     </div>
   );
 }

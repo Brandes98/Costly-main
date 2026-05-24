@@ -120,6 +120,45 @@ export const remove = async (empresa_id, importacion_id) => {
   })
 }
 
+export const addContenedor = async (empresa_id, importacion_id, data) => {
+  const importacion = await prisma.importacion.findFirst({ where: { importacion_id, empresa_id } })
+  if (!importacion) throw new AppError('Importación no encontrada', 404, 'IMPORTACION_NOT_FOUND')
+  return await prisma.contenedor.create({
+    data: {
+      importacion_id,
+      codigo:        data.codigo || data.nombre || `CONT-${Date.now()}`,
+      nota:          data.nota || null,
+      tipo:          data.tipo || null,
+      naviera:       data.naviera || null,
+      bl_numero:     data.bl_numero || null,
+      puerto_origen: data.puerto_origen || null,
+      puerto_destino:data.puerto_destino || null,
+      fecha_salida:  data.fecha_salida ? new Date(data.fecha_salida) : null,
+      eta_cr:        data.eta_cr ? new Date(data.eta_cr) : null,
+    }
+  })
+}
+
+export const updateContenedor = async (empresa_id, importacion_id, contenedor_id, data) => {
+  const contenedor = await prisma.contenedor.findFirst({
+    where: { contenedor_id, importacion: { importacion_id, empresa_id } }
+  })
+  if (!contenedor) throw new AppError('Contenedor no encontrado', 404, 'CONTENEDOR_NOT_FOUND')
+  const { codigo, nombre, ...rest } = data
+  return await prisma.contenedor.update({
+    where: { contenedor_id },
+    data: { ...rest, ...(codigo || nombre ? { codigo: codigo || nombre } : {}) }
+  })
+}
+
+export const removeContenedor = async (empresa_id, importacion_id, contenedor_id) => {
+  const contenedor = await prisma.contenedor.findFirst({
+    where: { contenedor_id, importacion: { importacion_id, empresa_id } }
+  })
+  if (!contenedor) throw new AppError('Contenedor no encontrado', 404, 'CONTENEDOR_NOT_FOUND')
+  await prisma.contenedor.delete({ where: { contenedor_id } })
+}
+
 export const addPedido = async (empresa_id, importacion_id, pedido_id, usuario_id) => {
   const importacion = await prisma.importacion.findFirst({
     where: { importacion_id, empresa_id }

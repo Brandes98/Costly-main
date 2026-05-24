@@ -1,0 +1,18 @@
+// ── 1. Agregar al model documento:
+//    campo   String?  @db.VarChar(60)
+
+// ── 2. Agregar al model costeo:
+//    detalles  costeo_detalle[]
+
+// ── 3. Agregar modelo nuevo:
+model costeo_detalle {
+  detalle_id  Int      @id @default(autoincrement())
+  costeo_id   Int
+  campo       String   @db.VarChar(60)
+  nota        String?  @db.Text
+  creado_en   DateTime @default(now())
+
+  costeo costeo @relation(fields: [costeo_id], references: [costeo_id], onDelete: Cascade)
+
+  @@unique([costeo_id, campo])
+}

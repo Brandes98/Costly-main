@@ -39,6 +39,31 @@ export const addPedido = async (req, res) => {
   } catch (error) { return errorResponse(res, error) }
 }
  
+export const addContenedor = async (req, res) => {
+  try {
+    return successResponse(res, await service.addContenedor(
+      req.user.empresa_id, parseInt(req.params.id), req.body
+    ), 201)
+  } catch (error) { return errorResponse(res, error) }
+}
+
+export const updateContenedor = async (req, res) => {
+  try {
+    return successResponse(res, await service.updateContenedor(
+      req.user.empresa_id, parseInt(req.params.id), parseInt(req.params.cont_id), req.body
+    ))
+  } catch (error) { return errorResponse(res, error) }
+}
+
+export const removeContenedor = async (req, res) => {
+  try {
+    await service.removeContenedor(
+      req.user.empresa_id, parseInt(req.params.id), parseInt(req.params.cont_id)
+    )
+    return successResponse(res, { ok: true })
+  } catch (error) { return errorResponse(res, error) }
+}
+
 export const removePedido = async (req, res) => {
   try {
     return successResponse(res, await service.removePedido(

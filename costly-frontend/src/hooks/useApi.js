@@ -406,7 +406,7 @@ export const useCreateCosteo = () => {
 export const useAprobarCosteo = () => {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id) => api.patch(`/costeos/${id}/aprobar`),
+    mutationFn: (id) => api.post(`/costeos/${id}/aprobar`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['costeos'] }),
   })
 }

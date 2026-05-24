@@ -24,3 +24,4 @@ dist/
 build/
 
 .vite/
+*.msi

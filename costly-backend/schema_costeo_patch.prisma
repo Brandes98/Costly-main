@@ -1,0 +1,27 @@
+// ============================================================
+// Cambios al schema.prisma para costeo multi-importación
+// ============================================================
+
+// ── 1. En model costeo, cambiar importacion_id a opcional:
+//    importacion_id Int?   (agregar el ?)
+//    Y cambiar la relación:
+//    importacion    importacion?   @relation(...)
+
+// ── 2. Agregar modelo nuevo después de costeo:
+model costeo_importacion {
+  ci_id          Int      @id @default(autoincrement())
+  costeo_id      Int
+  importacion_id Int
+  creado_en      DateTime @default(now())
+
+  costeo      costeo      @relation(fields: [costeo_id],      references: [costeo_id],      onDelete: Cascade)
+  importacion importacion @relation(fields: [importacion_id], references: [importacion_id], onDelete: Cascade)
+
+  @@unique([costeo_id, importacion_id])
+}
+
+// ── 3. En model importacion, agregar la relación inversa:
+//    costeos_rel  costeo_importacion[]
+
+// ── 4. En model costeo, agregar la relación inversa:
+//    importaciones_rel  costeo_importacion[]

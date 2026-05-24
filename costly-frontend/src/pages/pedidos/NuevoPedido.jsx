@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -21,13 +21,15 @@ const schema = z.object({
 });
 
 export default function NuevoPedido() {
-  const navigate = useNavigate();
+  const navigate  = useNavigate();
+  const location  = useLocation();
+  const duplicado = location.state;
   const { data: proveedores = [] } = useProveedores();
   const { data: clientes    = [] } = useClientes();
   const { data: productos   = [] } = useProductos();
   const { mutate, isPending, error } = useCreatePedido();
 
-  const { register, control, handleSubmit, watch, formState: { errors } } = useForm({
+  const { register, control, handleSubmit, watch, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
       incoterm: 'FOB',
@@ -37,7 +39,19 @@ export default function NuevoPedido() {
     },
   });
 
-  const { fields, append, remove } = useFieldArray({ control, name: 'lineas' });
+  const { fields, append, remove, replace } = useFieldArray({ control, name: 'lineas' });
+
+  // Precargar datos si viene de duplicar
+  useEffect(() => {
+    if (!duplicado) return
+    const { proveedor_id, cliente_id, incoterm, moneda, nota, lineas } = duplicado
+    if (proveedor_id) setValue('proveedor_id', proveedor_id)
+    if (cliente_id)   setValue('cliente_id',   cliente_id)
+    if (incoterm)     setValue('incoterm',      incoterm)
+    if (moneda)       setValue('moneda',        moneda)
+    if (nota)         setValue('nota',          nota)
+    if (lineas?.length) replace(lineas)
+  }, [])
   const lineas = watch('lineas');
   const total  = lineas.reduce((acc, l) => acc + (Number(l.cantidad) * Number(l.precio_unit) || 0), 0);
 
@@ -59,6 +73,15 @@ export default function NuevoPedido() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-w-4xl">
+      {/* Banner duplicado */}
+      {duplicado?.duplicadoDe && (
+        <div className="rounded-card border border-tl/20 bg-tl-xl px-4 py-3 flex items-center gap-3">
+          <span>📋</span>
+          <div className="text-xs text-tl">
+            Duplicado de <strong>{duplicado.duplicadoDe}</strong> — revisá los datos antes de guardar.
+          </div>
+        </div>
+      )}
 
       {/* Cabecera */}
       <div className="card">

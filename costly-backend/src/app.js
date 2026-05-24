@@ -26,6 +26,8 @@ import tcRoutes            from './modules/tc-historico/tc.routes.js'
 import documentosRoutes    from './modules/documentos/documentos.routes.js'
 import reportesRoutes      from './modules/reportes/reportes.routes.js'
 import auditoriaRoutes     from './modules/auditoria/auditoria.routes.js'
+import facturasRoutes      from './modules/facturas/facturas.routes.js'
+import importRoutes        from './modules/import/import.routes.js'
 
 const app = express()
 
@@ -67,6 +69,14 @@ app.use(sanitize)
 // ── Compresión
 app.use(compression())
 
+// --Guardar archivos
+import { fileURLToPath } from 'url'
+import { dirname, join }  from 'path'
+const __dirname = dirname(fileURLToPath(import.meta.url))
+app.use('/uploads', express.static(join(__dirname, 'public', 'uploads')))
+
+// --Importacion de datos en excel
+
 // ── Logs HTTP
 if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('combined'))
@@ -97,6 +107,8 @@ app.use(`${API}/tc`,            tcRoutes)
 app.use(`${API}/documentos`,    documentosRoutes)
 app.use(`${API}/reportes`,      reportesRoutes)
 app.use(`${API}/auditoria`,     auditoriaRoutes)
+app.use(`${API}/facturas`,      facturasRoutes)
+app.use(`${API}/import`,        importRoutes)
 
 // ── 404
 app.use((req, res) => {

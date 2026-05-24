@@ -18,9 +18,16 @@ const schema = z.object({
   arancel_pct: z.coerce.number().min(0).max(100).optional().or(z.literal('')),
   peso_kg: z.coerce.number().positive().optional().or(z.literal('')),
   modo_volumen: z.enum(['unitario', 'por_caja', 'sin_volumen']).default('unitario'),
+  largo_cm:   z.coerce.number().positive().optional().or(z.literal('')),
+  ancho_cm:   z.coerce.number().positive().optional().or(z.literal('')),
+  alto_cm:    z.coerce.number().positive().optional().or(z.literal('')),
   volumen_m3: z.coerce.number().positive().optional().or(z.literal('')),
   unidades_por_caja: z.coerce.number().int().positive().optional().or(z.literal('')),
-  volumen_caja_m3: z.coerce.number().positive().optional().or(z.literal('')),
+  peso_caja_kg:      z.coerce.number().positive().optional().or(z.literal('')),
+  largo_caja_cm:     z.coerce.number().positive().optional().or(z.literal('')),
+  ancho_caja_cm:     z.coerce.number().positive().optional().or(z.literal('')),
+  alto_caja_cm:      z.coerce.number().positive().optional().or(z.literal('')),
+  volumen_caja_m3:   z.coerce.number().positive().optional().or(z.literal('')),
   requiere_permiso: z.boolean().optional(),
   permiso_tipo: z.string().max(80).optional().or(z.literal('')),
 });
@@ -61,7 +68,14 @@ export default function ProductosPage() {
     defaultValues: { modo_volumen: 'unitario', requiere_permiso: false },
   });
 
-  const modoVolumen = useWatch({ control, name: 'modo_volumen' });
+  const modoVolumen  = useWatch({ control, name: 'modo_volumen' });
+  const largoCm      = useWatch({ control, name: 'largo_cm' });
+  const anchoCm      = useWatch({ control, name: 'ancho_cm' });
+  const altoCm       = useWatch({ control, name: 'alto_cm' });
+
+  const volumenCalculado = (largoCm && anchoCm && altoCm)
+    ? ((Number(largoCm) * Number(anchoCm) * Number(altoCm)) / 1_000_000).toFixed(6)
+    : null
   const requierePermiso = useWatch({ control, name: 'requiere_permiso' });
 
   const filtered = useMemo(() => {
@@ -92,9 +106,16 @@ export default function ProductosPage() {
       arancel_pct: p.arancel_pct ?? '',
       peso_kg: p.peso_kg ?? '',
       modo_volumen: p.modo_volumen || 'unitario',
+      largo_cm:   p.largo_cm ?? '',
+      ancho_cm:   p.ancho_cm ?? '',
+      alto_cm:    p.alto_cm  ?? '',
       volumen_m3: p.volumen_m3 ?? '',
       unidades_por_caja: p.unidades_por_caja ?? '',
-      volumen_caja_m3: p.volumen_caja_m3 ?? '',
+      peso_caja_kg:      p.peso_caja_kg ?? '',
+      largo_caja_cm:     p.largo_caja_cm ?? '',
+      ancho_caja_cm:     p.ancho_caja_cm ?? '',
+      alto_caja_cm:      p.alto_caja_cm  ?? '',
+      volumen_caja_m3:   p.volumen_caja_m3 ?? '',
       requiere_permiso: p.requiere_permiso || false,
       permiso_tipo: p.permiso_tipo || '',
     });
@@ -116,9 +137,18 @@ export default function ProductosPage() {
       arancel_pct: data.arancel_pct === '' ? undefined : Number(data.arancel_pct),
       peso_kg: data.peso_kg === '' ? undefined : Number(data.peso_kg),
       modo_volumen: data.modo_volumen,
-      volumen_m3: data.modo_volumen === 'unitario' && data.volumen_m3 !== '' ? Number(data.volumen_m3) : undefined,
+      largo_cm:   data.largo_cm !== '' ? Number(data.largo_cm) : undefined,
+      ancho_cm:   data.ancho_cm !== '' ? Number(data.ancho_cm) : undefined,
+      alto_cm:    data.alto_cm  !== '' ? Number(data.alto_cm)  : undefined,
+      volumen_m3: data.modo_volumen === 'unitario'
+        ? (volumenCalculado ? Number(volumenCalculado) : (data.volumen_m3 !== '' ? Number(data.volumen_m3) : undefined))
+        : undefined,
       unidades_por_caja: data.modo_volumen === 'por_caja' && data.unidades_por_caja !== '' ? Number(data.unidades_por_caja) : undefined,
-      volumen_caja_m3: data.modo_volumen === 'por_caja' && data.volumen_caja_m3 !== '' ? Number(data.volumen_caja_m3) : undefined,
+      peso_caja_kg:      data.modo_volumen === 'por_caja' && data.peso_caja_kg !== '' ? Number(data.peso_caja_kg) : undefined,
+      largo_caja_cm:     data.modo_volumen === 'por_caja' && data.largo_caja_cm !== '' ? Number(data.largo_caja_cm) : undefined,
+      ancho_caja_cm:     data.modo_volumen === 'por_caja' && data.ancho_caja_cm !== '' ? Number(data.ancho_caja_cm) : undefined,
+      alto_caja_cm:      data.modo_volumen === 'por_caja' && data.alto_caja_cm  !== '' ? Number(data.alto_caja_cm)  : undefined,
+      volumen_caja_m3:   data.modo_volumen === 'por_caja' && data.volumen_caja_m3 !== '' ? Number(data.volumen_caja_m3) : undefined,
       requiere_permiso: data.requiere_permiso || false,
       permiso_tipo: data.requiere_permiso ? (data.permiso_tipo || undefined) : undefined,
     };
@@ -150,7 +180,7 @@ export default function ProductosPage() {
         <TableContainer>
           <thead>
             <tr>
-              <th>SKU</th>
+              <th>Codigo de Producto</th>
               <th>Nombre</th>
               <th>Categoría</th>
               <th>Arancel</th>
@@ -228,7 +258,7 @@ export default function ProductosPage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="form-group">
-                <label className="form-label">SKU *</label>
+                <label className="form-label">Codigo de Producto *</label>
                 <input {...register('sku')} className="form-input" placeholder="Ej: MTR-HX200" />
                 {errors.sku && <span className="text-xs text-rs">{errors.sku.message}</span>}
               </div>
@@ -275,20 +305,76 @@ export default function ProductosPage() {
                 </select>
               </div>
               {modoVolumen === 'unitario' && (
-                <div className="form-group">
-                  <label className="form-label">Volumen m³</label>
-                  <input {...register('volumen_m3')} className="form-input" type="number" placeholder="0.0000" min="0" step="0.0001" />
+                <div className="space-y-3">
+                  <div className="rounded-card border border-border bg-sur2 p-3 space-y-2">
+                    <div className="text-[10px] font-semibold text-mist uppercase tracking-wider">
+                      Medidas (calcula volumen automáticamente)
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="form-group">
+                        <label className="form-label">Largo (cm)</label>
+                        <input {...register('largo_cm')} className="form-input" type="number" placeholder="0" min="0" step="0.01" />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Ancho (cm)</label>
+                        <input {...register('ancho_cm')} className="form-input" type="number" placeholder="0" min="0" step="0.01" />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Alto (cm)</label>
+                        <input {...register('alto_cm')} className="form-input" type="number" placeholder="0" min="0" step="0.01" />
+                      </div>
+                    </div>
+                    {volumenCalculado && (
+                      <div className="rounded border border-tl/20 bg-tl-xl px-3 py-1.5 text-xs text-tl flex justify-between">
+                        <span>✓ Volumen calculado automáticamente</span>
+                        <span className="font-bold">{volumenCalculado} m³</span>
+                      </div>
+                    )}
+                  </div>
+                  {!volumenCalculado && (
+                    <div className="form-group">
+                      <label className="form-label">Volumen m³ (manual)</label>
+                      <input {...register('volumen_m3')} className="form-input" type="number" placeholder="0.000000" min="0" step="0.000001" />
+                      <div className="text-[10px] text-mist mt-1">Ingresá las medidas arriba para calcular automáticamente, o el volumen directamente acá.</div>
+                    </div>
+                  )}
                 </div>
               )}
               {modoVolumen === 'por_caja' && (
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="form-group">
-                    <label className="form-label">Unidades por caja</label>
-                    <input {...register('unidades_por_caja')} className="form-input" type="number" placeholder="0" min="1" />
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="form-group">
+                      <label className="form-label">Unidades por caja</label>
+                      <input {...register('unidades_por_caja')} className="form-input" type="number" placeholder="0" min="1" />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Peso caja (kg)</label>
+                      <input {...register('peso_caja_kg')} className="form-input" type="number" placeholder="0.000" min="0" step="0.001" />
+                    </div>
+                  </div>
+                  <div className="rounded-card border border-border bg-sur2 p-3 space-y-2">
+                    <div className="text-[10px] font-semibold text-mist uppercase tracking-wider">
+                      Medidas de la caja (calcula volumen automáticamente)
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="form-group">
+                        <label className="form-label">Largo (cm)</label>
+                        <input {...register('largo_caja_cm')} className="form-input" type="number" placeholder="0" min="0" step="0.01" />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Ancho (cm)</label>
+                        <input {...register('ancho_caja_cm')} className="form-input" type="number" placeholder="0" min="0" step="0.01" />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Alto (cm)</label>
+                        <input {...register('alto_caja_cm')} className="form-input" type="number" placeholder="0" min="0" step="0.01" />
+                      </div>
+                    </div>
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Volumen caja m³</label>
-                    <input {...register('volumen_caja_m3')} className="form-input" type="number" placeholder="0.0000" min="0" step="0.0001" />
+                    <label className="form-label">Volumen caja m³ (manual)</label>
+                    <input {...register('volumen_caja_m3')} className="form-input" type="number" placeholder="0.000000" min="0" step="0.000001" />
+                    <div className="text-[10px] text-mist mt-1">Ingresá las medidas arriba o el volumen directamente.</div>
                   </div>
                 </div>
               )}

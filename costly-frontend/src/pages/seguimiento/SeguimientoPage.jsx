@@ -45,21 +45,203 @@ const getSemaforo = (fechaPlan) => {
   return 'green'
 }
 const semClass = (c) => ({ red: 's3r', yellow: 's3y', green: 's3g' }[c] || 's3g')
+const HITO_TIPO_LABEL = {
+  confirmacion:    'Confirmación',
+  pago_senal:      'Pago señal',
+  produccion:      'Producción',
+  embarque:        'Embarque',
+  llegada_cr:      'Llegada CR',
+  retiro_aduana:   'Retiro aduana',
+  entrega_bodega:  'Entrega bodega',
+  entrega_cliente: 'Entrega cliente',
+  personalizado:   'Personalizado',
+}
+
+const ESTADO_HITO_MAP = {
+  confirmado:    'confirmacion',
+  en_produccion: 'produccion',
+  listo_fabrica: 'produccion',
+  embarcado:     'embarque',
+  en_transito:   'embarque',
+  en_puerto_cr:  'llegada_cr',
+  en_aduana:     'retiro_aduana',
+  en_bodega:     'entrega_bodega',
+  entregado:     'entrega_cliente',
+}
+
 const getProgreso = (estado) => { const i = ESTADOS_ORDEN.indexOf(estado); return i === -1 ? 0 : i }
 
-// ── Mini formulario de hito (popover)
+// ── Modal de avance/retroceso de estado
+function EstadoModal({ pedido, estadoClickeado, onClose, onCambiarEstado, onActualizarHito, cambiando, saving }) {
+  const [fecha,       setFecha]       = useState(new Date().toISOString().slice(0,10))
+  const [nota,        setNota]        = useState('')
+  const [hitoAbierto, setHitoAbierto] = useState(false)
+  const [hitoPlan,    setHitoPlan]    = useState('')
+  const [hitoReal,    setHitoReal]    = useState(new Date().toISOString().slice(0,10))
+  const [hitoNota,    setHitoNota]    = useState('')
+  // Próximo hito
+  const [proximoHito, setProximoHito] = useState('')
+
+  const progreso    = getProgreso(pedido.estado)
+  const progrClick  = ESTADOS_ORDEN.indexOf(estadoClickeado)
+  const esAvanzar   = progrClick > progreso
+  const esRetroceder= progrClick < progreso
+  const esActual    = progrClick === progreso
+
+  const tipoHito = ESTADO_HITO_MAP[estadoClickeado]
+  const hitoAsoc = pedido.hitos?.find(h => h.tipo === tipoHito)
+
+  const handleConfirmar = () => {
+    if (esAvanzar || esRetroceder) {
+      onCambiarEstado({ id: pedido.pedido_id, estado: estadoClickeado, nota, fecha })
+      if (esAvanzar && hitoAsoc) {
+        // Actualizar hito actual como completado
+        // fecha_real = hitoReal si lo llenó, sino usa la fecha del cambio de estado
+        // fecha_plan = hitoPlan si lo llenó, sino usa la fecha_real como referencia
+        // fecha_real = hitoReal si lo llenó, sino fecha del cambio
+        // fecha_plan = hitoPlan si lo llenó, sino fecha del cambio (actualizamos siempre)
+        const fechaRealFinal = hitoReal || fecha
+        const fechaPlanFinal = hitoPlan || fecha
+        onActualizarHito({ id: hitoAsoc.hito_id, data: {
+          estado:     'completado',
+          fecha_plan: new Date(fechaPlanFinal).toISOString(),
+          fecha_real: new Date(fechaRealFinal).toISOString(),
+          nota:       hitoNota || undefined,
+        }})
+        // Actualizar próximo hito con fecha planificada si se ingresó
+        if (proximoHito) {
+          const idxDest   = ESTADOS_ORDEN.indexOf(estadoClickeado)
+          const sigEstado = ESTADOS_ORDEN[idxDest + 1]
+          const tipoSig   = sigEstado ? ESTADO_HITO_MAP[sigEstado] : null
+          const hitoSig   = tipoSig ? pedido.hitos?.find(h => h.tipo === tipoSig) : null
+          if (hitoSig) {
+            onActualizarHito({ id: hitoSig.hito_id, data: {
+              fecha_plan: new Date(proximoHito).toISOString(),
+            }})
+          }
+        }
+      }
+    } else if (esActual && hitoAsoc) {
+      onActualizarHito({ id: hitoAsoc.hito_id, data: {
+        estado: 'completado', fecha_real: fecha, nota
+      }})
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 px-4" onClick={onClose}>
+      <div className="w-full max-w-sm rounded-card border border-border bg-sur shadow-xl" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between border-b border-border px-5 py-4">
+          <div>
+            <div className="font-semibold text-xs text-ink">
+              {esAvanzar ? '⚡ Avanzar estado' : esRetroceder ? '↩ Retroceder estado' : '✏️ Actualizar estado actual'}
+            </div>
+            <div className="text-[10px] text-mist">
+              {pedido.codigo} · {estadoLabel(pedido.estado)} → {estadoLabel(estadoClickeado)}
+            </div>
+          </div>
+          <button className="text-mist hover:text-ink" onClick={onClose}>✕</button>
+        </div>
+        <div className="px-5 py-4 space-y-3">
+          <div className={`rounded-card px-3 py-2 text-xs font-medium flex items-center gap-2
+            ${esAvanzar ? 'bg-tl-xl border border-tl/20 text-tl'
+            : esRetroceder ? 'bg-rs-l border border-rs/20 text-rs'
+            : 'bg-sur2 border border-border text-mist'}`}>
+            {esAvanzar ? '⚡' : esRetroceder ? '↩' : '✏️'}
+            {esAvanzar ? `Se cambiará el estado a "${estadoLabel(estadoClickeado)}"`
+            : esRetroceder ? `Se revertirá el estado a "${estadoLabel(estadoClickeado)}"`
+            : `Estado actual: "${estadoLabel(estadoClickeado)}"`}
+          </div>
+          <div className="form-group">
+            <label className="form-label">Fecha *</label>
+            <input type="date" className="form-input" value={fecha}
+              onChange={e => setFecha(e.target.value)} />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Nota</label>
+            <textarea className="form-input min-h-[60px] resize-none text-xs"
+              placeholder="Observación del cambio de estado..."
+              value={nota} onChange={e => setNota(e.target.value)} />
+          </div>
+
+          {/* Hito opcional — solo al avanzar */}
+          {esAvanzar && hitoAsoc && (
+            <div className="rounded-card border border-border overflow-hidden">
+              <button type="button"
+                className={`w-full flex items-center justify-between px-3 py-2.5 text-left transition-colors
+                  ${hitoAbierto ? 'bg-tl-xl border-b border-tl/20' : 'bg-sur2 hover:bg-sur3'}`}
+                onClick={() => setHitoAbierto(!hitoAbierto)}>
+                <div className="flex items-center gap-2">
+                  <span>📌</span>
+                  <div>
+                    <div className="text-xs font-medium">Registrar hito — {estadoLabel(estadoClickeado)}</div>
+                    <div className="text-[10px] text-mist">Opcional — fecha planificada y real</div>
+                  </div>
+                </div>
+                <span className="text-mist text-xs">{hitoAbierto ? '▲' : '▼'}</span>
+              </button>
+              {hitoAbierto && (
+                <div className="p-3 space-y-2 bg-sur">
+                  <div className="form-group">
+                    <label className="form-label text-[10px]">Fecha planificada</label>
+                    <input type="date" className="form-input h-8 text-xs" value={hitoPlan}
+                      onChange={e => setHitoPlan(e.target.value)} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label text-[10px]">Fecha real</label>
+                    <input type="date" className="form-input h-8 text-xs" value={hitoReal}
+                      onChange={e => setHitoReal(e.target.value)} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label text-[10px]">Nota del hito</label>
+                    <input type="text" className="form-input h-8 text-xs"
+                      placeholder="Observación opcional..."
+                      value={hitoNota} onChange={e => setHitoNota(e.target.value)} />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Fecha del próximo hito — siempre visible al avanzar */}
+          {esAvanzar && (
+            <div className="form-group">
+              <label className="form-label">📅 Fecha estimada próximo hito</label>
+              <input type="date" className="form-input" value={proximoHito}
+                onChange={e => setProximoHito(e.target.value)} />
+              <div className="text-[10px] text-mist mt-0.5">
+                Opcional — se guarda como fecha planificada del siguiente hito
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="flex justify-end gap-2 border-t border-border px-5 py-3">
+          <button className="btn btn-outline text-xs" onClick={onClose}>Cancelar</button>
+          <button className={`btn text-xs ${esRetroceder ? 'btn-danger' : 'btn-primary'}`}
+            disabled={cambiando || saving || !fecha}
+            onClick={handleConfirmar}>
+            {cambiando || saving ? 'Guardando...' : esAvanzar ? '⚡ Avanzar' : esRetroceder ? '↩ Retroceder' : '✓ Guardar'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Mini formulario de hito (popover) — mantenido para edición directa de hitos
 function HitoPopover({ hito, onClose, onSave, saving }) {
-  const [fechaReal, setFechaReal] = useState(hito.fecha_real ? hito.fecha_real.slice(0,10) : new Date().toISOString().slice(0,10))
+  const [fechaPlan, setFechaPlan] = useState(hito.fecha_plan ? hito.fecha_plan.slice(0,10) : '')
+  const [fechaReal, setFechaReal] = useState(hito.fecha_real ? hito.fecha_real.slice(0,10) : '')
   const [nota,      setNota]      = useState(hito.nota || '')
-  const [estado,    setEstado]    = useState(hito.estado === 'completado' ? 'completado' : 'en_proceso')
+  const [estado,    setEstado]    = useState(hito.estado || 'pendiente')
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 px-4" onClick={onClose}>
       <div className="w-full max-w-sm rounded-card border border-border bg-sur shadow-xl" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <div>
-            <div className="font-semibold text-xs text-ink">{hito.nombre}</div>
-            <div className="text-[10px] text-mist">Actualizar hito</div>
+            <div className="font-semibold text-xs text-ink">{hito.nombre || hito.tipo}</div>
+            <div className="text-[10px] text-mist">Editar hito</div>
           </div>
           <button className="text-mist hover:text-ink" onClick={onClose}>✕</button>
         </div>
@@ -70,35 +252,37 @@ function HitoPopover({ hito, onClose, onSave, saving }) {
               <option value="pendiente">Pendiente</option>
               <option value="en_proceso">En proceso</option>
               <option value="completado">Completado</option>
+              <option value="vencido">Vencido</option>
             </select>
           </div>
           <div className="form-group">
-            <label className="form-label">Fecha real</label>
-            <input
-              type="date"
-              className="form-input"
-              value={fechaReal}
-              onChange={e => setFechaReal(e.target.value)}
-            />
+            <label className="form-label">Fecha planificada</label>
+            <input type="date" className="form-input" value={fechaPlan}
+              onChange={e => setFechaPlan(e.target.value)} />
+            <div className="text-[10px] text-mist mt-0.5">Fecha estimada en que debería ocurrir</div>
           </div>
           <div className="form-group">
-            <label className="form-label">Nota (opcional)</label>
-            <input
-              type="text"
-              className="form-input"
+            <label className="form-label">Fecha real</label>
+            <input type="date" className="form-input" value={fechaReal}
+              onChange={e => setFechaReal(e.target.value)} />
+            <div className="text-[10px] text-mist mt-0.5">Fecha en que efectivamente ocurrió</div>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Nota</label>
+            <textarea className="form-input min-h-[60px] resize-none text-xs"
               placeholder="Observación del hito..."
-              value={nota}
-              onChange={e => setNota(e.target.value)}
-            />
+              value={nota} onChange={e => setNota(e.target.value)} />
           </div>
         </div>
         <div className="flex justify-end gap-2 border-t border-border px-4 py-3">
           <button className="btn btn-outline text-xs" onClick={onClose}>Cancelar</button>
-          <button
-            className="btn btn-primary text-xs"
-            disabled={saving}
-            onClick={() => onSave({ estado, fecha_real: fechaReal || undefined, nota: nota || undefined })}
-          >
+          <button className="btn btn-primary text-xs" disabled={saving}
+            onClick={() => onSave({
+              estado,
+              fecha_plan: fechaPlan || undefined,
+              fecha_real: fechaReal || undefined,
+              nota:       nota      || undefined,
+            })}>
             {saving ? 'Guardando...' : '✓ Guardar'}
           </button>
         </div>
@@ -110,15 +294,36 @@ function HitoPopover({ hito, onClose, onSave, saving }) {
 // ── Timeline de pedido
 function TimelinePedido({ pedido, expanded, onToggle }) {
   const qc              = useQueryClient()
-  const [hitoEdit, setHitoEdit] = useState(null)
+  const [hitoEdit,    setHitoEdit]    = useState(null)
+  const [estadoModal, setEstadoModal] = useState(null) // estado clickeado en timeline
 
   const progreso = getProgreso(pedido.estado)
   const hitoNext = pedido.hitos?.find(h => h.estado !== 'completado')
   const sem      = hitoNext ? getSemaforo(hitoNext.fecha_plan) : null
 
-  // Mutation: actualizar estado del pedido
+  // Mutation: actualizar estado — hace transiciones secuenciales si es necesario
   const { mutate: cambiarEstado, isPending: cambiando } = useMutation({
-    mutationFn: ({ id, estado }) => api.patch(`/pedidos/${id}/estado`, { estado }),
+    mutationFn: async ({ id, estado: estadoDestino, nota, fecha }) => {
+      const estadoActual = pedido.estado
+      const idxActual    = ESTADOS_ORDEN.indexOf(estadoActual)
+      const idxDestino   = ESTADOS_ORDEN.indexOf(estadoDestino)
+
+      if (idxActual === idxDestino) return // ya está en ese estado
+
+      // Avanzar o retroceder de a un paso hasta llegar al destino
+      const paso = idxDestino > idxActual ? 1 : -1
+      let idx = idxActual + paso
+
+      while (idx !== idxDestino + paso) {
+        const estadoIntermedio = ESTADOS_ORDEN[idx]
+        await api.patch(`/pedidos/${id}/estado`, {
+          estado: estadoIntermedio,
+          nota:   idx === idxDestino ? nota : undefined,
+          fecha:  idx === idxDestino ? fecha : undefined,
+        })
+        idx += paso
+      }
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['pedidos'] }),
   })
 
@@ -150,12 +355,19 @@ function TimelinePedido({ pedido, expanded, onToggle }) {
 
           {/* Acciones: cambiar estado */}
           <div className="flex items-center gap-2">
-            {hitoNext && (
-              <div className={`text-[10px] px-2 py-0.5 rounded-full font-medium hidden sm:block
-                ${sem === 'red' ? 'bg-rs-l text-rs' : sem === 'yellow' ? 'bg-yellow-100 text-yellow-800' : 'bg-sg-l text-sg'}`}>
-                {hitoNext.nombre} — {fmtDate(hitoNext.fecha_plan)}
-              </div>
-            )}
+            {(() => {
+              const ORDEN_TIPOS = ['confirmacion','pago_senal','produccion','embarque','llegada_cr','retiro_aduana','entrega_bodega','entrega_cliente']
+              const sorted   = [...(pedido.hitos||[])].sort((a,b) => ORDEN_TIPOS.indexOf(a.tipo) - ORDEN_TIPOS.indexOf(b.tipo))
+              const proxHito = sorted.find(h => !h.fecha_real && h.fecha_plan)
+              if (!proxHito) return null
+              const s = getSemaforo(proxHito.fecha_plan)
+              return (
+                <div className={`text-[10px] px-2 py-0.5 rounded-full font-medium hidden sm:block
+                  ${s === 'red' ? 'bg-rs-l text-rs' : s === 'yellow' ? 'bg-yellow-100 text-yellow-800' : 'bg-sg-l text-sg'}`}>
+                  📅 {HITO_TIPO_LABEL[proxHito.tipo] || proxHito.tipo} — {fmtDate(proxHito.fecha_plan)}
+                </div>
+              )
+            })()}
             {/* Dropdown cambiar estado */}
             {siguientes.length > 0 && (
               <select
@@ -202,10 +414,17 @@ function TimelinePedido({ pedido, expanded, onToggle }) {
                 return (
                   <div
                     key={hito.key}
-                    className="flex flex-col items-center gap-1 cursor-pointer group"
+                    className={`flex flex-col items-center gap-1 group ${pedido.estado === 'borrador' || pedido.estado === 'cancelado' ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
                     style={{ width: `${100 / HITOS_ORDEN.length}%` }}
-                    onClick={() => hitoData && setHitoEdit(hitoData)}
-                    title={hitoData ? `Editar: ${hito.label}` : hito.label}
+                    onClick={() => {
+                      if (pedido.estado === 'borrador' || pedido.estado === 'cancelado') return
+                      setEstadoModal(ESTADOS_ORDEN[i])
+                    }}
+                    title={
+                      pedido.estado === 'borrador' ? 'El pedido debe estar confirmado para cambiar estado'
+                      : pedido.estado === 'cancelado' ? 'Pedido cancelado — no se puede modificar'
+                      : `${i <= progreso ? (i < progreso ? 'Completado' : 'Estado actual') : 'Pendiente'} — click para cambiar`
+                    }
                   >
                     <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-[9px] z-10 transition-all
                       group-hover:scale-110 group-hover:shadow-md
@@ -255,15 +474,18 @@ function TimelinePedido({ pedido, expanded, onToggle }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {pedido.hitos.map((hito, i) => {
+                  {[...(pedido.hitos||[])].sort((a,b) => {
+                    const ORDEN = ['confirmacion','pago_senal','produccion','embarque','llegada_cr','retiro_aduana','entrega_bodega','entrega_cliente']
+                    return ORDEN.indexOf(a.tipo) - ORDEN.indexOf(b.tipo)
+                  }).map((hito, i) => {
                     const s = hito.fecha_plan ? getSemaforo(hito.fecha_plan) : null
-                    const vencido = s === 'red' && hito.estado !== 'completado'
+                    const vencido = s === 'red' && hito.estado !== 'completado' && !hito.fecha_real
                     return (
                       <tr key={hito.hito_id || i} className="border-b border-border-lt hover:bg-sur2/50">
                         <td className="px-3 py-2">
-                          <span className={`s3 ${hito.estado === 'completado' ? 's3g' : s ? semClass(s) : 's3y'}`} />
+                          <span className={`s3 ${(hito.estado === 'completado' || hito.fecha_real) ? 's3g' : s ? semClass(s) : 's3y'}`} />
                         </td>
-                        <td className="px-3 py-2 text-xs font-medium">{hito.nombre}</td>
+                        <td className="px-3 py-2 text-xs font-medium">{hito.nombre || HITO_TIPO_LABEL[hito.tipo] || hito.tipo}</td>
                         <td className={`px-3 py-2 text-xs ${vencido ? 'text-rs font-medium' : 'text-mist'}`}>
                           {fmtDate(hito.fecha_plan) || '—'}
                           {vencido && <span className="ml-1 text-[9px] bg-rs-l text-rs px-1 rounded">Vencido</span>}
@@ -271,11 +493,11 @@ function TimelinePedido({ pedido, expanded, onToggle }) {
                         <td className="px-3 py-2 text-xs text-sg">{fmtDate(hito.fecha_real) || '—'}</td>
                         <td className="px-3 py-2">
                           <span className={`pill ${
-                            hito.estado === 'completado' ? 'pill-green'
+                            (hito.estado === 'completado' || hito.fecha_real) ? 'pill-green'
                             : hito.estado === 'en_proceso' ? 'pill-blue'
                             : 'pill-gray'
                           }`}>
-                            {hito.estado === 'completado' ? 'Completado'
+                            {(hito.estado === 'completado' || hito.fecha_real) ? 'Completado'
                             : hito.estado === 'en_proceso' ? 'En proceso'
                             : 'Pendiente'}
                           </span>
@@ -300,6 +522,17 @@ function TimelinePedido({ pedido, expanded, onToggle }) {
       </div>
 
       {/* Popover de edición de hito */}
+      {estadoModal && (
+          <EstadoModal
+            pedido={pedido}
+            estadoClickeado={estadoModal}
+            onClose={() => setEstadoModal(null)}
+            cambiando={cambiando}
+            saving={savingHito}
+            onCambiarEstado={(args) => cambiarEstado(args, { onSuccess: () => setEstadoModal(null) })}
+            onActualizarHito={(args) => actualizarHito(args, { onSuccess: () => setEstadoModal(null) })}
+          />
+        )}
       {hitoEdit && (
         <HitoPopover
           hito={hitoEdit}

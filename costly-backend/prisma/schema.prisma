@@ -360,23 +360,27 @@ model producto {
   isc_pct           Decimal?   @db.Decimal(5, 2)
 
   // Dimensiones y peso unitario
-  peso_kg           Decimal?   @db.Decimal(10, 3)
-  largo_cm          Decimal?   @db.Decimal(10, 2)
-  ancho_cm          Decimal?   @db.Decimal(10, 2)
-  alto_cm           Decimal?   @db.Decimal(10, 2)
-  volumen_m3        Decimal?   @db.Decimal(10, 4)  // calculado o ingresado
+  peso_kg           Decimal?   @db.Decimal(18, 3)
+  largo_cm          Decimal?   @db.Decimal(18, 2)
+  ancho_cm          Decimal?   @db.Decimal(18, 2)
+  alto_cm           Decimal?   @db.Decimal(18, 2)
+  volumen_m3        Decimal?   @db.Decimal(18, 6)  // calculado o ingresado
+  modo_volumen      String?    @db.VarChar(20)   @default("unitario")
 
   // Empaque
   unidades_por_caja Int?
-  peso_caja_kg      Decimal?   @db.Decimal(10, 3)
-  volumen_caja_m3   Decimal?   @db.Decimal(10, 4)
+  peso_caja_kg      Decimal?   @db.Decimal(18, 3)
+  largo_caja_cm     Decimal?   @db.Decimal(18, 2)
+  ancho_caja_cm     Decimal?   @db.Decimal(18, 2)
+  alto_caja_cm      Decimal?   @db.Decimal(18, 2)
+  volumen_caja_m3   Decimal?   @db.Decimal(18, 6)
 
   // Estiba
   tipo_estiba         TipoEstiba @default(pallet_americano)
-  pallet_largo_cm     Decimal?   @db.Decimal(10, 2)  // solo si tipo = pallet_medida
-  pallet_ancho_cm     Decimal?   @db.Decimal(10, 2)
-  pallet_alto_max_cm  Decimal?   @db.Decimal(10, 2)
-  pallet_peso_max_kg  Decimal?   @db.Decimal(10, 3)
+  pallet_largo_cm     Decimal?   @db.Decimal(18, 2)  // solo si tipo = pallet_medida
+  pallet_ancho_cm     Decimal?   @db.Decimal(18, 2)
+  pallet_alto_max_cm  Decimal?   @db.Decimal(18, 2)
+  pallet_peso_max_kg  Decimal?   @db.Decimal(18, 3)
   nota_estiba         String?    @db.Text             // obligatorio si tipo = otro
 
   // Permisos
@@ -410,6 +414,7 @@ model pedido {
   fecha_pedido    DateTime     @db.Date
   incoterm        String       @db.Char(3)
   moneda          String       @db.Char(3)
+  nota            String?      @db.VarChar(300)
   estado          EstadoPedido @default(borrador)
   creado_en       DateTime     @default(now())
   actualizado_en  DateTime     @updatedAt
@@ -450,6 +455,7 @@ model importacion {
   contenedores     contenedor[]
   tramite_aduana   tramite_aduana?
   historial_union  pedidos_historial_union[]
+  costeos_rel      costeo_importacion[]
 }
 
 // ------------------------------------------------------------
@@ -503,6 +509,9 @@ model factura_prov {
   monto        Decimal     @db.Decimal(16, 4)
   moneda       String      @db.Char(3)
   tipo         TipoFactura
+  nota         String?     @db.Text       
+  archivo_url  String?     @db.VarChar(500)
+
 
   // Relaciones
   pedido    pedido    @relation(fields: [pedido_id], references: [pedido_id])
@@ -514,11 +523,12 @@ model factura_prov {
 // ------------------------------------------------------------
 model costeo {
   costeo_id    Int          @id @default(autoincrement())
-  importacion_id Int
+  importacion_id Int?
   creado_por   Int
   aprobado_por Int?
   version      Int          @default(1) @db.SmallInt
   estado       EstadoCosteo @default(borrador)
+  detalles     costeo_detalle[]
 
   // Costos de transporte
   flete_maritimo  Decimal?  @db.Decimal(14, 4)
@@ -562,12 +572,25 @@ model costeo {
   aprobado_en  DateTime?
 
   // Relaciones
-  importacion    importacion    @relation(fields: [importacion_id], references: [importacion_id])
+  importacion    importacion?   @relation(fields: [importacion_id], references: [importacion_id])
   creador        usuario        @relation("CosteoCreadoPor", fields: [creado_por], references: [usuario_id])
   aprobador      usuario?       @relation("CosteoAprobadoPor", fields: [aprobado_por], references: [usuario_id])
   lineas_costeo  linea_costeo[]
+  importaciones_rel  costeo_importacion[]
 }
 
+// ── 2. Agregar modelo nuevo después de costeo:
+model costeo_importacion {
+  ci_id          Int      @id @default(autoincrement())
+  costeo_id      Int
+  importacion_id Int
+  creado_en      DateTime @default(now())
+
+  costeo      costeo      @relation(fields: [costeo_id],      references: [costeo_id],      onDelete: Cascade)
+  importacion importacion @relation(fields: [importacion_id], references: [importacion_id], onDelete: Cascade)
+
+  @@unique([costeo_id, importacion_id])
+}
 // ------------------------------------------------------------
 // 12. LINEAS DE COSTEO
 // ------------------------------------------------------------
@@ -591,6 +614,20 @@ model linea_costeo {
 }
 
 // ------------------------------------------------------------
+// 12.2 Modelo de costeo detalle
+// ------------------------------------------------------------
+model costeo_detalle {
+  detalle_id  Int      @id @default(autoincrement())
+  costeo_id   Int
+  campo       String   @db.VarChar(60)
+  nota        String?  @db.Text
+  creado_en   DateTime @default(now())
+
+  costeo costeo @relation(fields: [costeo_id], references: [costeo_id], onDelete: Cascade)
+
+  @@unique([costeo_id, campo])
+}
+// ------------------------------------------------------------
 // 13. CONTENEDORES
 // ------------------------------------------------------------
 model contenedor {
@@ -606,7 +643,7 @@ model contenedor {
   eta_cr          DateTime?        @db.Date
   fecha_arribo    DateTime?        @db.Date
   estado          EstadoContenedor @default(programado)
-
+  nota            String?          @db.Text
   // Relaciones
   importacion importacion @relation(fields: [importacion_id], references: [importacion_id])
 }
@@ -729,6 +766,7 @@ model documento {
   tamanio_kb   Int?
   mime_type    String?       @db.VarChar(80)
   subido_en    DateTime      @default(now())
+   campo       String?       @db.VarChar(60)
 
   // Relaciones
   empresa   empresa @relation(fields: [empresa_id], references: [empresa_id])

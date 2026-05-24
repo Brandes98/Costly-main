@@ -8,15 +8,15 @@ import { registrarAuditoria } from '../../middlewares/audit.middleware.js'
 
 const TRANSICIONES_VALIDAS = {
   borrador:      ['confirmado', 'cancelado'],
-  confirmado:    ['en_produccion', 'cancelado'],
-  en_produccion: ['listo_fabrica', 'cancelado'],
-  listo_fabrica: ['embarcado'],
-  embarcado:     ['en_transito'],
-  en_transito:   ['en_puerto_cr'],
-  en_puerto_cr:  ['en_aduana'],
-  en_aduana:     ['en_bodega'],
-  en_bodega:     ['entregado'],
-  entregado:     ['cerrado'],
+  confirmado:    ['en_produccion', 'cancelado', 'borrador'],
+  en_produccion: ['listo_fabrica', 'cancelado', 'confirmado'],
+  listo_fabrica: ['embarcado', 'en_produccion'],
+  embarcado:     ['en_transito', 'listo_fabrica'],
+  en_transito:   ['en_puerto_cr', 'embarcado'],
+  en_puerto_cr:  ['en_aduana', 'en_transito'],
+  en_aduana:     ['en_bodega', 'en_puerto_cr'],
+  en_bodega:     ['entregado', 'en_aduana'],
+  entregado:     ['cerrado', 'en_bodega'],
 }
 
 // ── Helper validación de fecha importación
@@ -108,6 +108,18 @@ export const create = async (empresa_id, usuario_id, data) => {
           total_linea: linea.cantidad * linea.precio_unit,
           nota:        linea.nota || null,
         })),
+      },
+      hitos: {
+        create: [
+          { tipo: 'confirmacion',    fecha_plan: new Date(data.fecha_pedido), estado: 'pendiente' },
+          { tipo: 'pago_senal',      estado: 'pendiente' },
+          { tipo: 'produccion',      estado: 'pendiente' },
+          { tipo: 'embarque',        estado: 'pendiente' },
+          { tipo: 'llegada_cr',      estado: 'pendiente' },
+          { tipo: 'retiro_aduana',   estado: 'pendiente' },
+          { tipo: 'entrega_bodega',  estado: 'pendiente' },
+          { tipo: 'entrega_cliente', estado: 'pendiente' },
+        ]
       },
     },
     include: { lineas: { include: { producto: true } } },

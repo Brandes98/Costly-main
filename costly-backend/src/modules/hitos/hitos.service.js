@@ -39,8 +39,13 @@ export const update = async (empresa_id, hito_id, data) => {
   })
   if (!hito) throw new AppError('Hito no encontrado', 404, 'HITO_NOT_FOUND')
 
-  // Si se marca como completado, registrar fecha real automáticamente
   const updateData = { ...data }
+
+  // Convertir fechas string a Date para Prisma
+  if (updateData.fecha_plan) updateData.fecha_plan = new Date(updateData.fecha_plan)
+  if (updateData.fecha_real) updateData.fecha_real = new Date(updateData.fecha_real)
+
+  // Si se marca como completado sin fecha real, usar ahora
   if (data.estado === 'completado' && !data.fecha_real) {
     updateData.fecha_real = new Date()
   }

@@ -11,6 +11,7 @@ import {
 } from '../../hooks/useApi';
 import api from '../../lib/api';
 import { Modal, Confirm } from '../../components/ui/Spinner';
+import ImportarExcelModal from '../../components/ui/ImportarExcelModal';
 import Button, { IconButton } from '../../components/ui/Button';
 import { TableCard, TableContainer, TableToolbar } from '../../components/ui/Table';
 import ContactosProveedor from '../../components/proveedores/ContactosProveedor';
@@ -32,6 +33,7 @@ const MONEDAS = ['USD', 'EUR', 'CNY', 'GBP', 'JPY'];
 
 export default function ProveedoresPage() {
   const [search, setSearch] = useState('');
+  const [modalImport, setModalImport] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editando, setEditando] = useState(null);
   const [confirmDel, setConfirmDel] = useState(null);
@@ -132,9 +134,10 @@ export default function ProveedoresPage() {
         onSearchChange={setSearch}
         searchPlaceholder="Buscar proveedor..."
         action={
-          <Button icon="create" onClick={abrirCrear}>
-            Nuevo proveedor
-          </Button>
+          <div className="flex gap-2">
+            <button className="btn btn-outline text-xs" onClick={() => setModalImport(true)}>📥 Importar Excel</button>
+            <Button icon="create" onClick={abrirCrear}>Nuevo proveedor</Button>
+          </div>
         }
       />
 
@@ -321,6 +324,13 @@ export default function ProveedoresPage() {
         message={`¿Seguro que querés desactivar a "${confirmDel?.nombre}"? No se borrará, solo quedará inactivo.`}
         danger
       />
+      {modalImport && (
+        <ImportarExcelModal
+          entidad="proveedores"
+          queryKey="proveedores"
+          onClose={() => setModalImport(false)}
+        />
+      )}
     </div>
   );
 }
