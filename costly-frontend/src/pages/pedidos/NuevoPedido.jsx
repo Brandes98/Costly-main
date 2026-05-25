@@ -12,6 +12,7 @@ const schema = z.object({
   incoterm:     z.enum(['EXW','FOB','CIF','DAP','DDP','CFR']),
   moneda:       z.string().length(3),
   nota:         z.string().max(300).optional(),
+  forma_pago:   z.string().optional(),
   lineas: z.array(z.object({
     producto_id: z.coerce.number().int().positive('Requerido'),
     cantidad:    z.coerce.number().positive('Requerido'),
@@ -32,9 +33,10 @@ export default function NuevoPedido() {
   const { register, control, handleSubmit, watch, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
-      incoterm: 'FOB',
-      moneda:   'USD',
-      nota:     '',
+      incoterm:    'FOB',
+      moneda:      'USD',
+      nota:        '',
+      forma_pago:  'contado',
       lineas:   [{ producto_id: '', cantidad: '', precio_unit: '', nota: '' }],
     },
   });
@@ -60,6 +62,7 @@ export default function NuevoPedido() {
       ...data,
       cliente_id:   data.cliente_id ? Number(data.cliente_id) : undefined,
       nota:         data.nota || undefined,
+      forma_pago:   data.forma_pago || undefined,
       fecha_pedido: new Date(data.fecha_pedido).toISOString(),
       lineas: data.lineas.map((l) => ({
         producto_id: Number(l.producto_id),
@@ -132,6 +135,18 @@ export default function NuevoPedido() {
               <option value="EUR">EUR — Euro</option>
               <option value="CNY">CNY — Yuan</option>
               <option value="CRC">CRC — Colón</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Forma de pago</label>
+            <select {...register('forma_pago')} className="form-input">
+              <option value="contado">Contado</option>
+              <option value="30">30 días</option>
+              <option value="60">60 días</option>
+              <option value="90">90 días</option>
+              <option value="180">180 días</option>
+              <option value="365">365 días</option>
             </select>
           </div>
 

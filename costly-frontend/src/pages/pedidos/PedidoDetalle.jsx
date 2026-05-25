@@ -18,6 +18,7 @@ const schemaCab = z.object({
   cliente_id:            z.coerce.number().int().positive().optional().or(z.literal('').transform(() => undefined)),
   proveedor_id:          z.coerce.number().int().positive('Requerido'),
   nota_cambio_proveedor: z.string().optional(),
+  forma_pago:            z.string().optional(),
 }).superRefine((data, ctx) => {
   // La nota es obligatoria solo si el usuario cambió el proveedor
   // Se valida en el componente comparando con el valor original
@@ -188,6 +189,7 @@ export default function PedidoDetalle() {
       cliente_id:            pedido.cliente_id || '',
       proveedor_id:          pedido.proveedor_id,
       nota_cambio_proveedor: '',
+      forma_pago:            pedido.forma_pago || '',
     })
     setModalCab(true)
   }
@@ -206,6 +208,7 @@ export default function PedidoDetalle() {
         cliente_id:            data.cliente_id ? Number(data.cliente_id) : undefined,
         proveedor_id:          Number(data.proveedor_id),
         nota_cambio_proveedor: proveedorCambio ? data.nota_cambio_proveedor : undefined,
+        forma_pago:            data.forma_pago || undefined,
       },
       { onSuccess: () => setModalCab(false) }
     )
@@ -277,6 +280,12 @@ export default function PedidoDetalle() {
           <div className="text-xs text-mist mb-1">Total estimado</div>
           <div className="text-sm font-bold text-tl">
             {pedido.moneda} {total.toLocaleString('en', { minimumFractionDigits: 2 })}
+          </div>
+        </div>
+        <div className="kpi">
+          <div className="text-xs text-mist mb-1">Forma de pago</div>
+          <div className="text-sm font-semibold text-ink">
+            {pedido.forma_pago ? (pedido.forma_pago === 'contado' ? 'Contado' : pedido.forma_pago + ' días') : '—'}
           </div>
         </div>
       </div>
@@ -419,6 +428,19 @@ export default function PedidoDetalle() {
                   <option value="CRC">CRC — Colón</option>
                 </select>
               </div>
+              <div className="form-group">
+                <label className="form-label">Forma de pago</label>
+                <select {...register('forma_pago')} className="form-input">
+                  <option value="">Sin definir</option>
+                  <option value="contado">Contado</option>
+                  <option value="30">30 días</option>
+                  <option value="60">60 días</option>
+                  <option value="90">90 días</option>
+                  <option value="180">180 días</option>
+                  <option value="365">365 días</option>
+                </select>
+              </div>
+
               <div className="form-group">
                 <label className="form-label">Cliente asociado</label>
                 <select {...register('cliente_id')} className="form-input">

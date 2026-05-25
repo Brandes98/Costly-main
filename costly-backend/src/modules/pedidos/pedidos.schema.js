@@ -13,6 +13,7 @@ export const createPedidoSchema = z.object({
     fecha_pedido: z.string().datetime(),
     incoterm: z.enum(INCOTERMS),
     moneda: z.string().length(3),
+    forma_pago: z.string().optional(),
     lineas: z.array(z.object({
       producto_id: z.number().int().positive(),
       cantidad: z.number().positive(),

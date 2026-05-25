@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
-import { EmptyState, Modal } from '../../components/ui/Spinner';
-import Spinner from '../../components/ui/Spinner';
+import { Modal } from '../../components/ui/Spinner';
 import Button from '../../components/ui/Button';
 import { TableCard, TableContainer, TableToolbar } from '../../components/ui/Table';
 import {
@@ -34,117 +33,237 @@ const initialForm = {
   comprobante_url: '',
 };
 
-function toIsoDate(dateString) {
-  if (!dateString) return undefined;
-  return new Date(`${dateString}T00:00:00.000Z`).toISOString();
+const DIAS_FORMA_PAGO = { contado: 0, '30': 30, '60': 60, '90': 90, '180': 180, '365': 365 }
+
+function fechaVencimiento(fechaConfirmacion, formaPago) {
+  const dias = DIAS_FORMA_PAGO[formaPago]
+  if (dias == null || !fechaConfirmacion) return null
+  const vence = new Date(fechaConfirmacion)
+  vence.setDate(vence.getDate() + dias)
+  vence.setHours(0, 0, 0, 0)
+  return vence
+}
+
+function toIsoDate(d) {
+  if (!d) return undefined
+  return new Date(`${d}T00:00:00.000Z`).toISOString()
 }
 
 function daysUntil(dateString) {
-  if (!dateString) return '—';
-  const today = new Date();
-  const target = new Date(dateString);
-  today.setHours(0, 0, 0, 0);
-  target.setHours(0, 0, 0, 0);
-  const diff = Math.round((target - today) / 86400000);
-  if (diff < 0) return `Vencido hace ${Math.abs(diff)} día${Math.abs(diff) === 1 ? '' : 's'}`;
-  if (diff === 0) return 'Hoy';
-  if (diff === 1) return 'Mañana';
-  return `En ${diff} días`;
+  if (!dateString) return '—'
+  const today = new Date(); today.setHours(0,0,0,0)
+  const target = new Date(dateString); target.setHours(0,0,0,0)
+  const diff = Math.round((target - today) / 86400000)
+  if (diff < 0) return `Vencido hace ${Math.abs(diff)} día${Math.abs(diff) === 1 ? '' : 's'}`
+  if (diff === 0) return 'Hoy'
+  if (diff === 1) return 'Mañana'
+  return `En ${diff} días`
 }
 
 function normalizePago(pago, proveedoresMap) {
-  const proveedor = proveedoresMap.get(pago.proveedor_id);
+  const proveedor = proveedoresMap.get(pago.proveedor_id)
   return {
     ...pago,
     codigo: pago.pedido?.codigo ?? `Pedido #${pago.pedido_id}`,
     proveedor_nombre: pago.proveedor?.nombre ?? proveedor?.nombre ?? `Proveedor #${pago.proveedor_id}`,
     proveedor_bandera: proveedor?.pais?.bandera ?? '',
     monto: Number(pago.monto ?? 0),
-  };
+  }
+}
+
+// ── Card de detalle de pedidos para el drawer del KPI
+function KpiDetallePedidos({ titulo, pedidos, onClose, colorClass = 'text-ink' }) {
+  if (!pedidos?.length) return null
+  return (
+    <div className="card fade-up">
+      <div className="card-header">
+        <div className={`card-title ${colorClass}`}>{titulo}</div>
+        <button className="text-mist hover:text-ink text-xs" onClick={onClose}>✕ Cerrar</button>
+      </div>
+      <div className="overflow-x-auto">
+        <table style={{width:'100%',borderCollapse:'collapse'}}>
+          <thead>
+            <tr className="bg-sur2">
+              <th className="text-[9px] font-semibold text-mist px-3 py-2 text-left">Pedido</th>
+              <th className="text-[9px] font-semibold text-mist px-3 py-2 text-left">Proveedor</th>
+              <th className="text-[9px] font-semibold text-mist px-3 py-2 text-right">Total</th>
+              <th className="text-[9px] font-semibold text-mist px-3 py-2 text-right">Pagado</th>
+              <th className="text-[9px] font-semibold text-mist px-3 py-2 text-right">Saldo</th>
+              <th className="text-[9px] font-semibold text-mist px-3 py-2 text-left">Forma pago</th>
+              <th className="text-[9px] font-semibold text-mist px-3 py-2 text-left">Vencimiento</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pedidos.map(p => {
+              const total  = (p.lineas || []).reduce((s,l) => s + Number(l.total_linea||0), 0)
+              const pagado = (p.pagos  || []).filter(pg => pg.estado === 'confirmado').reduce((s,pg) => s + Number(pg.monto||0), 0)
+              const saldo  = Math.max(0, total - pagado)
+              const hitoConf = (p.hitos || []).find(h => h.tipo === 'confirmacion' && h.estado === 'completado' && h.fecha_real)
+              const fechaBase = hitoConf?.fecha_real ?? p.fecha_pedido ?? p.creado_en  // ← este
+              const vence  = p.forma_pago ? fechaVencimiento(fechaBase, p.forma_pago) : null
+             const venceTest = fechaVencimiento(p.fecha_pedido, p.forma_pago)
+console.log(p.codigo, { 
+  forma_pago: p.forma_pago, 
+  dias: DIAS_FORMA_PAGO[p.forma_pago],
+  fechaBase, 
+  vence,
+  venceTest,
+  venceStr: vence?.toString()
+})
+              return (
+                <tr key={p.pedido_id} className="border-t border-border-lt hover:bg-sur2/50">
+                  <td className="px-3 py-2 text-xs font-semibold text-ink">{p.codigo}</td>
+                  <td className="px-3 py-2 text-xs text-mist">{p.proveedor?.nombre || '—'}</td>
+                  <td className="px-3 py-2 text-xs text-right">{fmtCurrency(total, p.moneda)}</td>
+                  <td className="px-3 py-2 text-xs text-right text-sg">{fmtCurrency(pagado, p.moneda)}</td>
+                  <td className="px-3 py-2 text-xs text-right font-semibold text-rs">{fmtCurrency(saldo, p.moneda)}</td>
+                  <td className="px-3 py-2 text-xs text-mist">{p.forma_pago ? `${p.forma_pago === 'contado' ? 'Contado' : p.forma_pago + ' días'}` : '—'}</td>
+                  <td className="px-3 py-2 text-xs">
+                    {vence ? (
+                      <span className={vence < new Date() ? 'text-rs font-semibold' : 'text-am'}>
+                        {fmtDate(vence)}
+                      </span>
+                    ) : '—'}
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
 }
 
 export default function PagosPage() {
-  const [filters, setFilters] = useState({ estado: '', proveedor_id: '' });
-  const [search, setSearch] = useState('');
-  const [modalOpen, setModalOpen] = useState(false);
-  const [form, setForm] = useState(initialForm);
+  const [filters, setFilters] = useState({ estado: '', proveedor_id: '' })
+  const [search, setSearch] = useState('')
+  const [modalOpen, setModalOpen] = useState(false)
+  const [form, setForm] = useState(initialForm)
+  const [kpiActivo, setKpiActivo] = useState(null) // 'pendientes' | 'proximos' | 'vencidos' | null
 
   const { data: pagosData = [], isLoading: loadingPagos, isError: pagosError } = usePagos({
     estado: filters.estado || undefined,
     proveedor_id: filters.proveedor_id || undefined,
-  });
-  const { data: pedidos = [], isLoading: loadingPedidos } = usePedidos();
-  const { data: proveedores = [], isLoading: loadingProveedores } = useProveedores();
+  })
+  const { data: pedidos = [], isLoading: loadingPedidos } = usePedidos()
+  const { data: proveedores = [], isLoading: loadingProveedores } = useProveedores()
 
-  const { mutate: crearPago, isPending: creandoPago } = useCreatePago();
-  const { mutate: confirmarPago, isPending: confirmandoPago } = useConfirmPago();
+  const { mutate: crearPago, isPending: creandoPago } = useCreatePago()
+  const { mutate: confirmarPago, isPending: confirmandoPago } = useConfirmPago()
 
   const proveedoresMap = useMemo(
-    () => new Map(proveedores.map((p) => [p.proveedor_id, p])),
+    () => new Map(proveedores.map(p => [p.proveedor_id, p])),
     [proveedores],
-  );
+  )
 
   const pedidosConProveedor = useMemo(
-    () => pedidos.map((p) => ({ ...p, proveedor: p.proveedor ?? proveedoresMap.get(p.proveedor_id) })),
+    () => pedidos.map(p => ({ ...p, proveedor: p.proveedor ?? proveedoresMap.get(p.proveedor_id) })),
     [pedidos, proveedoresMap],
-  );
+  )
 
   const pagos = useMemo(
-    () => pagosData.map((p) => normalizePago(p, proveedoresMap)),
+    () => pagosData.map(p => normalizePago(p, proveedoresMap)),
     [pagosData, proveedoresMap],
-  );
+  )
 
-  const stats = useMemo(() => ({
-    pendiente:  pagos.filter(p => !['confirmado','devuelto'].includes(p.estado)).reduce((a,p) => a + p.monto, 0),
-    programado: pagos.filter(p => p.estado === 'programado').reduce((a,p) => a + p.monto, 0),
-    confirmado: pagos.filter(p => p.estado === 'confirmado').reduce((a,p) => a + p.monto, 0),
-    proximos:   pagos.filter(p => {
-      if (p.estado === 'confirmado' || !p.fecha_limite) return false;
-      const label = daysUntil(p.fecha_limite);
-      return label === 'Hoy' || label === 'Mañana' || label.startsWith('En ');
-    }).length,
-    total: pagos.reduce((a,p) => a + p.monto, 0),
-  }), [pagos]);
+  // ── Cálculo de stats y listas de pedidos por categoría
+  const { stats, listaPendientes, listaProximos, listaVencidos } = useMemo(() => {
+    const hoy  = new Date(); hoy.setHours(0,0,0,0)
+    const en30 = new Date(hoy.getTime() + 30 * 86400000)
 
-  const loading = loadingPagos || loadingPedidos || loadingProveedores;
+    const pedidosConfirmados = pedidosConProveedor.filter(p => p.estado === 'confirmado')
+
+    const pedidosPendientes = pedidosConfirmados.filter(pedido => {
+      const total  = (pedido.lineas || []).reduce((s,l) => s + Number(l.total_linea||0), 0)
+      if (total === 0) return false
+      const pagado = (pedido.pagos || []).filter(pg => pg.estado === 'confirmado').reduce((s,pg) => s + Number(pg.monto||0), 0)
+      console.log('Pedidos confirmados:', pedidosConfirmados.map(p => ({
+  codigo: p.codigo,
+  estado: p.estado,
+  forma_pago: p.forma_pago,
+  fecha_pedido: p.fecha_pedido,
+  hitos: p.hitos,
+  lineas_count: p.lineas?.length,
+  pagos_count: p.pagos?.length,
+})))
+
+      return pagado < total
+    })
+
+    const saldoPendiente = pedidosPendientes.reduce((s, pedido) => {
+      const total  = (pedido.lineas || []).reduce((a,l) => a + Number(l.total_linea||0), 0)
+      const pagado = (pedido.pagos || []).filter(pg => pg.estado === 'confirmado').reduce((a,pg) => a + Number(pg.monto||0), 0)
+      return s + Math.max(0, total - pagado)
+    }, 0)
+
+    const getVence = (pedido) => {
+  if (!pedido.forma_pago) return null
+  const hitoConf = (pedido.hitos || []).find(h => h.tipo === 'confirmacion' && h.estado === 'completado' && h.fecha_real)
+  const fechaBase = hitoConf?.fecha_real ?? pedido.fecha_pedido ?? pedido.creado_en  // ← este
+  if (!fechaBase) return null
+  return fechaVencimiento(fechaBase, pedido.forma_pago)
+}
+
+    const pedidosProximos = pedidosPendientes.filter(pedido => {
+      const vence = getVence(pedido)
+      if (!vence) return false
+      return vence >= hoy && vence <= en30
+    })
+
+    const pedidosVencidos = pedidosPendientes.filter(pedido => {
+      const vence = getVence(pedido)
+      if (!vence) return false
+      return vence < hoy
+    })
+
+    return {
+      stats: {
+        saldoPendiente,
+        pedidosPendientes: pedidosPendientes.length,
+        pedidosProximos:   pedidosProximos.length,
+        pedidosVencidos:   pedidosVencidos.length,
+      },
+      listaPendientes: pedidosPendientes,
+      listaProximos:   pedidosProximos,
+      listaVencidos:   pedidosVencidos,
+    }
+  }, [pedidosConProveedor])
+
+  const loading = loadingPagos || loadingPedidos || loadingProveedores
 
   const proveedorOptions = useMemo(
     () => proveedores.map(p => ({ value: String(p.proveedor_id), label: p.nombre })),
     [proveedores],
-  );
+  )
 
   const filteredPagos = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return pagos;
+    const q = search.trim().toLowerCase()
+    if (!q) return pagos
     return pagos.filter(p =>
       p.codigo?.toLowerCase().includes(q) ||
       p.proveedor_nombre?.toLowerCase().includes(q) ||
       pagoTipoLabel(p.tipo)?.toLowerCase().includes(q) ||
       pagoMetodoLabel(p.metodo).toLowerCase().includes(q) ||
       p.estado?.toLowerCase().includes(q),
-    );
-  }, [pagos, search]);
+    )
+  }, [pagos, search])
 
   const handleChange = (event) => {
-    const { name, value } = event.target;
-    setForm((current) => {
-      const next = { ...current, [name]: value };
+    const { name, value } = event.target
+    setForm(current => {
+      const next = { ...current, [name]: value }
       if (name === 'pedido_id') {
-        const pedido = pedidosConProveedor.find(item => String(item.pedido_id) === value);
-        if (pedido) {
-          next.proveedor_id = String(pedido.proveedor_id);
-          next.moneda = pedido.moneda ?? current.moneda;
-        }
+        const pedido = pedidosConProveedor.find(item => String(item.pedido_id) === value)
+        if (pedido) { next.proveedor_id = String(pedido.proveedor_id); next.moneda = pedido.moneda ?? current.moneda }
       }
-      if (name === 'proveedor_id') {
-        next.pedido_id = '';
-      }
-      return next;
-    });
-  };
+      if (name === 'proveedor_id') next.pedido_id = ''
+      return next
+    })
+  }
 
   const handleSubmit = (event) => {
-    event.preventDefault();
+    event.preventDefault()
     const payload = {
       pedido_id:       Number(form.pedido_id),
       proveedor_id:    Number(form.proveedor_id),
@@ -156,15 +275,25 @@ export default function PagosPage() {
       metodo:          form.metodo || undefined,
       referencia:      form.referencia || undefined,
       comprobante_url: form.comprobante_url || undefined,
-    };
-    crearPago(payload, {
-      onSuccess: () => { setForm(initialForm); setModalOpen(false); },
-    });
-  };
+    }
+    crearPago(payload, { onSuccess: () => { setForm(initialForm); setModalOpen(false) } })
+  }
 
   const pedidoSeleccionado = pedidosConProveedor.find(
     p => String(p.pedido_id) === String(form.pedido_id),
-  );
+  )
+
+  // KPI click toggle — si ya está activo cierra, si no abre
+  const toggleKpi = (key) => setKpiActivo(prev => prev === key ? null : key)
+
+  const kpiConfig = [
+    { key: 'saldo',      label: 'Saldo pendiente total',           valor: fmtCurrency(stats.saldoPendiente), color: 'text-rs',  lista: listaPendientes, tituloDetalle: '💰 Pedidos con saldo pendiente' },
+    { key: 'pendientes', label: 'Pedidos con pagos pendientes',    valor: stats.pedidosPendientes,           color: 'text-am',  lista: listaPendientes, tituloDetalle: '📋 Pedidos con saldo pendiente' },
+    { key: 'proximos',   label: 'Pedidos próximos a vencer (30d)', valor: stats.pedidosProximos,             color: 'text-am',  lista: listaProximos,   tituloDetalle: '⏰ Pedidos próximos a vencer' },
+    { key: 'vencidos',   label: 'Pedidos vencidos sin pagar',      valor: stats.pedidosVencidos,             color: 'text-rs',  lista: listaVencidos,   tituloDetalle: '🚨 Pedidos vencidos sin pagar' },
+  ]
+
+  const kpiActivoConfig = kpiConfig.find(k => k.key === kpiActivo)
 
   return (
     <div className="space-y-4">
@@ -174,13 +303,32 @@ export default function PagosPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-5">
-        <div className="kpi"><div className="text-2xl font-bold text-rs">{fmtCurrency(stats.pendiente)}</div><div className="text-[11px] text-mist">Saldo pendiente</div></div>
-        <div className="kpi"><div className="text-2xl font-bold text-am">{fmtCurrency(stats.programado)}</div><div className="text-[11px] text-mist">Pagos programados</div></div>
-        <div className="kpi"><div className="text-2xl font-bold text-sg">{fmtCurrency(stats.confirmado)}</div><div className="text-[11px] text-mist">Pagado completo</div></div>
-        <div className="kpi"><div className="text-2xl font-bold text-rs">{stats.proximos}</div><div className="text-[11px] text-mist">Vencen pronto</div></div>
-        <div className="kpi"><div className="text-2xl font-bold text-ink">{fmtCurrency(stats.total)}</div><div className="text-[11px] text-mist">Total comprometido</div></div>
+      {/* KPIs clickeables */}
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+        {kpiConfig.map(kpi => (
+          <button
+            key={kpi.key}
+            type="button"
+            onClick={() => toggleKpi(kpi.key)}
+            className={`kpi text-left transition-all hover:shadow-md hover:-translate-y-0.5
+              ${kpiActivo === kpi.key ? 'ring-2 ring-tl ring-offset-1' : ''}`}
+          >
+            <div className={`text-2xl font-bold ${kpi.color}`}>{kpi.valor}</div>
+            <div className="text-[11px] text-mist">{kpi.label}</div>
+            <div className="text-[9px] text-tl mt-0.5">{kpiActivo === kpi.key ? '▲ Ocultar' : '▼ Ver pedidos'}</div>
+          </button>
+        ))}
       </div>
+
+      {/* Card de detalle del KPI activo */}
+      {kpiActivo && kpiActivoConfig && (
+        <KpiDetallePedidos
+          titulo={kpiActivoConfig.tituloDetalle}
+          pedidos={kpiActivoConfig.lista}
+          onClose={() => setKpiActivo(null)}
+          colorClass={kpiActivoConfig.color}
+        />
+      )}
 
       <TableToolbar
         searchValue={search}
@@ -210,7 +358,7 @@ export default function PagosPage() {
             </tr>
           </thead>
           <tbody>
-            {filteredPagos.map((pago) => (
+            {filteredPagos.map(pago => (
               <tr key={pago.pago_id}>
                 <td className="pl-3">
                   <span className={`s3 ${pago.estado === 'confirmado' ? 's3g' : pago.estado === 'devuelto' ? 's3r' : 's3y'}`} />
@@ -238,18 +386,16 @@ export default function PagosPage() {
 
       <Modal
         open={modalOpen}
-        onClose={() => { setModalOpen(false); setForm(initialForm); }}
+        onClose={() => { setModalOpen(false); setForm(initialForm) }}
         title="Registrar pago"
         footer={<>
-          <button className="btn btn-outline" onClick={() => { setModalOpen(false); setForm(initialForm); }}>Cancelar</button>
+          <button className="btn btn-outline" onClick={() => { setModalOpen(false); setForm(initialForm) }}>Cancelar</button>
           <button className="btn btn-primary" form="pago-form" type="submit" disabled={creandoPago}>
             {creandoPago ? 'Guardando...' : 'Registrar pago'}
           </button>
         </>}
       >
         <form id="pago-form" className="grid grid-cols-1 gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
-
-          {/* Toggle modo */}
           <div className="md:col-span-2">
             <div className="mb-2 text-xs text-mist">Buscar por</div>
             <div className="flex gap-2">
@@ -264,16 +410,13 @@ export default function PagosPage() {
             </div>
           </div>
 
-          {/* Modo pedido → proveedor auto */}
           {(form._modo || 'pedido') === 'pedido' && (<>
             <div>
               <div className="mb-1 text-xs text-mist">Pedido</div>
               <select className="form-input" name="pedido_id" value={form.pedido_id} onChange={handleChange} required>
                 <option value="">Seleccionar...</option>
                 {pedidosConProveedor.map(p => (
-                  <option key={p.pedido_id} value={p.pedido_id}>
-                    {p.codigo} — {p.proveedor?.nombre || `Proveedor #${p.proveedor_id}`}
-                  </option>
+                  <option key={p.pedido_id} value={p.pedido_id}>{p.codigo} — {p.proveedor?.nombre || `Proveedor #${p.proveedor_id}`}</option>
                 ))}
               </select>
             </div>
@@ -286,33 +429,26 @@ export default function PagosPage() {
                     <span className="font-medium text-ink">{pedidoSeleccionado.proveedor?.nombre || `Proveedor #${pedidoSeleccionado.proveedor_id}`}</span>
                     <span className="ml-auto text-[9px] text-mist">🔒</span>
                   </>
-                ) : (
-                  <span className="text-mist text-xs">Seleccioná un pedido primero</span>
-                )}
+                ) : <span className="text-mist text-xs">Seleccioná un pedido primero</span>}
               </div>
             </div>
           </>)}
 
-          {/* Modo proveedor → pedidos filtrados */}
           {form._modo === 'proveedor' && (<>
             <div>
               <div className="mb-1 text-xs text-mist">Proveedor</div>
               <select className="form-input" name="proveedor_id" value={form.proveedor_id} onChange={handleChange} required>
                 <option value="">Seleccionar...</option>
-                {proveedores.map(p => (
-                  <option key={p.proveedor_id} value={p.proveedor_id}>{p.nombre}</option>
-                ))}
+                {proveedores.map(p => <option key={p.proveedor_id} value={p.proveedor_id}>{p.nombre}</option>)}
               </select>
             </div>
             <div>
               <div className="mb-1 text-xs text-mist">Pedido</div>
               <select className="form-input" name="pedido_id" value={form.pedido_id} onChange={handleChange} required disabled={!form.proveedor_id}>
                 <option value="">{form.proveedor_id ? 'Seleccionar pedido...' : 'Seleccioná un proveedor primero'}</option>
-                {pedidosConProveedor
-                  .filter(p => String(p.proveedor_id) === String(form.proveedor_id))
-                  .map(p => (
-                    <option key={p.pedido_id} value={p.pedido_id}>{p.codigo}</option>
-                  ))}
+                {pedidosConProveedor.filter(p => String(p.proveedor_id) === String(form.proveedor_id)).map(p => (
+                  <option key={p.pedido_id} value={p.pedido_id}>{p.codigo}</option>
+                ))}
               </select>
             </div>
           </>)}
@@ -327,12 +463,10 @@ export default function PagosPage() {
               <option value="devolucion">{pagoTipoLabel('devolucion')}</option>
             </select>
           </div>
-
           <div>
             <div className="mb-1 text-xs text-mist">Monto</div>
             <input className="form-input" name="monto" type="number" min="0" step="0.01" value={form.monto} onChange={handleChange} required />
           </div>
-
           <div>
             <div className="mb-1 text-xs text-mist">Moneda</div>
             <select className="form-input" name="moneda" value={form.moneda} onChange={handleChange}>
@@ -342,7 +476,6 @@ export default function PagosPage() {
               <option value="CNY">CNY</option>
             </select>
           </div>
-
           <div>
             <div className="mb-1 text-xs text-mist">Método</div>
             <select className="form-input" name="metodo" value={form.metodo} onChange={handleChange}>
@@ -352,36 +485,30 @@ export default function PagosPage() {
               <option value="efectivo">{pagoMetodoLabel('efectivo')}</option>
             </select>
           </div>
-
           <div>
             <div className="mb-1 text-xs text-mist">Fecha de pago</div>
             <input className="form-input" name="fecha_pago" type="date" value={form.fecha_pago} onChange={handleChange} required />
           </div>
-
           <div>
             <div className="mb-1 text-xs text-mist">Fecha límite</div>
             <input className="form-input" name="fecha_limite" type="date" value={form.fecha_limite} onChange={handleChange} />
           </div>
-
           <div className="md:col-span-2">
             <div className="mb-1 text-xs text-mist">Referencia</div>
             <input className="form-input" name="referencia" value={form.referencia} onChange={handleChange} placeholder="Número de transferencia" />
           </div>
-
           <div className="md:col-span-2">
             <div className="mb-1 text-xs text-mist">URL comprobante</div>
             <input className="form-input" name="comprobante_url" type="url" value={form.comprobante_url} onChange={handleChange} placeholder="https://drive.google.com/..." />
           </div>
-
           {pedidoSeleccionado && (
             <div className="md:col-span-2 rounded-lg bg-sur2 px-3 py-2 text-xs text-mist">
-              Pedido: <span className="font-medium text-ink">{pedidoSeleccionado.codigo}</span>
-              {' · '}
+              Pedido: <span className="font-medium text-ink">{pedidoSeleccionado.codigo}</span>{' · '}
               <span>{pedidoSeleccionado.proveedor?.nombre}</span>
             </div>
           )}
         </form>
       </Modal>
     </div>
-  );
+  )
 }

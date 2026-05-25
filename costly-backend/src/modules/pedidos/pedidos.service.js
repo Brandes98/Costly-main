@@ -56,11 +56,13 @@ export const getAll = async (empresa_id, filters = {}) => {
     include: {
       proveedor: { select: { nombre: true, pais: { select: { bandera: true, nombre: true } } } },
       cliente:   { select: { nombre: true } },
+      lineas: { select: { total_linea: true } },
+      pagos:  { select: { monto: true, estado: true } },
       hitos: {
-        where:   { estado: { in: ['pendiente', 'en_proceso'] } },
-        orderBy: { fecha_plan: 'asc' },
-        take:    1,
-      },
+      where: { tipo: 'confirmacion', estado: 'completado' },
+      select: { fecha_real: true, tipo: true, estado: true },
+      take: 1,
+            },
       _count: { select: { lineas: true } },
     },
     orderBy: { creado_en: 'desc' },
@@ -99,6 +101,7 @@ export const create = async (empresa_id, usuario_id, data) => {
       moneda:       data.moneda,
       nota:         data.nota || null,
       estado:       'borrador',
+      forma_pago: data.forma_pago || null, 
       lineas: {
         create: data.lineas.map((linea, index) => ({
           producto_id: linea.producto_id,

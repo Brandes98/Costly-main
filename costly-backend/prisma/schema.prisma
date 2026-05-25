@@ -415,6 +415,7 @@ model pedido {
   incoterm        String       @db.Char(3)
   moneda          String       @db.Char(3)
   nota            String?      @db.VarChar(300)
+  forma_pago      String?      @db.VarChar(20)   // contado, 30, 60, 90, 180, 365
   estado          EstadoPedido @default(borrador)
   creado_en       DateTime     @default(now())
   actualizado_en  DateTime     @updatedAt

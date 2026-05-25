@@ -15,6 +15,7 @@ const schema = z.object({
   incoterm:     z.enum(['EXW','FOB','CIF','DAP','DDP','CFR']),
   moneda:       z.string().length(3),
   nota:         z.string().max(300).optional(),
+  forma_pago:   z.string().optional(),
   lineas: z.array(z.object({
     linea_id:    z.number().optional(),
     producto_id: z.coerce.number().int().positive('Requerido'),
@@ -58,6 +59,7 @@ export default function EditarPedido() {
       incoterm:     pedido.incoterm,
       moneda:       pedido.moneda,
       nota:         pedido.nota || '',
+      forma_pago:   pedido.forma_pago || '',
       lineas: pedido.lineas?.map(l => ({
         linea_id:    l.linea_id,
         producto_id: l.producto_id,
@@ -77,6 +79,7 @@ export default function EditarPedido() {
         incoterm:     data.incoterm,
         moneda:       data.moneda,
         nota:         data.nota || undefined,
+        forma_pago:   data.forma_pago || undefined,
       })
 
       // 2. Sincronizar líneas
@@ -232,6 +235,19 @@ export default function EditarPedido() {
               <option value="EUR">EUR — Euro</option>
               <option value="CNY">CNY — Yuan</option>
               <option value="CRC">CRC — Colón</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Forma de pago</label>
+            <select {...register('forma_pago')} className="form-input" disabled={!editable}>
+              <option value="">Sin definir</option>
+              <option value="contado">Contado</option>
+              <option value="30">30 días</option>
+              <option value="60">60 días</option>
+              <option value="90">90 días</option>
+              <option value="180">180 días</option>
+              <option value="365">365 días</option>
             </select>
           </div>
 
