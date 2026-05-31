@@ -44,16 +44,21 @@ app.use(helmet.contentSecurityPolicy({
 
 // ── CORS
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:5173']
+
+const isVercelOrigin = (origin) => {
+  return origin && (origin.endsWith('.vercel.app') || origin.includes('vercel.app'))
+}
+
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin || allowedOrigins.includes(origin) || isVercelOrigin(origin)) {
       callback(null, true)
     } else {
       callback(new Error('No permitido por CORS'))
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'],
+  methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
 }))
 
 // ── Rate limiting global
