@@ -1,14 +1,17 @@
 import prisma from '../../config/database.js'
 import { AppError } from '../../utils/response.utils.js'
 import { parsePagination, buildMeta } from '../../utils/pagination.utils.js'
-
+ 
+// ── Listar reportes guardados (propios + públicos)
 export const getAll = async (empresa_id, usuario_id, filters = {}) => {
   const { page, limit, skip } = parsePagination(filters)
+ 
   const where = {
     empresa_id,
     OR: [{ publico: true }, { usuario_id }],
     ...(filters.tipo && { tipo: filters.tipo }),
   }
+ 
   const [total, reportes] = await Promise.all([
     prisma.reporte.count({ where }),
     prisma.reporte.findMany({
@@ -19,9 +22,10 @@ export const getAll = async (empresa_id, usuario_id, filters = {}) => {
       take: limit,
     })
   ])
+ 
   return { reportes, meta: buildMeta(total, page, limit) }
 }
-
+ 
 export const getById = async (empresa_id, reporte_id) => {
   const reporte = await prisma.reporte.findFirst({
     where: { reporte_id, empresa_id },
@@ -30,9 +34,11 @@ export const getById = async (empresa_id, reporte_id) => {
   if (!reporte) throw new AppError('Reporte no encontrado', 404, 'REPORTE_NOT_FOUND')
   return reporte
 }
-
+ 
+// ── Generar reporte (ejecutar query y devolver datos)
 export const generar = async (empresa_id, body) => {
   const { tipo, config = {} } = body
+ 
   const handlers = {
     pedidos:       r_pedidos,
     importaciones: r_importaciones,
@@ -54,15 +60,16 @@ export const generar = async (empresa_id, body) => {
     r11: r11_utilidad_por_importacion,
     r12: r12_documentos_por_entidad,
     dinamico: r_dinamico,
-    pagos: r_pagos,
-    merge:    r_merge,
+    pagos:    r_pagos,
   }
+ 
   const handler = handlers[tipo]
   if (!handler) throw new AppError(`Tipo de reporte '${tipo}' no existe`, 400, 'TIPO_INVALIDO')
+ 
   const data = await handler(empresa_id, config)
   return { tipo, generado_en: new Date(), total: Array.isArray(data) ? data.length : null, data }
 }
-
+ 
 export const save = async (empresa_id, usuario_id, data) => {
   return await prisma.reporte.create({
     data: {
@@ -75,17 +82,19 @@ export const save = async (empresa_id, usuario_id, data) => {
     }
   })
 }
-
+ 
 export const remove = async (empresa_id, reporte_id) => {
   const reporte = await prisma.reporte.findFirst({ where: { reporte_id, empresa_id } })
   if (!reporte) throw new AppError('Reporte no encontrado', 404, 'REPORTE_NOT_FOUND')
   await prisma.reporte.delete({ where: { reporte_id } })
 }
-
+ 
+ 
 // ══════════════════════════════════════════════════════════════
-// HANDLERS PREDEFINIDOS
+// HANDLERS DE REPORTES PREDEFINIDOS
 // ══════════════════════════════════════════════════════════════
-
+ 
+// R01 — Pedidos activos con semáforo de hitos
 const r01_pedidos_activos = async (empresa_id, config) => {
   return await prisma.pedido.findMany({
     where: {
@@ -108,7 +117,8 @@ const r01_pedidos_activos = async (empresa_id, config) => {
     orderBy: { creado_en: 'desc' },
   })
 }
-
+ 
+// R02 — Importaciones por estado con totales
 const r02_importaciones_estado = async (empresa_id, config) => {
   return await prisma.importacion.findMany({
     where: {
@@ -123,7 +133,8 @@ const r02_importaciones_estado = async (empresa_id, config) => {
     orderBy: { creado_en: 'desc' },
   })
 }
-
+ 
+// R03 — Costeos con totales financieros por importación
 const r03_costeos_por_importacion = async (empresa_id, config) => {
   return await prisma.costeo.findMany({
     where: {
@@ -138,10 +149,14 @@ const r03_costeos_por_importacion = async (empresa_id, config) => {
     orderBy: { creado_en: 'desc' },
   })
 }
-
+ 
+// R04 — Pagos pendientes o próximos a vencer
 const r04_pagos_pendientes = async (empresa_id, config) => {
   const hoy = new Date()
-  const limite = config.dias_limite ? new Date(hoy.getTime() + config.dias_limite * 86400000) : null
+  const limite = config.dias_limite
+    ? new Date(hoy.getTime() + config.dias_limite * 86400000)
+    : null
+ 
   return await prisma.pago.findMany({
     where: {
       pedido: { empresa_id },
@@ -155,11 +170,13 @@ const r04_pagos_pendientes = async (empresa_id, config) => {
     orderBy: { fecha_limite: 'asc' },
   })
 }
-
+ 
+// R05 — Hitos vencidos o próximos a vencer
 const r05_hitos_vencidos = async (empresa_id, config) => {
   const hoy = new Date()
   const dias = config.dias_alerta || 3
   const limite = new Date(hoy.getTime() + dias * 86400000)
+ 
   return await prisma.hito.findMany({
     where: {
       pedido: { empresa_id },
@@ -173,10 +190,16 @@ const r05_hitos_vencidos = async (empresa_id, config) => {
     orderBy: { fecha_plan: 'asc' },
   })
 }
-
+ 
+// R06 — Proyección de volumen por pedido activo
 const r06_proyeccion_volumen = async (empresa_id, config) => {
   return await prisma.proyeccion_volumen.findMany({
-    where: { pedido: { empresa_id, estado: { notIn: ['cerrado', 'cancelado'] } } },
+    where: {
+      pedido: {
+        empresa_id,
+        estado: { notIn: ['cerrado', 'cancelado'] },
+      },
+    },
     include: {
       pedido:  { select: { codigo: true, estado: true, proveedor: { select: { nombre: true } } } },
       detalle: { include: { linea_pedido: { include: { producto: { select: { nombre: true, sku: true } } } } } },
@@ -184,23 +207,34 @@ const r06_proyeccion_volumen = async (empresa_id, config) => {
     orderBy: { calculado_en: 'desc' },
   })
 }
-
+ 
+// R07 — Productos más pedidos (ranking)
 const r07_productos_mas_pedidos = async (empresa_id, config) => {
   const desde = config.desde ? new Date(config.desde) : new Date(Date.now() - 365 * 86400000)
+ 
   const lineas = await prisma.linea_pedido.groupBy({
     by: ['producto_id'],
-    where: { pedido: { empresa_id, creado_en: { gte: desde }, estado: { not: 'cancelado' } } },
+    where: {
+      pedido: {
+        empresa_id,
+        creado_en: { gte: desde },
+        estado: { not: 'cancelado' },
+      }
+    },
     _count: { producto_id: true },
     _sum:   { cantidad: true, total_linea: true },
     orderBy: { _count: { producto_id: 'desc' } },
     take: config.top || 20,
   })
+ 
+  // Enriquecer con datos del producto
   const ids = lineas.map(l => l.producto_id)
   const productos = await prisma.producto.findMany({
     where: { producto_id: { in: ids } },
     select: { producto_id: true, nombre: true, sku: true, categoria: true },
   })
   const mapProd = Object.fromEntries(productos.map(p => [p.producto_id, p]))
+ 
   return lineas.map(l => ({
     producto: mapProd[l.producto_id] || { producto_id: l.producto_id },
     pedidos:  l._count.producto_id,
@@ -208,11 +242,17 @@ const r07_productos_mas_pedidos = async (empresa_id, config) => {
     monto_total:    l._sum.total_linea,
   }))
 }
-
+ 
+// R08 — Proveedores con actividad reciente
 const r08_proveedores_activos = async (empresa_id, config) => {
   const desde = config.desde ? new Date(config.desde) : new Date(Date.now() - 365 * 86400000)
+ 
   return await prisma.proveedor.findMany({
-    where: { empresa_id, activo: true, pedidos: { some: { creado_en: { gte: desde } } } },
+    where: {
+      empresa_id,
+      activo: true,
+      pedidos: { some: { creado_en: { gte: desde } } },
+    },
     include: {
       pais: { select: { nombre: true, bandera: true } },
       _count: { select: { pedidos: true } },
@@ -220,11 +260,13 @@ const r08_proveedores_activos = async (empresa_id, config) => {
     orderBy: { nombre: 'asc' },
   })
 }
-
+ 
+// R09 — Permisos por vencer en los próximos N días
 const r09_permisos_por_vencer = async (empresa_id, config) => {
   const hoy = new Date()
   const dias = config.dias_alerta || 30
   const limite = new Date(hoy.getTime() + dias * 86400000)
+ 
   return await prisma.permiso.findMany({
     where: {
       pedido: { empresa_id },
@@ -238,7 +280,8 @@ const r09_permisos_por_vencer = async (empresa_id, config) => {
     orderBy: { fecha_vencimiento: 'asc' },
   })
 }
-
+ 
+// R10 — Histórico de tipos de cambio
 const r10_tc_historico = async (empresa_id, config) => {
   return await prisma.tc_historico.findMany({
     where: {
@@ -250,32 +293,35 @@ const r10_tc_historico = async (empresa_id, config) => {
     take: config.limit || 90,
   })
 }
-
+ 
+// R11 — Utilidad bruta por importación
 const r11_utilidad_por_importacion = async (empresa_id, config) => {
   const costeos = await prisma.costeo.findMany({
     where: {
-      importaciones_rel: { some: { importacion: { empresa_id } } },
+      importacion: { empresa_id },
       estado: 'aprobado',
       ...(config.desde && { creado_en: { gte: new Date(config.desde) } }),
       ...(config.hasta && { creado_en: { lte: new Date(config.hasta) } }),
     },
     include: {
-      importaciones_rel: { include: { importacion: { select: { codigo: true, creado_en: true } } } },
+      importacion: { select: { codigo: true, creado_en: true } },
     },
     orderBy: { creado_en: 'desc' },
   })
+ 
   return costeos.map(c => ({
-    importacion:        c.importaciones_rel?.map(r => r.importacion?.codigo).join(' + ') || '—',
-    fecha:              c.importaciones_rel?.[0]?.importacion?.creado_en,
-    costo_origen:       c.costo_origen,
-    costo_total_cr:     c.costo_total_cr,
-    precio_venta_total: c.precio_venta_total,
-    utilidad_bruta:     c.utilidad_bruta,
-    margen_global:      c.margen_global,
-    tc_usd_crc:         c.tc_usd_crc,
+    importacion:       c.importaciones_rel?.map(r => r.importacion?.codigo).join(' + '),
+    fecha:             c.importaciones_rel?.[0]?.importacion?.creado_en,
+    costo_origen:      c.costo_origen,
+    costo_total_cr:    c.costo_total_cr,
+    precio_venta_total:c.precio_venta_total,
+    utilidad_bruta:    c.utilidad_bruta,
+    margen_global:     c.margen_global,
+    tc_usd_crc:        c.tc_usd_crc,
   }))
 }
-
+ 
+// R12 — Documentos por entidad y tipo
 const r12_documentos_por_entidad = async (empresa_id, config) => {
   return await prisma.documento.findMany({
     where: {
@@ -283,22 +329,27 @@ const r12_documentos_por_entidad = async (empresa_id, config) => {
       ...(config.entidad_tipo && { entidad_tipo: config.entidad_tipo }),
       ...(config.tipo_doc     && { tipo_doc: config.tipo_doc }),
     },
-    include: { subidor: { select: { nombre: true } } },
+    include: {
+      subidor: { select: { nombre: true } },
+    },
     orderBy: { subido_en: 'desc' },
     take: config.limit || 100,
   })
 }
-
+ 
+// R-DINÁMICO — Filtros libres sobre pedidos
 const r_dinamico = async (empresa_id, config) => {
+  const where = {
+    empresa_id,
+    ...(config.estado       && { estado: config.estado }),
+    ...(config.proveedor_id && { proveedor_id: config.proveedor_id }),
+    ...(config.cliente_id   && { cliente_id: config.cliente_id }),
+    ...(config.desde        && { creado_en: { gte: new Date(config.desde) } }),
+    ...(config.hasta        && { creado_en: { lte: new Date(config.hasta) } }),
+  }
+ 
   return await prisma.pedido.findMany({
-    where: {
-      empresa_id,
-      ...(config.estado       && { estado: config.estado }),
-      ...(config.proveedor_id && { proveedor_id: config.proveedor_id }),
-      ...(config.cliente_id   && { cliente_id: config.cliente_id }),
-      ...(config.desde        && { creado_en: { gte: new Date(config.desde) } }),
-      ...(config.hasta        && { creado_en: { lte: new Date(config.hasta) } }),
-    },
+    where,
     include: {
       proveedor:  { select: { nombre: true } },
       cliente:    { select: { nombre: true } },
@@ -309,9 +360,8 @@ const r_dinamico = async (empresa_id, config) => {
     take: config.limit || 200,
   })
 }
-
 // ══════════════════════════════════════════════════════════════
-// NUEVOS HANDLERS — fecha_inicio / fecha_fin
+// NUEVOS HANDLERS — fecha_inicio / fecha_fin + columnas
 // ══════════════════════════════════════════════════════════════
 
 const buildFechaWhere = (config, campo = 'creado_en') => {
@@ -322,6 +372,7 @@ const buildFechaWhere = (config, campo = 'creado_en') => {
   return { [campo]: cond }
 }
 
+// R-PEDIDOS — todos los campos con rango de fechas
 const r_pedidos = async (empresa_id, config) => {
   return await prisma.pedido.findMany({
     where: {
@@ -344,6 +395,7 @@ const r_pedidos = async (empresa_id, config) => {
   })
 }
 
+// R-IMPORTACIONES — todos los campos con rango de fechas
 const r_importaciones = async (empresa_id, config) => {
   return await prisma.importacion.findMany({
     where: {
@@ -361,6 +413,7 @@ const r_importaciones = async (empresa_id, config) => {
   })
 }
 
+// R-COSTEOS — sección 2 (costos) + sección 3 (desglose por línea)
 const r_costeos = async (empresa_id, config) => {
   const costeos = await prisma.costeo.findMany({
     where: {
@@ -372,7 +425,9 @@ const r_costeos = async (empresa_id, config) => {
       importaciones_rel: { include: { importacion: { select: { codigo: true, estado: true } } } },
       lineas_costeo: {
         include: {
-          linea_pedido: { include: { producto: { select: { nombre: true, sku: true, categoria: true } } } }
+          linea_pedido: {
+            include: { producto: { select: { nombre: true, sku: true, categoria: true } } }
+          }
         }
       },
       creador:   { select: { nombre: true } },
@@ -380,7 +435,9 @@ const r_costeos = async (empresa_id, config) => {
     },
     orderBy: { creado_en: 'desc' },
   })
+
   return costeos.map(c => ({
+    // Sección 2 — costos de la importación
     costeo_id:          c.costeo_id,
     estado:             c.estado,
     importaciones:      c.importaciones_rel.map(r => r.importacion?.codigo).join(' + '),
@@ -405,6 +462,7 @@ const r_costeos = async (empresa_id, config) => {
     margen_global:      c.margen_global,
     precio_venta_total: c.precio_venta_total,
     utilidad_bruta:     c.utilidad_bruta,
+    // Sección 3 — desglose por línea
     lineas: c.lineas_costeo.map(l => ({
       producto:       l.linea_pedido?.producto?.nombre,
       sku:            l.linea_pedido?.producto?.sku,
@@ -422,6 +480,7 @@ const r_costeos = async (empresa_id, config) => {
   }))
 }
 
+// R-SEGUIMIENTO — hitos por pedido con rango de fechas
 const r_seguimiento = async (empresa_id, config) => {
   return await prisma.pedido.findMany({
     where: {
@@ -438,11 +497,12 @@ const r_seguimiento = async (empresa_id, config) => {
   })
 }
 
-// ── Catálogos sin buildFechaWhere (no tienen creado_en)
+// R-PROVEEDORES — todos los campos
 const r_proveedores = async (empresa_id, config) => {
   return await prisma.proveedor.findMany({
     where: {
       empresa_id,
+      ...buildFechaWhere(config),
       ...(config.activo !== undefined && { activo: config.activo }),
     },
     include: {
@@ -454,10 +514,12 @@ const r_proveedores = async (empresa_id, config) => {
   })
 }
 
+// R-PRODUCTOS — todos los campos
 const r_productos = async (empresa_id, config) => {
   return await prisma.producto.findMany({
     where: {
       empresa_id,
+      ...buildFechaWhere(config),
       ...(config.activo    !== undefined && { activo:    config.activo }),
       ...(config.categoria && { categoria: config.categoria }),
     },
@@ -465,203 +527,17 @@ const r_productos = async (empresa_id, config) => {
   })
 }
 
+// R-CLIENTES — todos los campos
 const r_clientes = async (empresa_id, config) => {
   return await prisma.cliente.findMany({
     where: {
       empresa_id,
+      ...buildFechaWhere(config),
       ...(config.tipo   && { tipo:  config.tipo }),
       ...(config.activo !== undefined && { activo: config.activo }),
     },
     orderBy: { nombre: 'asc' },
   })
-}
-
-// ══════════════════════════════════════════════════════════════
-// R-MERGE — Tabla desnormalizada árbol jerárquico
-// Proveedor → Pedido → Seguimiento → Importación → Costeo → Línea/Producto → Cliente
-// ══════════════════════════════════════════════════════════════
-const r_merge = async (empresa_id, config) => {
-  const secciones = config.secciones || []
-  if (!secciones.length) return []
-
-  const fecha_inicio = config.fecha_inicio
-  const fecha_fin    = config.fecha_fin
-
-  const tieneProductos     = secciones.includes('productos')
-  const tieneCosteos       = secciones.includes('costeos')
-  const tienePedidos       = secciones.includes('pedidos')
-  const tieneImportaciones = secciones.includes('importaciones')
-  const tieneSeguimiento   = secciones.includes('seguimiento')
-  const tieneProveedores   = secciones.includes('proveedores')
-  const tieneClientes      = secciones.includes('clientes')
-
-  const ejeLineas = tienePedidos || tieneCosteos || tieneProductos || tieneImportaciones || tieneSeguimiento
-
-  if (ejeLineas) {
-    const pedidos = await prisma.pedido.findMany({
-      where: {
-        empresa_id,
-        ...buildFechaWhere({ fecha_inicio, fecha_fin }, 'fecha_pedido'),
-        ...(config.estado_pedido && { estado: config.estado_pedido }),
-        ...(config.proveedor_id  && { proveedor_id: parseInt(config.proveedor_id) }),
-        ...(config.cliente_id    && { cliente_id:   parseInt(config.cliente_id)   }),
-      },
-      include: {
-        proveedor:   { include: { pais: { select: { nombre: true, bandera: true } } } },
-        cliente:     true,
-        lineas:      { include: { producto: true } },
-        hitos:       { orderBy: { fecha_plan: 'asc' } },
-        importacion: {
-          include: {
-            // Relación directa importacion → costeo via importacion_id
-            costeos:      { include: { lineas_costeo: true }, take: 1 },
-            // Relación N:M via costeo_importacion
-            costeos_rel:  { include: { costeo: { include: { lineas_costeo: true } } }, take: 1 },
-            contenedores: { take: 1 },
-          }
-        },
-      },
-      orderBy: { creado_en: 'desc' },
-    })
-
-    const filas = []
-    const ORDEN_HITOS = ['confirmacion','pago_senal','produccion','embarque','llegada_cr','retiro_aduana','entrega_bodega','entrega_cliente']
-
-    for (const pedido of pedidos) {
-      const costeo = pedido.importacion?.costeos?.[0] ?? pedido.importacion?.costeos_rel?.[0]?.costeo ?? null
-
-      for (const linea of (pedido.lineas || [])) {
-        const costoLinea = costeo?.lineas_costeo?.find(lc => lc.linea_id === linea.linea_id) ?? null
-        const fila = {}
-
-        if (tieneProveedores) {
-          fila.prov_nombre        = pedido.proveedor?.nombre
-          fila.prov_pais          = `${pedido.proveedor?.pais?.bandera||''} ${pedido.proveedor?.pais?.nombre||''}`.trim()
-          fila.prov_ciudad        = pedido.proveedor?.ciudad
-          fila.prov_moneda        = pedido.proveedor?.moneda
-          fila.prov_incoterm      = pedido.proveedor?.incoterm_pref
-          fila.prov_dias_transito = pedido.proveedor?.dias_transito
-        }
-        if (tienePedidos) {
-          fila.ped_codigo    = pedido.codigo
-          fila.ped_estado    = pedido.estado
-          fila.ped_fecha     = pedido.fecha_pedido
-          fila.ped_incoterm  = pedido.incoterm
-          fila.ped_moneda    = pedido.moneda
-          fila.ped_nota      = pedido.nota
-          fila.ped_creado_en = pedido.creado_en
-        }
-        if (tieneSeguimiento) {
-          const hitosOrdenados = [...(pedido.hitos||[])].sort((a,b) => ORDEN_HITOS.indexOf(a.tipo) - ORDEN_HITOS.indexOf(b.tipo))
-          const proxHito = hitosOrdenados.find(h => !h.fecha_real && h.fecha_plan)
-          const ultHito  = [...hitosOrdenados].reverse().find(h => h.fecha_real)
-          fila.seg_prox_hito       = proxHito?.tipo
-          fila.seg_prox_fecha_plan = proxHito?.fecha_plan
-          fila.seg_ult_hito        = ultHito?.tipo
-          fila.seg_ult_fecha_real  = ultHito?.fecha_real
-        }
-        if (tieneImportaciones) {
-          fila.imp_codigo      = pedido.importacion?.codigo
-          fila.imp_estado      = pedido.importacion?.estado
-          fila.imp_fecha_union = pedido.importacion?.fecha_union
-          fila.imp_contenedor  = pedido.importacion?.contenedores?.[0]?.codigo
-          fila.imp_eta_cr      = pedido.importacion?.contenedores?.[0]?.eta_cr
-        }
-        if (tieneCosteos && costeo) {
-          fila.cos_tc         = costeo.tc_usd_crc
-          fila.cos_cif        = costeo.valor_cif
-          fila.cos_arancel    = costeo.arancel_monto
-          fila.cos_flete      = costeo.flete_maritimo
-          fila.cos_agente     = costeo.agente_aduana
-          fila.cos_flete_cr   = costeo.flete_cr
-          fila.cos_bodega     = costeo.bodega_costo
-          fila.cos_total_cr   = costeo.costo_total_cr
-          fila.cos_margen     = costeo.margen_global
-          fila.cos_pv_total   = costeo.precio_venta_total
-          fila.cos_utilidad   = costeo.utilidad_bruta
-          if (costoLinea) {
-            fila.cos_lin_costo_unit = costoLinea.costo_unit_cr
-            fila.cos_lin_margen_pct = costoLinea.margen_pct
-            fila.cos_lin_pv_unit    = costoLinea.precio_venta_u
-            fila.cos_lin_pv_total   = costoLinea.precio_venta_t
-            fila.cos_lin_utilidad   = costoLinea.utilidad
-          }
-        }
-        if (tieneProductos) {
-          fila.prod_nombre      = linea.producto?.nombre
-          fila.prod_sku         = linea.producto?.sku
-          fila.prod_categoria   = linea.producto?.categoria
-          fila.prod_peso_kg     = linea.producto?.peso_kg
-          fila.prod_volumen_m3  = linea.producto?.volumen_m3
-          fila.prod_arancel_pct = linea.producto?.arancel_pct
-          fila.lin_cantidad     = linea.cantidad
-          fila.lin_precio_unit  = linea.precio_unit
-          fila.lin_total        = linea.total_linea
-        } else {
-          fila.prod_nombre  = linea.producto?.nombre
-          fila.prod_sku     = linea.producto?.sku
-          fila.lin_cantidad = linea.cantidad
-          fila.lin_total    = linea.total_linea
-        }
-        if (tieneClientes) {
-          fila.cli_nombre    = pedido.cliente?.nombre
-          fila.cli_tipo      = pedido.cliente?.tipo
-          fila.cli_moneda    = pedido.cliente?.moneda
-          fila.cli_descuento = pedido.cliente?.descuento_pct
-        }
-        filas.push(fila)
-      }
-    }
-    return filas
-  }
-
-  // Proveedor + Producto sin operaciones — unir via pedidos históricos
-  if (tieneProveedores && tieneProductos) {
-    const provs = await prisma.proveedor.findMany({
-      where: { empresa_id },
-      include: {
-        pais: { select: { nombre: true, bandera: true } },
-        pedidos: { include: { lineas: { include: { producto: true } } }, take: 100 }
-      },
-      orderBy: { nombre: 'asc' },
-    })
-    const filas = []
-    for (const prov of provs) {
-      const prodMap = new Map()
-      for (const ped of (prov.pedidos||[])) {
-        for (const linea of (ped.lineas||[])) {
-          if (linea.producto && !prodMap.has(linea.producto.producto_id))
-            prodMap.set(linea.producto.producto_id, linea.producto)
-        }
-      }
-      const productos = prodMap.size > 0 ? [...prodMap.values()] : [null]
-      for (const prod of productos) {
-        const fila = {}
-        fila.prov_nombre        = prov.nombre
-        fila.prov_pais          = `${prov.pais?.bandera||''} ${prov.pais?.nombre||''}`.trim()
-        fila.prov_ciudad        = prov.ciudad
-        fila.prov_moneda        = prov.moneda
-        fila.prov_incoterm      = prov.incoterm_pref
-        fila.prov_dias_transito = prov.dias_transito
-        if (prod) {
-          fila.prod_nombre      = prod.nombre
-          fila.prod_sku         = prod.sku
-          fila.prod_categoria   = prod.categoria
-          fila.prod_peso_kg     = prod.peso_kg
-          fila.prod_volumen_m3  = prod.volumen_m3
-          fila.prod_arancel_pct = prod.arancel_pct
-        }
-        filas.push(fila)
-      }
-    }
-    return filas
-  }
-
-  // Catálogos puros
-  if (tieneProveedores) return await r_proveedores(empresa_id, config)
-  if (tieneProductos)   return await r_productos(empresa_id, config)
-  if (tieneClientes)    return await r_clientes(empresa_id, config)
-  return []
 }
 
 const r_pagos = async (empresa_id, config) => {

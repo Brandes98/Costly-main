@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-const TIPOS_REPORTE = ['r01','r02','r03','r04','r05','r06','r07','r08','r09','r10','r11','r12','dinamico','pedidos','importaciones','costeos','seguimiento','proveedores','productos','clientes','merge']
+const TIPOS_REPORTE = ['r01','r02','r03','r04','r05','r06','r07','r08','r09','r10','r11','r12','dinamico','pedidos','importaciones','costeos','seguimiento','proveedores','productos','clientes','merge','pagos']
 
 export const generarReporteSchema = z.object({
   body: z.object({

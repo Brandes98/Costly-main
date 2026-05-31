@@ -18,6 +18,8 @@ import {
   hitoDotClass,
   hitoSubtitulo,
   pagoTipoLabel,
+  pagoMetodoLabel,
+  pagoEstadoLabel,
   permisoTipoLabel,
   fmtCurrency,
   fmtDate,
@@ -34,6 +36,7 @@ const MODULOS = [
       { tipo: 'importaciones', icon: '🚢', label: 'Importaciones', configFields: ['fecha_inicio','fecha_fin','estado_importacion'] },
       { tipo: 'costeos',       icon: '💰', label: 'Costeo',        configFields: ['fecha_inicio','fecha_fin','estado_costeo'] },
       { tipo: 'seguimiento',   icon: '⏱️', label: 'Seguimiento',   configFields: ['fecha_inicio','fecha_fin','estado_pedido'] },
+      { tipo: 'pagos',         icon: '💳', label: 'Pagos',         configFields: ['fecha_inicio','fecha_fin','proveedor_id','modo_pagos'] },
     ]
   },
   {
@@ -125,6 +128,18 @@ const COLS_DISPONIBLES = {
     { key: 'volumen_m3',     label: 'Volumen (m³)' },
     { key: 'activo',         label: 'Estado' },
   ],
+  pagos: [
+  { key: 'proveedor',    label: 'Proveedor' },
+  { key: 'pedido',       label: 'Pedido' },
+  { key: 'tipo',         label: 'Tipo' },
+  { key: 'monto',        label: 'Monto' },
+  { key: 'moneda',       label: 'Moneda' },
+  { key: 'estado',       label: 'Estado' },
+  { key: 'fecha_pago',   label: 'Fecha pago' },
+  { key: 'fecha_limite', label: 'Fecha límite' },
+  { key: 'metodo',       label: 'Método' },
+  { key: 'referencia',   label: 'Referencia' },
+],
   clientes: [
     { key: 'nombre',        label: 'Nombre' },
     { key: 'cedula',        label: 'Cédula' },
@@ -175,6 +190,16 @@ const getCellValue = (row, key, tipo) => {
     if (key === 'activo')    return row.activo ? 'Activo' : 'Inactivo'
     if (key === 'arancel_pct' || key === 'peso_kg' || key === 'volumen_m3') return fmt(row[key])
   }
+if (tipo === 'pagos') {
+  if (key === 'proveedor')    return row.proveedor?.nombre ?? '—'
+  if (key === 'pedido')       return row.pedido?.codigo ?? '—'
+  if (key === 'tipo')         return pagoTipoLabel(row.tipo)
+  if (key === 'metodo')       return pagoMetodoLabel(row.metodo)
+  if (key === 'monto')        return fmtCurrency(Number(row.monto||0), row.moneda)
+  if (key === 'estado')       return pagoEstadoLabel(row.estado)
+  if (key === 'fecha_pago')   return fmtDate(row.fecha_pago)
+  if (key === 'fecha_limite') return fmtDate(row.fecha_limite)
+}
   if (tipo === 'clientes') {
     if (key === 'activo') return row.activo ? 'Activo' : 'Inactivo'
     if (key === 'tipo')   return row.tipo
@@ -221,6 +246,13 @@ function buildConfigFieldDefs(proveedores, clientes) {
       options: costeoEstadoOptions,
       placeholder: 'Todos',
     },
+    modo_pagos: { 
+      key: 'modo', 
+      label: 'Agrupar por', 
+      type: 'select', 
+      options: [{value:'proveedor',label:'Proveedor'},
+        {value:'pedido',label:'Pedido'}], 
+        placeholder: 'Proveedor' },
     dias_limite: { key: 'dias_limite', label: 'Días límite', type: 'number', placeholder: '30' },
     dias_alerta: { key: 'dias_alerta', label: 'Días de alerta', type: 'number', placeholder: '7' },
     desde: { key: 'desde', label: 'Desde', type: 'date' },
@@ -685,6 +717,7 @@ export default function ReportesPage() {
                   { tipo: 'importaciones', icon: '🚢', label: 'Importaciones', filtros: ['estado_importacion'] },
                   { tipo: 'costeos',       icon: '💰', label: 'Costeo',        filtros: ['estado_costeo'] },
                   { tipo: 'seguimiento',   icon: '⏱️', label: 'Seguimiento',   filtros: ['estado_pedido'] },
+                  
                   { tipo: 'proveedores',   icon: '🏭', label: 'Proveedores',   filtros: [] },
                   { tipo: 'productos',     icon: '📦', label: 'Productos',     filtros: ['categoria'] },
                   { tipo: 'clientes',      icon: '👥', label: 'Clientes',      filtros: [] },

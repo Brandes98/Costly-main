@@ -16,6 +16,8 @@ export const getById = async (req, res) => {
 }
 
 export const generar = async (req, res) => {
+  console.log('Body recibido:', req.body);
+  console.log('Headers:', req.headers);
   try { return successResponse(res, await service.generar(req.user.empresa_id, req.body)) }
   catch (error) { return errorResponse(res, error) }
 }
