@@ -1,13 +1,10 @@
-import { useState, useEffect } from 'react';
-import { useImportaciones, useTramiteAduana, useUpsertTramiteAduana } from '../../hooks/useApi';
+import { useState } from 'react';
+import { useImportaciones } from '../../hooks/useApi';
 import {
   fmtCurrency,
   fmtDate,
   importacionEstadoLabel,
   importacionSemaforoClass,
-  tramiteEstadoLabel,
-  tramiteEstadoPillClass,
-  tramiteEstadoOptions,
 } from '../../lib/utils';
 import Spinner from '../../components/ui/Spinner';
 
@@ -73,252 +70,205 @@ const ENLACES = [
   { label: 'INCOTERMS 2020 — ICC', url: 'https://iccwbo.org/business-solutions/incoterms-rules/incoterms-2020/' },
 ];
 
-const EMPTY_FORM = {
-  dua_numero: '',
-  fecha_dua: '',
-  tc_hacienda: '',
-  almacen_fiscal: '',
-  valor_cif_cr: '',
-  total_tributos: '',
-  estado: 'pendiente',
-};
-
-function toDateInput(iso) {
-  if (!iso) return '';
-  return iso.slice(0, 10);
-}
-
 export default function AduanasPage() {
   const [selId, setSelId] = useState(null);
-  const [form, setForm] = useState(EMPTY_FORM);
 
   const { data: importaciones = [], isLoading } = useImportaciones();
-  const enAduana = importaciones.filter((i) => ['en_aduana', 'en_puerto_cr'].includes(i.estado));
 
-  const { data: tramite, isLoading: loadingTramite } = useTramiteAduana(selId);
-  const upsert = useUpsertTramiteAduana();
+  const enAduana = importaciones.filter(i => ['en_aduana', 'en_puerto_cr'].includes(i.estado));
+  const selImp = importaciones.find(i => i.importacion_id === selId);
 
-  // Pre-fill form when tramite loads
-  useEffect(() => {
-    if (tramite) {
-      setForm({
-        dua_numero: tramite.dua_numero ?? '',
-        fecha_dua: toDateInput(tramite.fecha_dua),
-        tc_hacienda: tramite.tc_hacienda ?? '',
-        almacen_fiscal: tramite.almacen_fiscal ?? '',
-        valor_cif_cr: tramite.valor_cif_cr ?? '',
-        total_tributos: tramite.total_tributos ?? '',
-        estado: tramite.estado ?? 'pendiente',
-      });
-    } else if (selId) {
-      setForm(EMPTY_FORM);
-    }
-  }, [tramite, selId]);
-
-  const selImp = importaciones.find((i) => i.importacion_id === selId);
-
-  const field = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
-
-  const handleGuardar = () => {
-    if (!selId) return;
-    upsert.mutate({
-      importacion_id: selId,
-      dua_numero: form.dua_numero || undefined,
-      fecha_dua: form.fecha_dua ? new Date(form.fecha_dua).toISOString() : undefined,
-      tc_hacienda: form.tc_hacienda ? Number(form.tc_hacienda) : undefined,
-      almacen_fiscal: form.almacen_fiscal || undefined,
-      valor_cif_cr: form.valor_cif_cr ? Number(form.valor_cif_cr) : undefined,
-      total_tributos: form.total_tributos ? Number(form.total_tributos) : undefined,
-      estado: form.estado || undefined,
-    });
-  };
+  // Extraer todos los productos con permiso requerido de la importación seleccionada
+  const productosConPermiso = selImp
+    ? (selImp.pedidos || []).flatMap(pedido =>
+        (pedido.lineas || [])
+          .filter(l => l.producto?.requiere_permiso)
+          .map(l => ({
+            pedido_codigo:     pedido.codigo,
+            pedido_id:         pedido.pedido_id,
+            importacion_codigo: selImp.codigo,
+            importacion_id:    selImp.importacion_id,
+            producto_nombre:   l.producto?.nombre,
+            producto_sku:      l.producto?.sku,
+            permiso_tipo:      l.producto?.permiso_tipo || 'Sin especificar',
+            cantidad:          Number(l.cantidad),
+            total_linea:       Number(l.total_linea || 0),
+            moneda:            pedido.moneda,
+            linea_id:          l.linea_id,
+          }))
+      )
+    : [];
 
   return (
     <div className="space-y-4">
       {isLoading ? (
-        <div className="flex justify-center py-16">
-          <Spinner />
-        </div>
+        <div className="flex justify-center py-16"><Spinner /></div>
       ) : (
         <div className="space-y-4">
-        <div className="flex gap-4 items-start">
-          {/* ── Left: DUA form ── */}
-          <div className="flex-1 min-w-0">
-            {!selId ? (
-              <div className="card">
-                <p className="p-10 text-center text-xs text-mist">
-                  Seleccioná una importación de la lista para ver o editar su trámite.
-                </p>
-              </div>
-            ) : loadingTramite ? (
-              <div className="card flex justify-center p-10">
-                <Spinner />
-              </div>
-            ) : (
-              <div className="card">
-                <div className="card-header">
-                  <div className="card-title">🏛️ {selImp?.codigo} — Trámite DUA</div>
-                  <span className={`pill ${tramiteEstadoPillClass(form.estado)}`}>
-                    {tramiteEstadoLabel(form.estado)}
-                  </span>
-                </div>
-                <div className="card-body space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="form-group">
-                      <label className="form-label">DUA número</label>
-                      <input
-                        className="form-input"
-                        value={form.dua_numero}
-                        onChange={field('dua_numero')}
-                        placeholder="Ej: DUA-2026-04-001"
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Fecha DUA</label>
-                      <input
-                        className="form-input"
-                        type="date"
-                        value={form.fecha_dua}
-                        onChange={field('fecha_dua')}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">TC Hacienda (₡)</label>
-                      <input
-                        className="form-input"
-                        type="number"
-                        step="0.01"
-                        value={form.tc_hacienda}
-                        onChange={field('tc_hacienda')}
-                        placeholder="Ej: 518.40"
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Almacén fiscal</label>
-                      <input
-                        className="form-input"
-                        value={form.almacen_fiscal}
-                        onChange={field('almacen_fiscal')}
-                        placeholder="Ej: Almacén Heredia S.A."
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Valor CIF CR (USD)</label>
-                      <input
-                        className="form-input"
-                        type="number"
-                        step="0.01"
-                        value={form.valor_cif_cr}
-                        onChange={field('valor_cif_cr')}
-                        placeholder="0.00"
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Total tributos (USD)</label>
-                      <input
-                        className="form-input"
-                        type="number"
-                        step="0.01"
-                        value={form.total_tributos}
-                        onChange={field('total_tributos')}
-                        placeholder="0.00"
-                      />
-                    </div>
-                    <div className="form-group col-span-2">
-                      <label className="form-label">Estado del trámite</label>
-                      <select className="form-input" value={form.estado} onChange={field('estado')}>
-                        {tramiteEstadoOptions.map((o) => (
-                          <option key={o.value} value={o.value}>
-                            {o.label}
-                          </option>
-                        ))}
-                      </select>
+
+          {/* ── Layout principal ── */}
+          <div className="flex gap-4 items-start">
+
+            {/* ── Panel izquierdo: productos con permiso ── */}
+            <div className="flex-1 min-w-0">
+              {!selId ? (
+                <div className="card">
+                  <div className="p-10 text-center space-y-2">
+                    <div className="text-3xl">🏛️</div>
+                    <div className="text-sm font-medium text-ink">Seleccioná una importación</div>
+                    <div className="text-xs text-mist">
+                      Se mostrarán los productos que requieren permiso especial para su ingreso a Costa Rica.
                     </div>
                   </div>
-
-                  {/* Resumen calculado */}
-                  {(form.valor_cif_cr || form.total_tributos) && (
-                    <div className="rounded-card border border-border bg-sur2 px-4 py-3 grid grid-cols-2 gap-3 text-xs">
-                      <div>
-                        <div className="text-mist mb-0.5">Valor CIF CR</div>
-                        <div className="font-semibold text-ink">
-                          {fmtCurrency(Number(form.valor_cif_cr) || 0, 'USD')}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-mist mb-0.5">Total tributos</div>
-                        <div className="font-semibold text-rs">
-                          {fmtCurrency(Number(form.total_tributos) || 0, 'USD')}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  <button
-                    className="btn btn-primary w-full justify-center"
-                    onClick={handleGuardar}
-                    disabled={upsert.isPending}
-                  >
-                    {upsert.isPending ? 'Guardando...' : '💾 Guardar trámite'}
-                  </button>
-
-                  {upsert.isSuccess && (
-                    <div className="rounded-card border border-sg/30 bg-sg-l px-3 py-2 text-xs text-sg font-medium">
-                      ✓ Trámite guardado correctamente
-                    </div>
-                  )}
-                  {upsert.isError && (
-                    <div className="rounded-card border border-rs/30 bg-rs-l px-3 py-2 text-xs text-rs font-medium">
-                      Error al guardar — {upsert.error?.message ?? 'Intentá de nuevo'}
-                    </div>
-                  )}
                 </div>
-              </div>
-            )}
-          </div>
-
-          {/* ── Right: importaciones en aduana ── */}
-          <div className="w-72 flex-shrink-0">
-            <div className="card">
-              <div className="card-header">
-                <div className="card-title">📋 En aduana / puerto</div>
-                <span className="text-[11px] text-mist">{enAduana.length} importaciones</span>
-              </div>
-              {enAduana.length === 0 ? (
-                <p className="p-6 text-center text-xs text-mist">No hay importaciones en aduana</p>
               ) : (
-                <div className="divide-y divide-border-lt">
-                  {enAduana.map((imp) => {
-                    const isSelected = imp.importacion_id === selId;
-                    return (
-                      <div
-                        key={imp.importacion_id}
-                        onClick={() => setSelId(imp.importacion_id)}
-                        className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors
-                          ${isSelected ? 'bg-tl-xl' : 'hover:bg-sur2'}`}
-                      >
-                        <span className={`s3 ${importacionSemaforoClass(imp.estado)}`} />
-                        <div className="flex-1 min-w-0">
-                          <div
-                            className={`text-xs font-medium truncate ${isSelected ? 'text-tl' : 'text-ink'}`}
-                          >
-                            {imp.codigo}
-                          </div>
-                          <div className="text-[10px] text-mist">
-                            {importacionEstadoLabel(imp.estado)} · {fmtDate(imp.creado_en)}
-                          </div>
-                        </div>
-                        {isSelected && (
-                          <div className="w-1.5 h-1.5 rounded-full bg-tl flex-shrink-0" />
-                        )}
+                <div className="card">
+                  <div className="card-header">
+                    <div className="card-title">
+                      ⚠️ Productos con permiso especial — {selImp?.codigo}
+                    </div>
+                    <span className="text-[11px] text-mist">
+                      {productosConPermiso.length} producto{productosConPermiso.length !== 1 ? 's' : ''} requiere{productosConPermiso.length === 1 ? '' : 'n'} permiso
+                    </span>
+                  </div>
+
+                  {productosConPermiso.length === 0 ? (
+                    <div className="p-10 text-center space-y-2">
+                      <div className="text-3xl">✅</div>
+                      <div className="text-sm font-medium text-sg">Sin permisos especiales</div>
+                      <div className="text-xs text-mist">
+                        Ningún producto en esta importación requiere permiso especial.
                       </div>
-                    );
-                  })}
+                    </div>
+                  ) : (
+                    <>
+                      {/* Alerta resumen */}
+                      <div className="mx-4 mt-3 rounded-card border border-am/30 bg-yellow-50 px-4 py-3 flex items-start gap-3">
+                        <span className="text-lg mt-0.5">⚠️</span>
+                        <div className="text-xs text-am leading-relaxed">
+                          <span className="font-semibold">Atención:</span> Los siguientes productos requieren documentación especial antes del retiro en aduana.
+                          Verificá con tu agente aduanero que todos los permisos estén gestionados.
+                        </div>
+                      </div>
+
+                      <div className="overflow-x-auto mt-3">
+                        <table className="tbl">
+                          <thead>
+                            <tr>
+                              <th>Importación</th>
+                              <th>Pedido</th>
+                              <th>Producto</th>
+                              <th>SKU</th>
+                              <th>Tipo de permiso requerido</th>
+                              <th className="text-right">Cantidad</th>
+                              <th className="text-right">Total línea</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {productosConPermiso.map((item, i) => (
+                              <tr key={item.linea_id || i}>
+                                <td>
+                                  <span className="pill pill-blue text-[9px]">
+                                    {item.importacion_codigo}
+                                  </span>
+                                </td>
+                                <td>
+                                  <span className="pill pill-gray text-[9px]">
+                                    {item.pedido_codigo}
+                                  </span>
+                                </td>
+                                <td>
+                                  <div className="font-medium text-xs">{item.producto_nombre}</div>
+                                </td>
+                                <td>
+                                  <code className="text-[10px] bg-sur2 px-1.5 py-0.5 rounded">
+                                    {item.producto_sku}
+                                  </code>
+                                </td>
+                                <td>
+                                  <span className="pill pill-yellow text-[9px]">
+                                    {item.permiso_tipo}
+                                  </span>
+                                </td>
+                                <td className="text-right text-xs font-semibold">
+                                  {item.cantidad.toLocaleString('en')}
+                                </td>
+                                <td className="text-right text-xs font-semibold text-tl">
+                                  {fmtCurrency(item.total_linea, item.moneda)}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                          <tfoot>
+                            <tr className="bg-sur2">
+                              <td colSpan={4} className="px-3 py-2 text-xs text-mist font-semibold">
+                                Total productos con permiso
+                              </td>
+                              <td className="px-3 py-2 text-xs font-bold text-am">
+                                {productosConPermiso.length} producto{productosConPermiso.length !== 1 ? 's' : ''}
+                              </td>
+                              <td colSpan={2} />
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>
+
+            {/* ── Panel derecho: lista de importaciones ── */}
+            <div className="w-72 flex-shrink-0">
+              <div className="card">
+                <div className="card-header">
+                  <div className="card-title">📋 Importaciones</div>
+                  <span className="text-[11px] text-mist">{importaciones.length} total</span>
+                </div>
+                {importaciones.length === 0 ? (
+                  <p className="p-6 text-center text-xs text-mist">No hay importaciones</p>
+                ) : (
+                  <div className="divide-y divide-border-lt">
+                    {importaciones.map(imp => {
+                      const isSelected = imp.importacion_id === selId
+
+                      // Contar productos con permiso en esta importación
+                      const conPermiso = (imp.pedidos || [])
+                        .flatMap(p => p.lineas || [])
+                        .filter(l => l.producto?.requiere_permiso).length
+
+                      return (
+                        <div
+                          key={imp.importacion_id}
+                          onClick={() => setSelId(imp.importacion_id)}
+                          className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors
+                            ${isSelected ? 'bg-tl-xl' : 'hover:bg-sur2'}`}
+                        >
+                          <span className={`s3 ${importacionSemaforoClass(imp.estado)}`} />
+                          <div className="flex-1 min-w-0">
+                            <div className={`text-xs font-medium truncate ${isSelected ? 'text-tl' : 'text-ink'}`}>
+                              {imp.codigo}
+                            </div>
+                            <div className="text-[10px] text-mist">
+                              {importacionEstadoLabel(imp.estado)} · {fmtDate(imp.creado_en)}
+                            </div>
+                            {conPermiso > 0 && (
+                              <div className="text-[9px] text-am font-semibold mt-0.5">
+                                ⚠️ {conPermiso} producto{conPermiso !== 1 ? 's' : ''} con permiso
+                              </div>
+                            )}
+                          </div>
+                          {isSelected && (
+                            <div className="w-1.5 h-1.5 rounded-full bg-tl flex-shrink-0" />
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-        </div>
 
           {/* ── Normativa de importaciones ── */}
           <div className="card">
@@ -336,17 +286,13 @@ export default function AduanasPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {NORMATIVA.map((row) => (
+                  {NORMATIVA.map(row => (
                     <tr key={row.tipo}>
                       <td className="font-medium whitespace-nowrap">{row.tipo}</td>
                       <td className="text-mist">{row.documentos}</td>
                       <td className="whitespace-nowrap">
-                        <a
-                          href={row.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-tl hover:underline text-xs"
-                        >
+                        <a href={row.url} target="_blank" rel="noopener noreferrer"
+                          className="text-tl hover:underline text-xs">
                           {row.entidad}
                         </a>
                       </td>
@@ -358,20 +304,16 @@ export default function AduanasPage() {
             <div className="card-body border-t border-border-lt pt-3">
               <p className="text-[11px] text-mist mb-2 font-medium">Enlaces a fuentes oficiales</p>
               <div className="flex flex-wrap gap-2">
-                {ENLACES.map((e) => (
-                  <a
-                    key={e.label}
-                    href={e.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="pill pill-gray hover:bg-tl hover:text-white transition-colors cursor-pointer"
-                  >
+                {ENLACES.map(e => (
+                  <a key={e.label} href={e.url} target="_blank" rel="noopener noreferrer"
+                    className="pill pill-gray hover:bg-tl hover:text-white transition-colors cursor-pointer">
                     {e.label}
                   </a>
                 ))}
               </div>
             </div>
           </div>
+
         </div>
       )}
     </div>
