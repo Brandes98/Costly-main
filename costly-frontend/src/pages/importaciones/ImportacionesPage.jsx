@@ -364,7 +364,11 @@ export default function ImportacionesPage() {
       proveedores:    resumenProveedores(imp.pedidos),
       pedidosResumen: resumenPedidos(imp.pedidos),
       pedidosCount:   imp._count?.pedidos ?? imp.pedidos?.length ?? 0,
-      costeoEstado:   imp._count?.costeos > 0 ? 'Registrado' : 'Pendiente',
+      costeoEstado:   imp.costeos_rel?.some(r => r.costeo?.estado === 'aprobado')
+      ? 'Aprobado'
+      : imp.costeos_rel?.length > 0
+      ? 'Registrado'
+      : 'Pendiente',
     })), [importaciones])
 
   const filteredRows = useMemo(() => {
@@ -475,9 +479,13 @@ export default function ImportacionesPage() {
                 </td>
                 <td className="text-[11px] text-mist">{fmtDate(item.fecha_union || item.creado_en)}</td>
                 <td>
-                  <span className={`pill ${item.costeoEstado === 'Registrado' ? 'pill-green' : 'pill-yellow'}`}>
-                    {item.costeoEstado}
-                  </span>
+                  <span className={`pill ${
+  item.costeoEstado === 'Aprobado' ? 'pill-green' :
+  item.costeoEstado === 'Registrado' ? 'pill-blue' :
+  'pill-yellow'
+}`}>
+  {item.costeoEstado}
+</span>
                 </td>
                 <td onClick={e => e.stopPropagation()}>
                   <div className="flex items-center gap-1">

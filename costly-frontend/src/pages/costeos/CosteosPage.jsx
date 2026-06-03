@@ -775,11 +775,18 @@ const abrirVer = (c) => {
               <label className="form-label">Importación *</label>
               <select {...register('importacion_id')} className="form-input">
                 <option value="">— Seleccioná —</option>
-                {importaciones.filter(i => i.estado === 'cerrada').map(i => (
-                  <option key={i.importacion_id} value={i.importacion_id}>
-                    {i.codigo} — {i.pedidos?.map(p=>p.codigo).join(' + ')}
-                  </option>
-                ))}
+               {importaciones.filter(i => i.estado === 'cerrada').map(i => {
+  const tieneAprobado = costeos.some(c =>
+    c.estado === 'aprobado' &&
+    c.importaciones_rel?.some(r => r.importacion_id === i.importacion_id)
+  )
+  return (
+    <option key={i.importacion_id} value={i.importacion_id} disabled={tieneAprobado}>
+      {i.codigo} — {i.pedidos?.map(p=>p.codigo).join(' + ')}
+      {tieneAprobado ? ' (ya tiene costeo aprobado)' : ''}
+    </option>
+  )
+})}
               </select>
               {errors.importacion_id && <span className="text-xs text-rs">{errors.importacion_id.message}</span>}
             </div>

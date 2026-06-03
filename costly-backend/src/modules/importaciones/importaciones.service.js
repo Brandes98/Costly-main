@@ -61,7 +61,10 @@ export const getAll = async (empresa_id, filters = {}) => {
           }
         }
       },
-      _count: { select: { pedidos: true, costeos: true } }
+      _count: { select: { pedidos: true } },
+costeos_rel: {
+  select: { costeo: { select: { estado: true } } }
+}
     },
     orderBy: { creado_en: 'desc' },
   })
