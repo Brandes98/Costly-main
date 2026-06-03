@@ -38,14 +38,34 @@ export const getAll = async (empresa_id, filters = {}) => {
     },
     include: {
       pedidos: {
-        select: { pedido_id: true, codigo: true, estado: true, proveedor: { select: { nombre: true } } }
+        select: {
+          pedido_id: true,
+          codigo:    true,
+          estado:    true,
+          moneda:    true,
+          proveedor: { select: { nombre: true } },
+          lineas: {
+            select: {
+              linea_id:   true,
+              cantidad:   true,
+              total_linea: true,
+              producto: {
+                select: {
+                  nombre:           true,
+                  sku:              true,
+                  requiere_permiso: true,
+                  permiso_tipo:     true,
+                }
+              }
+            }
+          }
+        }
       },
       _count: { select: { pedidos: true, costeos: true } }
     },
     orderBy: { creado_en: 'desc' },
   })
 }
-
 export const getById = async (empresa_id, importacion_id) => {
   const importacion = await prisma.importacion.findFirst({
     where: { importacion_id, empresa_id },

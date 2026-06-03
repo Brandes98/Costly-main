@@ -56,7 +56,17 @@ export const getAll = async (empresa_id, filters = {}) => {
     include: {
       proveedor: { select: { nombre: true, pais: { select: { bandera: true, nombre: true } } } },
       cliente:   { select: { nombre: true } },
-      lineas: { select: { total_linea: true } },
+      lineas: {
+  select: {
+    linea_id:    true,
+    total_linea: true,
+    cantidad:    true,  
+    precio_unit: true,      
+    producto: {
+      select: { nombre: true, sku: true, categoria: true }
+    }
+  }
+},
       pagos:  { select: { monto: true, estado: true } },
       hitos: {
       where: { tipo: 'confirmacion', estado: 'completado' },

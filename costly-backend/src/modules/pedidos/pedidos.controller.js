@@ -4,6 +4,7 @@
 import * as service from './pedidos.service.js'
 import * as proyeccionService from './proyeccion.service.js'
 import { successResponse, errorResponse } from '../../utils/response.utils.js'
+import { registrarAuditoria } from '../../middlewares/audit.middleware.js'
 
 export const getAll = async (req, res) => {
   try {
@@ -19,7 +20,17 @@ export const getById = async (req, res) => {
 
 export const create = async (req, res) => {
   try {
-    return successResponse(res, await service.create(req.user.empresa_id, req.user.usuario_id, req.body), 201)
+    const result = await service.create(req.user.empresa_id, req.user.usuario_id, req.body)
+    await registrarAuditoria({
+      empresa_id:    req.user.empresa_id,
+      usuario_id:    req.user.usuario_id,
+      accion:        'INSERT',
+      entidad_tipo:  'pedido',
+      entidad_id:    result.pedido_id,
+      valor_despues: result,
+      ip:            req.ip,
+    })
+    return successResponse(res, result, 201)
   } catch (error) { return errorResponse(res, error) }
 }
 
@@ -92,7 +103,16 @@ export const updateLinea = async (req, res) => {
  
 export const deleteLinea = async (req, res) => {
   try {
-    return successResponse(res, await service.deleteLinea(req.user.empresa_id, parseInt(req.params.id), parseInt(req.params.linea_id)))
+    const result = await service.deleteLinea(req.user.empresa_id, parseInt(req.params.id), parseInt(req.params.linea_id))
+    await registrarAuditoria({
+      empresa_id:   req.user.empresa_id,
+      usuario_id:   req.user.usuario_id,
+      accion:       'DELETE',
+      entidad_tipo: 'linea_pedido',
+      entidad_id:   parseInt(req.params.linea_id),
+      ip:           req.ip,
+    })
+    return successResponse(res, result)
   } catch (error) { return errorResponse(res, error) }
 }
  

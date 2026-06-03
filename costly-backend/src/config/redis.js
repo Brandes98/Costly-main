@@ -22,6 +22,7 @@ if (process.env.REDIS_URL && process.env.REDIS_URL !== 'redis://localhost:6379')
   redis = {
     get: async () => null,
     set: async () => 'OK',
+    setex: async () => 'OK',
     del: async () => 1,
     quit: async () => {},
     on: () => {},

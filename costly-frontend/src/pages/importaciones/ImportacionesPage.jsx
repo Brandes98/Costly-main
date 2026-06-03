@@ -17,10 +17,12 @@ function resumenProveedores(pedidos = []) {
 }
 
 // ── Menú de acciones
-function AccionesMenu({ imp, onNota, onEliminar }) {
+function AccionesMenu({ imp, onNota, onEliminar, onAceptar }) {
   const navigate        = useNavigate()
   const [open, setOpen] = useState(false)
   const ref             = useRef(null)
+  const [modalAceptar, setModalAceptar] = useState(null)
+  
 
   useEffect(() => {
     const h = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
@@ -29,14 +31,19 @@ function AccionesMenu({ imp, onNota, onEliminar }) {
   }, [])
 
   const opciones = [
+
     { label: '📝 Agregar nota',    action: () => { setOpen(false); onNota(imp) } },
     { label: '✏️ Editar',          action: () => { setOpen(false); navigate(`/importaciones/${imp.importacion_id}/editar`) } },
     { divider: true },
     { label: '📄 Ver / Exportar PDF', action: () => { setOpen(false); exportarPDF(imp.importacion_id) } },
     { label: '📊 Exportar Excel',     action: () => { setOpen(false); exportarExcel(imp.importacion_id) } },
     { divider: true },
-    { label: '🗑 Eliminar',        danger: true, action: () => { setOpen(false); onEliminar(imp) } },
-  ]
+    ...(imp.estado !== 'cerrada' ? [
+      { label: '✅ Aceptar importación', action: () => { setOpen(false); onAceptar(imp) } }
+    ] : []),
+    { divider: true },
+    { label: '🗑 Eliminar', danger: true, action: () => { setOpen(false); onEliminar(imp) } },
+  ]  
 
   return (
     <div className="relative" ref={ref} onClick={e => e.stopPropagation()}>
@@ -230,6 +237,7 @@ export default function ImportacionesPage() {
   const [modalUnir,    setModalUnir]   = useState(false)
   const [modalSeparar, setModalSeparar]= useState(null)
   const [seleccionados, setSeleccionados] = useState([]) // importacion_ids
+  const [modalAceptar, setModalAceptar] = useState(null)
 
   const { data: importaciones = [], isLoading, isError } = useImportaciones({ estado: estado || undefined })
   const { data: pedidosSinImp = [], isLoading: loadingPedidos } = usePedidos({ sin_importacion: 'true' })
@@ -332,6 +340,15 @@ export default function ImportacionesPage() {
     onError: (e) => alert(e?.message || 'Error al separar'),
   })
 
+  const { mutate: aceptarImportacion, isPending: aceptando } = useMutation({
+  mutationFn: (id) => api.patch(`/importaciones/${id}`, { estado: 'cerrada' }),
+  onSuccess: () => {
+    qc.invalidateQueries({ queryKey: ['importaciones'] });
+     setModalAceptar(null)
+    // Opcional: mostrar notificación de éxito
+  },
+  onError: (e) => alert(e?.message || 'No se pudo aceptar la importación'),
+});
   // ── Helpers selección (solo sin costeo)
   const toggleSeleccion = (id) =>
     setSeleccionados(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
@@ -477,6 +494,7 @@ export default function ImportacionesPage() {
                       imp={item}
                       onNota={setModalNota}
                       onEliminar={setModalElim}
+                       onAceptar={setModalAceptar}
                     />
                   </div>
                 </td>
@@ -541,13 +559,13 @@ export default function ImportacionesPage() {
             Un solo pedido → <strong className="text-tl">individual</strong>. Dos o más → <strong className="text-tl">consolidada</strong>.
           </div>
           <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-mist">
-            Pedidos disponibles ({pedidosSinImp.length})
+            Pedidos disponibles ({pedidosSinImp.filter(p => p.estado === 'confirmado').length})
           </div>
           {loadingPedidos ? <div className="flex justify-center py-6"><Spinner /></div>
             : pedidosSinImp.length === 0
               ? <div className="rounded-card border border-border py-6 text-center text-xs text-mist">No hay pedidos disponibles</div>
               : <div className="space-y-1.5 max-h-[40vh] overflow-y-auto">
-                  {pedidosSinImp.map(p => {
+                  {pedidosSinImp.filter(p => p.estado === 'confirmado').map(p => {
                     const sel = selIds.includes(p.pedido_id)
                     return (
                       <div key={p.pedido_id} className="rounded-card border transition-all overflow-hidden"
@@ -668,7 +686,28 @@ export default function ImportacionesPage() {
           onClose={() => setModalNota(null)}
           onSave={nota => guardarNota({ id: modalNota.importacion_id, nota })} />
       )}
-
+      
+      {modalAceptar && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 px-4">
+    <div className="w-full max-w-sm rounded-card border border-border bg-sur shadow-xl p-5 space-y-4">
+      <div className="font-semibold text-ink">¿Aceptar importación?</div>
+      <div className="text-xs text-mist">
+        Se marcará <strong className="text-ink">{modalAceptar.codigo}</strong> como <strong>cerrada</strong>.
+        Esta acción no se puede deshacer.
+      </div>
+      <div className="flex justify-end gap-2">
+        <button className="btn btn-outline text-xs" onClick={() => setModalAceptar(null)}>Cancelar</button>
+        <button className="btn btn-primary text-xs" disabled={aceptando}
+          onClick={() => {
+  aceptarImportacion(modalAceptar.importacion_id)
+  setModalAceptar(null)
+}}>
+          {aceptando ? 'Procesando...' : '✅ Confirmar'}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
       {/* ── Modal eliminar */}
       {modalElim && (
         <ModalEliminar imp={modalElim} saving={eliminando}

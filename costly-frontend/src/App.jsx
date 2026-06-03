@@ -21,6 +21,8 @@ import UsuariosPage from './pages/usuarios/UsuariosPage';
 import AuditoriaPage from './pages/auditoria/AuditoriaPages';
 import ReportesPage from './pages/reportes/ReportesPage';
 import ProductosPage from './pages/productos/ProductosPage';
+import VerCosteoPage from './pages/costeos/VerCosteoPage'
+
 
 const PrivateRoute = ({ children }) => {
   const token = useAuthStore((s) => s.token);
@@ -60,6 +62,7 @@ export default function App() {
           <Route path="usuarios" element={<UsuariosPage />} />
           <Route path="auditoria" element={<AuditoriaPage />} />
           <Route path="empresa" element={<EmpresaPage />} />
+          <Route path="/costeos/:id/ver" element={<VerCosteoPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

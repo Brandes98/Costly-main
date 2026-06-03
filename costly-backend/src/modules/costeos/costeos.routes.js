@@ -25,6 +25,9 @@ router.use(authenticate)
 
 const AUTH = authorize('finanzas', 'operador_sr', 'admin')
 
+// ── Aproximación de costeo
+router.post('/aproximacion', AUTH, validate(createAproximacionSchema), auditLog('costeo', 'INSERT'), controller.createAproximacion)
+
 router.get('/',    AUTH, controller.getAll)
 router.get('/:id', AUTH, controller.getById)
 router.post('/',   AUTH, validate(createCosteoSchema), auditLog('costeo', 'INSERT'), controller.create)
@@ -32,8 +35,6 @@ router.patch('/:id', AUTH, validate(updateCosteoSchema), auditLog('costeo', 'UPD
 router.delete('/:id', AUTH, auditLog('costeo', 'DELETE'), controller.remove)
 router.post('/:id/aprobar', authorize('admin'), auditLog('costeo', 'UPDATE'), controller.aprobar)
 
-// ── Aproximación de costeo
-router.post('/aproximacion', AUTH, validate(createAproximacionSchema), auditLog('costeo', 'INSERT'), controller.createAproximacion)
 
 // ── Notas y archivos por campo
 router.get('/:id/detalles',             AUTH, controller.getDetalles)

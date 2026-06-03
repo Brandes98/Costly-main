@@ -165,7 +165,8 @@ export default function EditarPedido() {
     },
   })
 
-  const editable = pedido && ['borrador','confirmado'].includes(pedido.estado)
+const editable        = pedido?.estado === 'borrador'
+const facturaEditable = pedido && ['borrador','confirmado'].includes(pedido.estado)
 
   if (loadingPedido) return <div className="flex justify-center p-12"><Spinner /></div>
   if (!pedido)       return <div className="p-12 text-center text-mist">Pedido no encontrado</div>
@@ -377,7 +378,7 @@ export default function EditarPedido() {
       <div className="card">
         <div className="card-header">
           <div className="card-title">🧾 Factura del proveedor</div>
-          {editable && !fForm && (
+          {facturaEditable && !fForm && (
             <button type="button" className="btn btn-outline text-xs"
               onClick={() => setFForm(true)}>
               {factura ? '✏️ Editar factura' : '＋ Agregar factura'}
@@ -389,7 +390,7 @@ export default function EditarPedido() {
           {!factura && !fForm && (
             <div className="py-4 text-center text-xs text-mist">
               Sin factura registrada
-              {editable && <span> — usá el botón para agregar</span>}
+              {facturaEditable && <span> — usá el botón para agregar</span>}
             </div>
           )}
 
@@ -404,7 +405,7 @@ export default function EditarPedido() {
                 <div><span className="text-mist">Moneda:</span> <span className="font-medium">{factura.moneda}</span></div>
               </div>
               {factura.nota && <div className="text-[10px] text-mist">📝 {factura.nota}</div>}
-              {editable && (
+              {facturaEditable && (
                 <div className="flex gap-2 pt-1">
                   <button type="button" className="btn btn-outline text-[10px] px-2 py-1"
                     onClick={() => setFForm(true)}>✏️ Editar</button>

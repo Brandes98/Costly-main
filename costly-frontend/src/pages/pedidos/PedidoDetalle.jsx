@@ -10,6 +10,12 @@ import { usePedido, useUpdatePedido, useClientes, useProductos, useProveedores }
 import Spinner from '../../components/ui/Spinner';
 import { estadoPillClass, estadoLabel, fmtDate } from '../../lib/utils';
 import api from '../../lib/api';
+import { useEffect } from 'react';
+
+
+
+
+
 
 // ── Schema editar cabecera
 const schemaCab = z.object({
@@ -166,12 +172,31 @@ export default function PedidoDetalle() {
   const [lineaEdit,   setLineaEdit]   = useState(null)
   const [modalAgregar,setModalAgregar]= useState(false)
   const [confirmDel,  setConfirmDel]  = useState(null)
+  const [factura,  setFactura]  = useState(null)
+  const [fForm,    setFForm]    = useState(false)
+  const [fData,    setFData]    = useState({
+  numero: '', fecha: '', monto: '', moneda: 'USD', tipo: 'comercial', nota: '', archivo: null
+})
 
   const { data: pedido, isLoading } = usePedido(id)
   const { data: clientes    = [] }  = useClientes()
   const { data: proveedores = [] }  = useProveedores()
   const { mutate: actualizar, isPending: guardando } = useUpdatePedido()
 
+  useEffect(() => {
+  if (pedido?.facturas?.length > 0) {
+    const f = pedido.facturas[0]
+    setFactura(f)
+    setFData({
+      numero: f.numero || '',
+      fecha:  f.fecha?.slice(0,10) || '',
+      monto:  f.monto || '',
+      moneda: f.moneda || 'USD',
+      tipo:   f.tipo || 'comercial',
+      nota:   f.nota || '',
+    })
+  }
+}, [pedido])
   // Eliminar línea
   const { mutate: eliminarLinea, isPending: eliminando } = useMutation({
     mutationFn: (linea_id) => api.delete(`/pedidos/${id}/lineas/${linea_id}`),
@@ -214,6 +239,26 @@ export default function PedidoDetalle() {
     )
   }
 
+   const { mutate: guardarFactura, isPending: savingFactura } = useMutation({
+  mutationFn: (formData) => factura
+    ? api.patch(`/facturas/${factura.factura_id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+    : api.post('/facturas', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  onSuccess: (res) => {
+    const f = res?.data || res
+    setFactura(f)
+    setFForm(false)
+    qc.invalidateQueries({ queryKey: ['pedido', String(id)] })
+  },
+})
+
+const { mutate: eliminarFactura } = useMutation({
+  mutationFn: () => api.delete(`/facturas/${factura.factura_id}`),
+  onSuccess: () => {
+    setFactura(null)
+    setFData({ numero: '', fecha: '', monto: '', moneda: 'USD', tipo: 'comercial', nota: '' })
+    qc.invalidateQueries({ queryKey: ['pedido', String(id)] })
+  },
+})
   if (isLoading) return <div className="flex justify-center p-12"><Spinner /></div>
   if (!pedido)   return <div className="p-12 text-center text-mist">Pedido no encontrado</div>
 
@@ -379,6 +424,136 @@ export default function PedidoDetalle() {
           </div>
         </TableCard>
       )}
+      
+      {/* ── Factura */}
+<div className="card">
+  <div className="card-header">
+    <div className="card-title">🧾 Factura del proveedor</div>
+    {editable && !fForm && (
+      <button type="button" className="btn btn-outline text-xs"
+        onClick={() => setFForm(true)}>
+        {factura ? '✏️ Editar factura' : '＋ Agregar factura'}
+      </button>
+    )}
+  </div>
+  <div className="p-4">
+    {!factura && !fForm && (
+      <div className="py-4 text-center text-xs text-mist">
+        Sin factura registrada
+        {editable && <span> — usá el botón para agregar</span>}
+      </div>
+    )}
+    {factura && !fForm && (
+      <div className="rounded-card border border-tl/20 bg-tl-xl px-4 py-3 space-y-2">
+        <div className="grid grid-cols-3 gap-3 text-xs">
+          <div><span className="text-mist">Número:</span> <span className="font-medium">{factura.numero}</span></div>
+          <div><span className="text-mist">Fecha:</span> <span className="font-medium">{factura.fecha?.slice(0,10)}</span></div>
+          <div><span className="text-mist">Tipo:</span> <span className="font-medium capitalize">{factura.tipo}</span></div>
+          <div><span className="text-mist">Monto:</span> <span className="font-bold text-tl">{factura.moneda} {Number(factura.monto).toLocaleString('en',{minimumFractionDigits:2})}</span></div>
+        </div>
+        {factura.archivo_url && (
+          <a href={factura.archivo_url} target="_blank" rel="noreferrer"
+            className="text-[10px] text-tl hover:underline flex items-center gap-1">
+            📄 Ver archivo
+          </a>
+        )}
+        {editable && (
+          <div className="flex gap-2 pt-1">
+            <button type="button" className="btn btn-outline text-[10px] px-2 py-1"
+              onClick={() => setFForm(true)}>✏️ Editar</button>
+            <button type="button" className="btn btn-outline text-[10px] px-2 py-1 hover:border-rs hover:text-rs"
+              onClick={() => { if (window.confirm('¿Eliminar la factura?')) eliminarFactura() }}>🗑 Eliminar</button>
+          </div>
+        )}
+      </div>
+    )}
+    {fForm && (
+      <div className="space-y-3">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="form-group">
+            <label className="form-label">Número de factura *</label>
+            <input className="form-input" value={fData.numero}
+              onChange={e => setFData(p => ({...p, numero: e.target.value}))}
+              placeholder="Ej: INV-2024-001" />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Fecha *</label>
+            <input type="date" className="form-input" value={fData.fecha}
+              onChange={e => setFData(p => ({...p, fecha: e.target.value}))} />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Monto *</label>
+            <input type="number" step="0.01" className="form-input" value={fData.monto}
+              onChange={e => setFData(p => ({...p, monto: e.target.value}))}
+              placeholder="0.00" />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Moneda *</label>
+            <select className="form-input" value={fData.moneda}
+              onChange={e => setFData(p => ({...p, moneda: e.target.value}))}>
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+              <option value="CNY">CNY</option>
+              <option value="CRC">CRC</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Tipo *</label>
+            <select className="form-input" value={fData.tipo}
+              onChange={e => setFData(p => ({...p, tipo: e.target.value}))}>
+              <option value="comercial">Comercial</option>
+              <option value="proforma">Proforma</option>
+              <option value="credito">Crédito</option>
+            </select>
+          </div>
+          <div className="form-group col-span-2">
+            <label className="form-label">Nota</label>
+            <input className="form-input" value={fData.nota}
+              onChange={e => setFData(p => ({...p, nota: e.target.value}))}
+              placeholder="Observación opcional..." />
+          </div>
+        </div>
+        <div className="form-group">
+          <label className="form-label">📎 Archivo</label>
+          <label className="flex items-center gap-3 cursor-pointer rounded-card border-2 border-dashed border-border bg-sur2 px-4 py-3 hover:border-tl/40 transition-colors">
+            <span className="text-2xl">📄</span>
+            <div>
+              <div className="text-xs font-medium text-ink">
+                {fData.archivo ? fData.archivo.name : 'Seleccionar archivo...'}
+              </div>
+              <div className="text-[10px] text-mist">PDF, JPG, PNG, Excel — máx. 10MB</div>
+            </div>
+            <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png,.xlsx,.xls"
+              onChange={e => setFData(p => ({...p, archivo: e.target.files?.[0] || null}))} />
+          </label>
+        </div>
+        <div className="flex justify-end gap-2">
+          <button type="button" className="btn btn-outline text-xs"
+            onClick={() => setFForm(false)}>Cancelar</button>
+          <button type="button" className="btn btn-primary text-xs"
+            disabled={savingFactura || !fData.numero || !fData.fecha || !fData.monto}
+            onClick={() => {
+              const formData = new FormData()
+              formData.append('numero', fData.numero)
+              formData.append('fecha',  new Date(fData.fecha).toISOString())
+              formData.append('monto',  Number(fData.monto))
+              formData.append('moneda', fData.moneda)
+              formData.append('tipo',   fData.tipo)
+              if (fData.nota)    formData.append('nota',    fData.nota)
+              if (fData.archivo) formData.append('archivo', fData.archivo)
+              if (!factura) {
+                formData.append('pedido_id',    id)
+                formData.append('proveedor_id', pedido.proveedor_id)
+              }
+              guardarFactura(formData)
+            }}>
+            {savingFactura ? 'Guardando...' : '✓ Guardar factura'}
+          </button>
+        </div>
+      </div>
+    )}
+  </div>
+</div>
 
       {/* ── Modal editar cabecera */}
       {modalCab && (

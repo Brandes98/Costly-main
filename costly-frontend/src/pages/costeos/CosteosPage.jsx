@@ -12,6 +12,7 @@ import { fmtCurrency, fmtDate } from '../../lib/utils'
 import Spinner from '../../components/ui/Spinner'
 import api from '../../lib/api'
 
+
 // ── Tipos de transporte y sus secciones
 const TIPOS_TRANSPORTE = [
   { value: 'maritimo',   label: '🚢 Marítimo'    },
@@ -265,13 +266,17 @@ function ResumenLateral({ fob, cif, val_cif, arancel, isc, otros, total, tc, tcF
 // ── Resumen de pedidos para encabezado del paso 1 y 2
 function ResumenPedidos({ pedidos = [], lineas = [], tipoCosteo, pedidosSel, todosPedidos = [] }) {
   const pedidosMostrar = tipoCosteo === 'aproximacion'
-    ? todosPedidos.filter(p => pedidosSel.includes(p.pedido_id))
-    : pedidos
+  ? (todosPedidos.filter(p => pedidosSel.includes(p.pedido_id)).length > 0
+      ? todosPedidos.filter(p => pedidosSel.includes(p.pedido_id))
+      : pedidos.filter(p => pedidosSel.includes(p.pedido_id)))
+  : pedidos
 
   if (!pedidosMostrar.length) return null
 
   const proveedores = [...new Set(pedidosMostrar.map(p => p.proveedor?.nombre).filter(Boolean))]
-
+  console.log('lineasAprox:', lineas)
+console.log('pedidosSel:', pedidosSel)
+console.log('pedidos filtered:', pedidos.filter(p => pedidosSel.includes(p.pedido_id)))
   return (
     <div className="card">
       <div className="card-header">
@@ -366,6 +371,7 @@ export default function CosteosPage() {
   const [seccionAb,  setSeccionAb]  = useState('flete') // sección abierta
   const [conIVI,     setConIVI]     = useState(false)
   const [confirmDel, setConfirmDel] = useState(null)
+  const [costeoVer,  setCosteoVer]  = useState(null)
   const [confirmApr, setConfirmApr] = useState(null)
   const [archivos,   setArchivos]   = useState({})
   const [tipoCosteo, setTipoCosteo] = useState(null)
@@ -374,7 +380,7 @@ export default function CosteosPage() {
   const [modoTC,       setModoTC]       = useState('bccr')
   const [monedaCosteo, setMonedaCosteo] = useState('USD') // 'USD' | 'CRC'
   const [otrosEntradas, setOtrosEntradas] = useState([{ id: Date.now(), monto: '', nota: '', archivo: null }])
-
+  const navigate = useNavigate()
   const { data: costeos      = [], isLoading } = useCosteos()
   const { data: importaciones = [] }           = useImportaciones()
   const { data: pedidos       = [] }           = usePedidos()
@@ -518,6 +524,10 @@ export default function CosteosPage() {
   const abrirEditar = (c) => {
     setCosteoEdit(c)
     setTipoCosteo(c.tipo === 'aproximacion' ? 'aproximacion' : 'real')
+    if (c.tipo === 'aproximacion') {
+    const pedidoIds = c.pedidos_rel?.map(r => r.pedido_id) || []
+    setPedidosSel(pedidoIds)
+  }
     const impId = c.importacion_id || c.importaciones_rel?.[0]?.importacion_id || ''
     reset({
       importacion_id: impId,
@@ -536,7 +546,11 @@ export default function CosteosPage() {
     setPaso(2)
     setModoWizard(true)
   }
-
+  
+const abrirVer = (c) => {
+  navigate(`/costeos/${c.costeo_id}/ver`)
+}
+  
   const cerrarWizard = () => {
     setModoWizard(false); setCosteoEdit(null); setPaso(0)
     setTipoCosteo(null); setPedidosSel([]); setArchivos({})
@@ -761,7 +775,7 @@ export default function CosteosPage() {
               <label className="form-label">Importación *</label>
               <select {...register('importacion_id')} className="form-input">
                 <option value="">— Seleccioná —</option>
-                {importaciones.filter(i => i.estado !== 'cerrada').map(i => (
+                {importaciones.filter(i => i.estado === 'cerrada').map(i => (
                   <option key={i.importacion_id} value={i.importacion_id}>
                     {i.codigo} — {i.pedidos?.map(p=>p.codigo).join(' + ')}
                   </option>
@@ -1199,10 +1213,13 @@ export default function CosteosPage() {
             <button className="btn btn-primary text-xs" onClick={abrirCrear}>＋ Nuevo costeo</button>
           </div>
         ) : (
+          <div className="overflow-x-auto">
           <table className="tbl">
             <thead>
               <tr>
-                <th>Importación</th>
+                <th>Importación / Pedidos</th>
+                <th>Tipo</th>
+                <th>Proveedores</th>
                 <th>TC USD/CRC</th>
                 <th>CIF</th>
                 <th>Imp. dif. IVA</th>
@@ -1218,9 +1235,25 @@ export default function CosteosPage() {
                 return (
                   <tr key={c.costeo_id}>
                     <td>
-                      <div className="font-medium text-xs">{c.importaciones_rel?.map(r=>r.importacion?.codigo).join(' + ') || c.importacion?.codigo || 'Sin importación'}</div>
-                      <div className="text-[10px] text-mist">{fmtDate(c.creado_en||c.created_at)}</div>
+                      <div className="font-medium text-xs">
+                      {c.importaciones_rel?.map(r=>r.importacion?.codigo).join(' + ') || 
+                      c.pedidos_rel?.map(r=>r.pedido?.codigo).join(' + ') || 'Sin referencia'}
+                      </div>                    
                     </td>
+                    {/* ← NUEVA: Tipo */}
+  <td>
+    <span className={`pill ${c.tipo === 'aproximacion' ? 'pill-yellow' : 'pill-blue'}`}>
+      {c.tipo === 'aproximacion' ? '🧮 Aprox.' : '🚢 Real'}
+    </span>
+  </td>
+
+  {/* ← NUEVA: Proveedores */}
+  <td className="text-xs text-mist">
+    {c.tipo === 'aproximacion'
+      ? [...new Set(c.pedidos_rel?.map(r => r.pedido?.proveedor?.nombre).filter(Boolean) || [])].join(', ') || '—'
+      : [...new Set(c.importaciones_rel?.flatMap(r => r.importacion?.pedidos?.map(p => p.proveedor?.nombre) || []).filter(Boolean) || [])].join(', ') || '—'
+    }
+  </td>
                     <td className="text-xs font-medium">₡{Number(c.tc_usd_crc).toLocaleString('es-CR',{minimumFractionDigits:2})}</td>
                     <td className="text-xs">{fmtCurrency(cifC,'USD')}</td>
                     <td className="text-xs text-center">{fmtCurrency(Number(c.arancel_monto)||0,'USD')}</td>
@@ -1230,6 +1263,12 @@ export default function CosteosPage() {
                     <td>
                       <div className="flex gap-1 justify-end">
                         {/* Editar siempre disponible excepto aprobado */}
+                        <button
+                          className="btn btn-outline text-[10px] px-2 py-1 hover:border-tl hover:text-tl"
+                          onClick={() => abrirVer(c)}
+                        >
+                          👁 Ver
+                        </button>
                         {c.estado !== 'aprobado' && (
                           <button
                             className="btn btn-outline text-[10px] px-2 py-1 hover:border-tl hover:text-tl"
@@ -1238,7 +1277,7 @@ export default function CosteosPage() {
                             ✏️ Editar
                           </button>
                         )}
-                        {c.estado === 'borrador' && (
+                        {c.estado === 'borrador' && c.tipo !== 'aproximacion' && (
                           <>
                             <button
                               className="btn btn-outline text-[10px] px-2 py-1 text-tl hover:bg-tl hover:text-white"
@@ -1261,6 +1300,7 @@ export default function CosteosPage() {
               })}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 

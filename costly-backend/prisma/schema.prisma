@@ -433,6 +433,7 @@ model pedido {
   permisos         permiso[]
   historial_union  pedidos_historial_union[]
   proyeccion       proyeccion_volumen?
+  costeos_rel  costeo_pedido[]
 }
 
 // ------------------------------------------------------------
@@ -448,6 +449,7 @@ model importacion {
   estado          EstadoImportacion @default(borrador)
   consolidado     Boolean           @default(false)
   creado_en       DateTime          @default(now())
+  nota            String?           @db.Text
 
   // Relaciones
   empresa          empresa                   @relation(fields: [empresa_id], references: [empresa_id])
@@ -530,6 +532,7 @@ model costeo {
   version      Int          @default(1) @db.SmallInt
   estado       EstadoCosteo @default(borrador)
   detalles     costeo_detalle[]
+  tipo         String?      @default("real") @db.VarChar(20)
 
   // Costos de transporte
   flete_maritimo  Decimal?  @db.Decimal(14, 4)
@@ -578,6 +581,7 @@ model costeo {
   aprobador      usuario?       @relation("CosteoAprobadoPor", fields: [aprobado_por], references: [usuario_id])
   lineas_costeo  linea_costeo[]
   importaciones_rel  costeo_importacion[]
+  pedidos_rel  costeo_pedido[]
 }
 
 // ── 2. Agregar modelo nuevo después de costeo:
@@ -627,6 +631,17 @@ model costeo_detalle {
   costeo costeo @relation(fields: [costeo_id], references: [costeo_id], onDelete: Cascade)
 
   @@unique([costeo_id, campo])
+}
+
+// -----------------------------------------------------------
+// 12.3 Modelo de costeo pedidos
+// -----------------------------------------------------------
+model costeo_pedido {
+  costeo_id  Int
+  pedido_id  Int
+  costeo     costeo  @relation(fields: [costeo_id], references: [costeo_id])
+  pedido     pedido  @relation(fields: [pedido_id], references: [pedido_id])
+  @@id([costeo_id, pedido_id])
 }
 // ------------------------------------------------------------
 // 13. CONTENEDORES

@@ -23,13 +23,26 @@ const INCLUDE_COSTEO = {
 export const getAll = async (empresa_id, filters = {}) => {
   return await prisma.costeo.findMany({
     where: {
-      importaciones_rel: { some: { importacion: { empresa_id } } },
+      OR: [
+        { importaciones_rel: { some: { importacion: { empresa_id } } } },
+        { pedidos_rel: { some: { pedido: { empresa_id } } } },
+      ],
       ...(filters.estado && { estado: filters.estado }),
     },
     include: {
       importaciones_rel: {
         include: { importacion: { select: { codigo: true, estado: true } } }
       },
+      pedidos_rel: {
+  include: {
+    pedido: {
+      select: {
+        codigo: true,
+        proveedor: { select: { nombre: true } }  // ← agregar
+      }
+    }
+  }
+},
     },
     orderBy: { creado_en: 'desc' },
   })
@@ -143,7 +156,13 @@ export const create = async (empresa_id, usuario_id, data) => {
 
 export const update = async (empresa_id, costeo_id, data) => {
   const costeo = await prisma.costeo.findFirst({
-    where: { costeo_id, importaciones_rel: { some: { importacion: { empresa_id } } } }
+    where: {
+      costeo_id,
+      OR: [
+        { importaciones_rel: { some: { importacion: { empresa_id } } } },
+        { pedidos_rel: { some: { pedido: { empresa_id } } } },
+      ]
+    }
   })
   if (!costeo) throw new AppError('Costeo no encontrado', 404, 'COSTEO_NOT_FOUND')
   if (costeo.estado !== 'borrador')
@@ -151,7 +170,6 @@ export const update = async (empresa_id, costeo_id, data) => {
 
   const { importacion_ids, importacion_id, ...updateData } = data
 
-  // Si viene lista de importaciones nueva, sincronizarla
   if (importacion_ids?.length) {
     await prisma.costeo_importacion.deleteMany({ where: { costeo_id } })
     await prisma.costeo_importacion.createMany({

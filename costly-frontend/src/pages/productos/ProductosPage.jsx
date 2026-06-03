@@ -8,6 +8,8 @@ import { Modal, Confirm } from '../../components/ui/Spinner';
 import Button, { IconButton } from '../../components/ui/Button';
 import { TableCard, TableContainer, TableToolbar } from '../../components/ui/Table';
 import { permisoTipoLabel } from '../../lib/utils';
+import { useQueryClient } from '@tanstack/react-query'  // ← ya lo tenés? si no agregar
+import api from '../../lib/api'                          // ← agregar
 
 const schema = z.object({
   sku: z.string().min(1, 'Requerido').max(50),
@@ -46,6 +48,7 @@ const modoPillClass = (modo) => MODO_VOLUMEN.find((m) => m.value === modo)?.pill
 export default function ProductosPage() {
   const usuario = useAuthStore((s) => s.usuario);
   const isAdmin = usuario?.rol === 'admin';
+  const qc = useQueryClient();
 
   const [search, setSearch] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
@@ -72,7 +75,13 @@ export default function ProductosPage() {
   const largoCm      = useWatch({ control, name: 'largo_cm' });
   const anchoCm      = useWatch({ control, name: 'ancho_cm' });
   const altoCm       = useWatch({ control, name: 'alto_cm' });
+  const largoCajaCm  = useWatch({ control, name: 'largo_caja_cm' })
+const anchoCajaCm  = useWatch({ control, name: 'ancho_caja_cm' })
+const altoCajaCm   = useWatch({ control, name: 'alto_caja_cm' })
 
+  const volumenCajaCalculado = (largoCajaCm && anchoCajaCm && altoCajaCm)
+    ? ((Number(largoCajaCm) * Number(anchoCajaCm) * Number(altoCajaCm)) / 1_000_000).toFixed(6)
+    : null
   const volumenCalculado = (largoCm && anchoCm && altoCm)
     ? ((Number(largoCm) * Number(anchoCm) * Number(altoCm)) / 1_000_000).toFixed(6)
     : null
@@ -148,7 +157,9 @@ export default function ProductosPage() {
       largo_caja_cm:     data.modo_volumen === 'por_caja' && data.largo_caja_cm !== '' ? Number(data.largo_caja_cm) : undefined,
       ancho_caja_cm:     data.modo_volumen === 'por_caja' && data.ancho_caja_cm !== '' ? Number(data.ancho_caja_cm) : undefined,
       alto_caja_cm:      data.modo_volumen === 'por_caja' && data.alto_caja_cm  !== '' ? Number(data.alto_caja_cm)  : undefined,
-      volumen_caja_m3:   data.modo_volumen === 'por_caja' && data.volumen_caja_m3 !== '' ? Number(data.volumen_caja_m3) : undefined,
+      volumen_caja_m3: data.modo_volumen === 'por_caja'
+  ? (volumenCajaCalculado ? Number(volumenCajaCalculado) : (data.volumen_caja_m3 !== '' ? Number(data.volumen_caja_m3) : undefined))
+  : undefined,
       requiere_permiso: data.requiere_permiso || false,
       permiso_tipo: data.requiere_permiso ? (data.permiso_tipo || undefined) : undefined,
     };
@@ -161,7 +172,9 @@ export default function ProductosPage() {
   };
 
   return (
-    <div className="space-y-3">
+ <div className="space-y-3">
+  <div className="flex items-center gap-2">
+    <div className="flex-1">
       <TableToolbar
         searchValue={search}
         onSearchChange={setSearch}
@@ -169,6 +182,51 @@ export default function ProductosPage() {
         createLabel="Nuevo producto"
         onCreate={abrirCrear}
       />
+    </div>
+  <button
+  className="btn btn-outline text-xs shrink-0"
+  onClick={async () => {
+    try {
+      const res = await api.get('/import/plantilla/productos', { responseType: 'blob' })
+      const url = URL.createObjectURL(new Blob([res]))
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'plantilla_productos.xlsx'
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (e) {
+      alert('Error al descargar plantilla')
+    }
+  }}
+>
+  📥 Plantilla Excel
+</button>
+    <label className="btn btn-outline text-xs cursor-pointer shrink-0">
+      📊 Importar Excel
+      <input
+        type="file"
+        className="hidden"
+        accept=".xlsx,.xls"
+        onChange={async (e) => {
+          const file = e.target.files?.[0]
+          if (!file) return
+          const formData = new FormData()
+          formData.append('archivo', file)
+          try {
+            const res = await api.post('/import/productos', formData, {
+              headers: { 'Content-Type': 'multipart/form-data' }
+            })
+            alert(`✅ ${res.creados} productos importados${res.errores?.length ? `\n⚠️ ${res.errores.length} errores` : ''}`)
+            qc.invalidateQueries({ queryKey: ['productos'] })
+          } catch (e) {
+            alert('Error al importar: ' + (e?.message || 'Intentá de nuevo'))
+          }
+          e.target.value = ''
+        }}
+      />
+    </label>
+  </div>
+    
 
       <TableCard
         title="📦 Catálogo de productos"
@@ -369,6 +427,12 @@ export default function ProductosPage() {
                         <label className="form-label">Alto (cm)</label>
                         <input {...register('alto_caja_cm')} className="form-input" type="number" placeholder="0" min="0" step="0.01" />
                       </div>
+                      {volumenCajaCalculado && (
+                      <div className="rounded border border-tl/20 bg-tl-xl px-3 py-1.5 text-xs text-tl flex justify-between">
+                       <span>✓ Volumen calculado automáticamente</span>
+                        <span className="font-bold">{volumenCajaCalculado} m³</span>
+                          </div>
+                           )}
                     </div>
                   </div>
                   <div className="form-group">
