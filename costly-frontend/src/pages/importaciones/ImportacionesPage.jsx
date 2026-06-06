@@ -285,6 +285,17 @@ export default function ImportacionesPage() {
 
   // Crear importación — guardar facturas primero si las hay
   const handleCrearImportacion = async () => {
+    // Validar fechas futuras
+  const hoy = new Date()
+  hoy.setHours(23, 59, 59, 999)
+  const pedidosFuturos = pedidosSinImp
+    .filter(p => selIds.includes(p.pedido_id))
+    .filter(p => new Date(p.fecha_pedido) > hoy)
+
+  if (pedidosFuturos.length > 0) {
+    alert(`No se pudo procesar debido a que ${pedidosFuturos.length} pedido${pedidosFuturos.length > 1 ? 's' : ''} tiene${pedidosFuturos.length > 1 ? 'n' : ''} fecha posterior a hoy: ${pedidosFuturos.map(p => p.codigo).join(', ')}`)
+    return
+  }
     // Guardar facturas opcionales
     for (const [pedido_id, f] of Object.entries(facturasPedido)) {
       if (f.show && f.data?.numero && f.data?.fecha && f.data?.monto) {

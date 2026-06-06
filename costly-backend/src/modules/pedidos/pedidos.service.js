@@ -45,7 +45,7 @@ const validarFechaImportacion = async (fecha_union, pedido_ids) => {
 }
 
 export const getAll = async (empresa_id, filters = {}) => {
-  return await prisma.pedido.findMany({
+  const pedidos = await prisma.pedido.findMany({
     where: {
       empresa_id,
       ...(filters.estado        && { estado:        filters.estado }),
@@ -67,6 +67,14 @@ export const getAll = async (empresa_id, filters = {}) => {
     }
   }
 },
+importacion: {
+  select: {
+    estado: true,
+    costeos_rel: {
+      select: { costeo: { select: { estado: true } } }
+    }
+  }
+},
       pagos:  { select: { monto: true, estado: true } },
       hitos: {
       where: { tipo: 'confirmacion', estado: 'completado' },
@@ -76,7 +84,20 @@ export const getAll = async (empresa_id, filters = {}) => {
       _count: { select: { lineas: true } },
     },
     orderBy: { creado_en: 'desc' },
-  })
+  }) 
+
+ return pedidos.map(p => {
+  const importacionCerrada    = p.importacion?.estado === 'cerrada'
+  const tieneCosteAprobado    = p.importacion?.costeos_rel?.some(r => r.costeo?.estado === 'aprobado')
+  const estaConfirmado        = !['borrador','cancelado'].includes(p.estado)
+
+  let etapa_seguimiento = 'pendiente'
+  if (importacionCerrada && tieneCosteAprobado) etapa_seguimiento = 'en_bodega'
+  else if (importacionCerrada)                  etapa_seguimiento = 'en_aduana'
+  else if (estaConfirmado)                      etapa_seguimiento = 'listo_fabrica'
+
+  return { ...p, etapa_seguimiento }
+})
 }
 
 export const getById = async (empresa_id, pedido_id) => {
@@ -98,7 +119,14 @@ export const getById = async (empresa_id, pedido_id) => {
 }
 
 export const create = async (empresa_id, usuario_id, data) => {
+  const fechaPedido = new Date(data.fecha_pedido)
+  const hoy = new Date()
+  hoy.setHours(23, 59, 59, 999)
+  if (fechaPedido > hoy)
+    throw new AppError('La fecha del pedido no puede ser futura', 400, 'FECHA_PEDIDO_FUTURA')
+
   const codigo = await generarCodigoPedido(empresa_id)
+
   return await prisma.pedido.create({
     data: {
       empresa_id,
@@ -174,7 +202,11 @@ export const updateEstado = async (empresa_id, pedido_id, nuevoEstado, usuario_i
   if (!permitidos.includes(nuevoEstado))
     throw new AppError(`No se puede cambiar de '${pedido.estado}' a '${nuevoEstado}'`, 400, 'ESTADO_INVALIDO')
 
-  return await prisma.pedido.update({ where: { pedido_id }, data: { estado: nuevoEstado } })
+  const resultado = await prisma.pedido.update({ where: { pedido_id }, data: { estado: nuevoEstado } })
+
+  
+
+  return resultado
 }
 
 export const unirPedidos = async (empresa_id, usuario_id, pedido_ids, nota) => {
