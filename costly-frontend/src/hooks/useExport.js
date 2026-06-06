@@ -466,7 +466,8 @@ export const exportarCosteoExcel = async (costeoId, datos) => {
 ['Agente + otros CR',           calculos.otros],
 ['Costo total CR',              calculos.total_cr],
 [`Precio venta (${calculos.margen}%)`, calculos.pvTotal],
-['Utilidad bruta',              calculos.utilidad],])
+['Utilidad bruta',              calculos.utilidad],
+])
 
   XLSX.utils.book_append_sheet(wb, ws, 'Costeo')
   XLSX.writeFile(wb, `costeo-${costeo.referencia || costeoId}.xlsx`)

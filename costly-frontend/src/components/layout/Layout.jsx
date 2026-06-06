@@ -29,18 +29,18 @@ export default function Layout() {
   }
 
   const content = (
-    <main className="w-0 flex-1 flex flex-col overflow-hidden min-w-0">
+    <main className="flex-1 flex flex-col overflow-hidden min-w-0">
       <Topbar
         isMobile={isMobile}
         isSidebarOpen={sidebarOpen}
         isSidebarCollapsed={sidebarCollapsed}
         onToggleSidebar={handleToggleSidebar}
       />
-      <div className="flex-1 overflow-y-auto p-5 custom-scroll min-w-0">
-        <div className="fade-up w-full min-w-0">
-          <Outlet />
-        </div>
-      </div>
+      <div className="flex-1 overflow-y-auto p-5 custom-scroll">
+  <div className="fade-up w-full max-w-none">
+    <Outlet />
+  </div>
+</div>
     </main>
   )
 

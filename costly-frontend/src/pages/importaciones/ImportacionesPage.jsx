@@ -365,7 +365,7 @@ export default function ImportacionesPage() {
     setSeleccionados(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
 
   const toggleTodos = () => {
-    const disponibles = filteredRows.filter(i => i.costeoEstado === 'Pendiente').map(i => i.importacion_id)
+    const disponibles = filteredRows.filter(i => i.costeoEstado === 'Pendiente' && i.estado === 'cerrada').map(i => i.importacion_id)
     setSeleccionados(prev => prev.length === disponibles.length ? [] : disponibles)
   }
 
@@ -453,7 +453,7 @@ export default function ImportacionesPage() {
                 onClick={() => navigate(`/importaciones/${item.importacion_id}`)}>
                 <td className="pl-3" onClick={e => e.stopPropagation()}>
                   <div className="flex items-center gap-2">
-                    {item.costeoEstado === 'Pendiente' ? (
+                    {item.costeoEstado === 'Pendiente' && item.estado === 'cerrada' ? (
                       <input type="checkbox"
                         className="accent-tl w-3.5 h-3.5 cursor-pointer"
                         checked={seleccionados.includes(item.importacion_id)}
@@ -555,9 +555,17 @@ export default function ImportacionesPage() {
             <button
               className="bg-tl text-white text-xs font-semibold px-4 py-1.5 rounded-full hover:bg-tl-d transition-colors"
               onClick={() => {
-                navigate('/costeos', { state: { importacion_ids: seleccionados } })
-                setSeleccionados([])
-              }}>
+  const noCerradas = seleccionados.filter(id => {
+    const imp = filteredRows.find(i => i.importacion_id === id)
+    return imp?.estado !== 'cerrada'
+  })
+  if (noCerradas.length > 0) {
+    alert('Solo se pueden mover a costeo importaciones cerradas')
+    return
+  }
+  navigate('/costeos', { state: { importacion_ids: seleccionados } })
+  setSeleccionados([])
+}}>
               💰 Mover a costeo
             </button>
           </div>
