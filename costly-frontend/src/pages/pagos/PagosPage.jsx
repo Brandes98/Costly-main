@@ -173,7 +173,7 @@ export default function PagosPage() {
     const en30 = new Date(hoy.getTime() + 30 * 86400000)
 
     const pedidosConfirmados = pedidosConProveedor.filter(p => p.estado === 'confirmado')
-
+    console.log('sample pedido:', pedidosConfirmados[0])
     const pedidosPendientes = pedidosConfirmados.filter(pedido => {
       const total  = (pedido.lineas || []).reduce((s,l) => s + Number(l.total_linea||0), 0)
       if (total === 0) return false
@@ -198,7 +198,7 @@ export default function PagosPage() {
     }, 0)
 
     const getVence = (pedido) => {
-  if (!pedido.forma_pago) return null
+   if (!pedido.forma_pago || pedido.forma_pago === 'contado') return null  // ← contado no vence
   const hitoConf = (pedido.hitos || []).find(h => h.tipo === 'confirmacion' && h.estado === 'completado' && h.fecha_real)
   const fechaBase = hitoConf?.fecha_real ?? pedido.fecha_pedido ?? pedido.creado_en  // ← este
   if (!fechaBase) return null

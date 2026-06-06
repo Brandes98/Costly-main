@@ -215,7 +215,9 @@ export default function PedidosPage() {
     setSeleccionados(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
 
   const toggleTodos = () => {
-    const disponibles = filtered.filter(p => !p.importacion_id).map(p => p.pedido_id)
+    const disponibles = filtered
+  .filter(p => !p.importacion_id && p.estado !== 'borrador')
+  .map(p => p.pedido_id)
     setSeleccionados(prev =>
       prev.length === disponibles.length ? [] : disponibles
     )
@@ -289,7 +291,7 @@ export default function PedidosPage() {
                         className="accent-tl w-3.5 h-3.5 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
                         checked={seleccionados.includes(pedido.pedido_id)}
                         onChange={() => toggleSeleccion(pedido.pedido_id)}
-                        disabled={!!pedido.importacion_id}
+                        disabled={!!pedido.importacion_id || pedido.estado === 'borrador'}
                         title={pedido.importacion_id ? 'Este pedido ya está en una importación' : ''}
                       />
                       <span className={`s3 ${semaforoClass(semaforo)}`} />
@@ -419,6 +421,12 @@ export default function PedidosPage() {
                   const conImp = filtered.filter(p => seleccionados.includes(p.pedido_id) && p.importacion_id)
                   if (conImp.length > 0) {
                     alert(`Los siguientes pedidos ya están en una importación: ${conImp.map(p => p.codigo).join(', ')}`)
+                    return
+                  }
+                  
+                  const borradores = filtered.filter(p => seleccionados.includes(p.pedido_id) && p.estado === 'borrador')
+                  if (borradores.length > 0) {
+                    alert(`Los siguientes pedidos están en borrador y no pueden agregarse a una importación: ${borradores.map(p => p.codigo).join(', ')}`)
                     return
                   }
                   try {

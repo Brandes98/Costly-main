@@ -573,6 +573,8 @@ export default function ReportesPage() {
     setSelected(def);
     setConfig({});
     generar.reset();
+    setResultadoMerge(null)      // ← agregar
+    setResultadosDin(null)       
     // Preseleccionar todas las columnas del módulo
     const cols = COLS_DISPONIBLES[def.tipo] || []
     setColumnasSel(cols.map(c => c.key))

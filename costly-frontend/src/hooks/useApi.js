@@ -352,6 +352,7 @@ export const useEmpresa = () =>
   useQuery({
     queryKey: ['empresa'],
     queryFn: () => api.get('/empresa').then(r => r.data),
+    staleTime: 0, 
   })
 
 export const useUpdateEmpresa = () => {

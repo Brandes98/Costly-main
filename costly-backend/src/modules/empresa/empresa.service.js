@@ -20,7 +20,7 @@ export const update = async (empresa_id, data) => {
     where: { empresa_id },
     data: {
       nombre: data.nombre,
-      cedula_juridica: data.cedula_juridica,
+      ruc: data.ruc,
       telefono: data.telefono,
       email: data.email,
       direccion: data.direccion,

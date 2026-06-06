@@ -8,6 +8,7 @@ import {
 } from '../../hooks/useApi'
 import { fmtCurrency, fmtDate } from '../../lib/utils'
 import Spinner from '../../components/ui/Spinner'
+import { exportarCosteoPDF, exportarCosteoExcel } from '../../hooks/useExport'
 
 const ESTADO_PILL  = { borrador:'pill pill-gray', confirmado:'pill pill-yellow', aprobado:'pill pill-green' }
 const ESTADO_LABEL = { borrador:'Borrador', confirmado:'Confirmado', aprobado:'Aprobado' }
@@ -175,7 +176,38 @@ export default function VerCosteoPage() {
 
   const pvTotal  = lineasActivas.reduce((s,l) => s + calcLinea(l).pVentaTotal, 0)
   const utilidad = lineasActivas.reduce((s,l) => s + (calcLinea(l).pVentaTotal - calcLinea(l).costoTotal), 0)
+//------------------Exportar a PDF Y EXCEL---------------------
+const handleExport = (tipo) => {
+  const pedidosInfo = tipoCosteo === 'aproximacion'
+    ? pedidos.filter(p => pedidosSel.includes(p.pedido_id))
+    : impSel?.pedidos || []
 
+  const lineasConCalc = lineasActivas.map(l => {
+    const pedidoOrigen = tipoCosteo === 'aproximacion'
+      ? pedidos.find(p => p.pedido_id === l.pedido_id)
+      : impSel?.pedidos?.find(p => (p.lineas||[]).some(lp => lp.linea_id === l.linea_id))
+    return {
+      linea: l,
+      calc: calcLinea(l),
+      pedidoCodigo: pedidoOrigen?.codigo || '—'
+    }
+  })
+
+  const datos = {
+    costeo: {
+      ...costeo,
+      referencia: costeo.importaciones_rel?.map(r => r.importacion?.codigo).join('+') ||
+                  costeo.pedidos_rel?.map(r => r.pedido?.codigo).join('+') || String(costeo.costeo_id),
+    },
+    lineas:      lineasConCalc,
+    calculos:    { fob_total, cif, val_cif, arancel, isc, otros, total_cr, margen, pvTotal, utilidad },
+    pedidosInfo,
+  }
+
+  if (tipo === 'pdf')   exportarCosteoPDF(costeo.costeo_id, datos)
+  if (tipo === 'excel') exportarCosteoExcel(costeo.costeo_id, datos)
+}
+//-------------------------------------------------------------
   if (isLoading) return <div className="flex justify-center p-12"><Spinner /></div>
   if (!costeo)   return <div className="p-12 text-center text-mist">Costeo no encontrado</div>
 
@@ -197,9 +229,11 @@ export default function VerCosteoPage() {
             }
           </div>
         </div>
-        <div className="flex gap-2">
-          <button className="btn btn-outline text-xs" onClick={() => navigate('/costeos')}>← Volver</button>
-        </div>
+       <div className="flex gap-2">
+  <button className="btn btn-outline text-xs" onClick={() => handleExport('excel')}>📊 Excel</button>
+  <button className="btn btn-outline text-xs" onClick={() => handleExport('pdf')}>📄 PDF</button>
+  <button className="btn btn-outline text-xs" onClick={() => navigate('/costeos')}>← Volver</button>
+</div>
       </div>
 
       {/* Tabs paso 3 / paso 4 */}

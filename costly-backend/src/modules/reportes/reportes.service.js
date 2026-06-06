@@ -140,19 +140,35 @@ const r03_costeos_por_importacion = async (empresa_id, config) => {
 }
 
 const r04_pagos_pendientes = async (empresa_id, config) => {
-  const hoy = new Date()
-  const limite = config.dias_limite ? new Date(hoy.getTime() + config.dias_limite * 86400000) : null
-  return await prisma.pago.findMany({
+  const pedidos = await prisma.pedido.findMany({
     where: {
-      pedido: { empresa_id },
-      estado: { in: ['programado'] },
-      ...(limite && { fecha_limite: { lte: limite } }),
+      empresa_id,
+      estado: { notIn: ['borrador', 'cancelado'] },
     },
     include: {
-      pedido:    { select: { codigo: true } },
       proveedor: { select: { nombre: true } },
+      lineas:    { select: { total_linea: true } },
+      pagos:     { select: { monto: true, estado: true, tipo: true, fecha_limite: true, fecha_pago: true } },
     },
-    orderBy: { fecha_limite: 'asc' },
+    orderBy: { creado_en: 'desc' },
+  })
+
+  return pedidos.map(p => {
+    const total     = p.lineas.reduce((s,l) => s + Number(l.total_linea||0), 0)
+    const pagado    = p.pagos.filter(pg => pg.estado === 'confirmado').reduce((s,pg) => s + Number(pg.monto||0), 0)
+    const saldo     = total - pagado
+    const overpaid  = pagado > total
+
+    return {
+      ...p,
+      total,
+      pagado,
+      saldo:    Math.abs(saldo),
+      estado_pago: overpaid ? 'pagado_demas'
+        : saldo <= 0        ? 'pagado'
+        : pagado > 0        ? 'pago_parcial'
+        : 'pendiente',
+    }
   })
 }
 
