@@ -406,7 +406,8 @@ const { mutate: eliminarFactura } = useMutation({
         </TableContainer>
       </TableCard>
 
-      {/* Hitos */}
+{/*
+      {/* Hitos 
       {pedido.hitos?.length > 0 && (
         <TableCard title="🎯 Hitos">
           <div className="card-body flex flex-col gap-2">
@@ -424,7 +425,7 @@ const { mutate: eliminarFactura } = useMutation({
           </div>
         </TableCard>
       )}
-      
+      */}
       {/* ── Factura */}
 <div className="card">
   <div className="card-header">

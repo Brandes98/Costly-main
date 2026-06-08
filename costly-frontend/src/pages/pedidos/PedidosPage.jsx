@@ -267,7 +267,7 @@ export default function PedidosPage() {
               <th>Proveedor</th>
               <th>Incoterm</th>
               <th>Estado</th>
-              <th>Prox. hito</th>
+            
               <th>Moneda</th>
               <th>Líneas</th>
               <th className="w-10" />
@@ -275,8 +275,7 @@ export default function PedidosPage() {
           </thead>
           <tbody>
             {filtered.map((pedido) => {
-              const hito     = pedido.hitos?.[0]
-              const semaforo = hito ? getSemaforo(hito.fecha_plan) : 'green'
+              const semaforo = 'green'
 
               return (
                 <tr
@@ -322,18 +321,7 @@ export default function PedidosPage() {
                       {estadoLabel(pedido.estado)}
                     </span>
                   </td>
-                  <td className="text-[11px]">
-                    {hito ? (
-                      <span className={
-                        semaforo === 'red'    ? 'text-rs font-medium' :
-                        semaforo === 'yellow' ? 'text-am font-medium' : 'text-mist'
-                      }>
-                        {fmtDate(hito.fecha_plan)}
-                      </span>
-                    ) : (
-                      <span className="text-mist">-</span>
-                    )}
-                  </td>
+                  
                   <td className="font-medium text-xs">{pedido.moneda}</td>
                   <td className="text-mist text-xs">{pedido._count?.lineas}</td>
                   <td onClick={e => e.stopPropagation()}>
