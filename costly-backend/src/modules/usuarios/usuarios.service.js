@@ -85,3 +85,10 @@ export const deactivate = async (empresa_id, usuario_id, solicitante_id) => {
 
   await prisma.usuario.update({ where: { usuario_id }, data: { activo: false } })
 }
+
+export const cambiarPassword = async (empresa_id, usuario_id, nueva_password) => {
+  const usuario = await prisma.usuario.findFirst({ where: { usuario_id, empresa_id } })
+  if (!usuario) throw new AppError('Usuario no encontrado', 404, 'USER_NOT_FOUND')
+  const password_hash = await bcrypt.hash(nueva_password, 12)
+  await prisma.usuario.update({ where: { usuario_id }, data: { password_hash } })
+}

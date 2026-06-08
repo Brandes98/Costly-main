@@ -43,3 +43,11 @@ export const deactivate = async (req, res) => {
     return successResponse(res, { message: 'Usuario desactivado correctamente' })
   } catch (error) { return errorResponse(res, error) }
 }
+
+export const cambiarPassword = async (req, res) => {
+  try {
+    const { empresa_id } = req.user
+    await service.cambiarPassword(empresa_id, parseInt(req.params.id), req.body.nueva_password)
+    return successResponse(res, { message: 'Contraseña actualizada' })
+  } catch (error) { return errorResponse(res, error) }
+}

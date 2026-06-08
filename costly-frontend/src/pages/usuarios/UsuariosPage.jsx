@@ -4,6 +4,8 @@ import { TableCard, TableContainer, TableToolbar } from '../../components/ui/Tab
 import { Modal, Confirm } from '../../components/ui/Modal';
 import { IconButton } from '../../components/ui/Button';
 import { fmtDate } from '../../lib/utils';
+import { useMutation } from '@tanstack/react-query';  // ← agregar
+import api from '../../lib/api';                       // ← agregar
 
 const ROL_LABEL = {
   admin: 'Admin',
@@ -54,7 +56,7 @@ function Avatar({ nombre, rol }) {
   );
 }
 
-const EMPTY_FORM = { nombre: '', email: '', rol: 'operador' };
+const EMPTY_FORM = { nombre: '', email: '', rol: 'operador', password_temporal: '' }
 
 export default function UsuariosPage() {
   const [search, setSearch] = useState('');
@@ -64,6 +66,8 @@ export default function UsuariosPage() {
   const [showInactivos, setShowInactivos] = useState(true);
   const [form, setForm] = useState(EMPTY_FORM);
   const [editForm, setEditForm] = useState({ nombre: '', rol: '' });
+  const [modalPassword, setModalPassword] = useState(null)
+  const [nuevaPassword, setNuevaPassword]  = useState('')
 
   const { data: usuarios = [], isLoading } = useUsuarios(showInactivos ? {} : { activo: 'true' });
   const { data: meData } = useMe();
@@ -72,6 +76,10 @@ export default function UsuariosPage() {
   const createUsuario = useCreateUsuario();
   const updateUsuario = useUpdateUsuario();
   const deactivateUsuario = useDeactivateUsuario();
+  const { mutate: cambiarPassword, isPending: cambiandoPass } = useMutation({
+  mutationFn: ({ id, nueva_password }) => api.patch(`/usuarios/${id}/password`, { nueva_password }),
+  onSuccess: () => { setModalPassword(null); setNuevaPassword('') },
+})
 
   const field = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
   const editField = (key) => (e) => setEditForm((f) => ({ ...f, [key]: e.target.value }));
@@ -169,6 +177,13 @@ export default function UsuariosPage() {
                 </td>
                 <td>
                   <div className="flex gap-1">
+                    <button
+  className="btn btn-outline text-[10px] px-2 py-1 hover:border-tl hover:text-tl"
+  onClick={() => { setModalPassword(u); setNuevaPassword('') }}
+  title="Cambiar contraseña"
+>
+  🔑
+</button>
                     <IconButton variant="edit" onClick={() => handleOpenEdit(u)} title="Editar" />
                     {u.activo && u.usuario_id !== myId && (
                       <IconButton
@@ -225,6 +240,16 @@ export default function UsuariosPage() {
               onChange={field('email')}
             />
           </div>
+          <div className="form-group">
+  <label className="form-label">Contraseña temporal</label>
+  <input className="form-input" type="text"
+    placeholder="Dejar vacío para usar Cambiar1234!"
+    value={form.password_temporal}
+    onChange={field('password_temporal')} />
+  <div className="text-[10px] text-mist mt-0.5">
+    Si dejás vacío se usará: <code className="bg-sur2 px-1 rounded">Cambiar1234!</code>
+  </div>
+</div>
           <div className="form-group">
             <label className="form-label">Rol *</label>
             <select className="form-input" value={form.rol} onChange={field('rol')}>
@@ -289,6 +314,30 @@ export default function UsuariosPage() {
         title="Desactivar usuario"
         message={`¿Desactivar a ${confirmTarget?.nombre}? El usuario perderá acceso al sistema inmediatamente.`}
       />
+      {modalPassword && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 px-4">
+    <div className="w-full max-w-sm rounded-card border border-border bg-sur shadow-xl p-5 space-y-4">
+      <div className="font-semibold text-ink">🔑 Cambiar contraseña</div>
+      <div className="text-xs text-mist">{modalPassword.nombre} · {modalPassword.email}</div>
+      <div className="form-group">
+        <label className="form-label">Nueva contraseña</label>
+        <input className="form-input" type="text"
+          placeholder="Mínimo 8 caracteres"
+          value={nuevaPassword}
+          onChange={e => setNuevaPassword(e.target.value)} />
+      </div>
+      <div className="flex justify-end gap-2">
+        <button className="btn btn-outline text-xs" onClick={() => setModalPassword(null)}>Cancelar</button>
+        <button className="btn btn-primary text-xs"
+          disabled={cambiandoPass || nuevaPassword.length < 8}
+          onClick={() => cambiarPassword({ id: modalPassword.usuario_id, nueva_password: nuevaPassword })}>
+          {cambiandoPass ? 'Guardando...' : '✓ Cambiar contraseña'}
+        </button>
+      </div>
     </div>
+  </div>
+)}
+    </div>
+    
   );
 }

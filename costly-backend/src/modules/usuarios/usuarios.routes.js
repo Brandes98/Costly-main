@@ -39,4 +39,6 @@ router.patch(
 // DELETE /api/v1/usuarios/:id
 router.delete('/:id', authorize('admin'), auditLog('usuario', 'DELETE'), controller.deactivate);
 
+router.patch('/:id/password', authorize('admin'), controller.cambiarPassword)
+
 export default router;
