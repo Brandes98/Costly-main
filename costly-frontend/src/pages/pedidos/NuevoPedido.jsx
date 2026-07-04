@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -21,29 +21,88 @@ const schema = z.object({
   })).min(1, 'Agregá al menos una línea'),
 });
 
+// ── SearchableSelect reutilizable
+function SearchableSelect({ options, value, onChange, placeholder, searchPlaceholder, renderOption, renderSelected }) {
+  const [open,  setOpen]  = useState(false)
+  const [query, setQuery] = useState('')
+  const ref               = useRef(null)
+
+  useEffect(() => {
+    const h = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', h)
+    return () => document.removeEventListener('mousedown', h)
+  }, [])
+
+  const filtered = options.filter(o =>
+    !query || renderOption(o).toLowerCase().includes(query.toLowerCase())
+  )
+  const selected = options.find(o => String(o.value) === String(value))
+
+  return (
+    <div className="relative" ref={ref}>
+      <button type="button"
+        onClick={() => { setOpen(v => !v); setQuery('') }}
+        className="form-input w-full text-left flex items-center justify-between h-9 text-xs">
+        <span className={selected ? 'text-ink' : 'text-mist'}>
+          {selected ? (renderSelected ? renderSelected(selected) : renderOption(selected)) : placeholder}
+        </span>
+        <span className="text-mist text-[10px] ml-2 shrink-0">{open ? '▲' : '▼'}</span>
+      </button>
+
+      {open && (
+        <div className="absolute z-50 w-full mt-1 rounded-card border border-border bg-sur shadow-xl">
+          <div className="p-2 border-b border-border">
+            <input autoFocus type="text"
+              className="form-input h-7 text-xs w-full"
+              placeholder={searchPlaceholder || 'Buscar...'}
+              value={query}
+              onChange={e => setQuery(e.target.value)} />
+          </div>
+          <div className="max-h-48 overflow-y-auto custom-scroll">
+            <button type="button"
+              className="w-full text-left px-3 py-2 text-xs text-mist hover:bg-sur2"
+              onClick={() => { onChange(''); setOpen(false) }}>
+              {placeholder}
+            </button>
+            {filtered.length === 0 ? (
+              <div className="px-3 py-3 text-xs text-mist text-center">Sin resultados</div>
+            ) : filtered.map(o => (
+              <button key={o.value} type="button"
+                className={`w-full text-left px-3 py-2 text-xs transition-colors hover:bg-sur2
+                  ${String(o.value) === String(value) ? 'bg-tl-xl text-tl font-semibold' : 'text-ink'}`}
+                onClick={() => { onChange(o.value); setOpen(false); setQuery('') }}>
+                {renderOption(o)}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function NuevoPedido() {
-  const navigate  = useNavigate();
-  const location  = useLocation();
-  const duplicado = location.state;
-  const { data: proveedores = [] } = useProveedores();
-  const { data: clientes    = [] } = useClientes();
-  const { data: productos   = [] } = useProductos();
-  const { mutate, isPending, error } = useCreatePedido();
+  const navigate  = useNavigate()
+  const location  = useLocation()
+  const duplicado = location.state
+  const { data: proveedores = [] } = useProveedores()
+  const { data: clientes    = [] } = useClientes()
+  const { data: productos   = [] } = useProductos()
+  const { mutate, isPending, error } = useCreatePedido()
 
   const { register, control, handleSubmit, watch, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
-      incoterm:    'FOB',
-      moneda:      'USD',
-      nota:        '',
-      forma_pago:  'contado',
-      lineas:   [{ producto_id: '', cantidad: '', precio_unit: '', nota: '' }],
+      incoterm:   'FOB',
+      moneda:     'USD',
+      nota:       '',
+      forma_pago: 'contado',
+      lineas:     [{ producto_id: '', cantidad: '', precio_unit: '', nota: '' }],
     },
-  });
+  })
 
-  const { fields, append, remove, replace } = useFieldArray({ control, name: 'lineas' });
+  const { fields, append, remove, replace } = useFieldArray({ control, name: 'lineas' })
 
-  // Precargar datos si viene de duplicar
   useEffect(() => {
     if (!duplicado) return
     const { proveedor_id, cliente_id, incoterm, moneda, nota, lineas } = duplicado
@@ -54,8 +113,15 @@ export default function NuevoPedido() {
     if (nota)         setValue('nota',          nota)
     if (lineas?.length) replace(lineas)
   }, [])
-  const lineas = watch('lineas');
-  const total  = lineas.reduce((acc, l) => acc + (Number(l.cantidad) * Number(l.precio_unit) || 0), 0);
+
+  const lineas  = watch('lineas')
+  const wProvId = watch('proveedor_id')
+  const wCliId  = watch('cliente_id')
+  const total   = lineas.reduce((acc, l) => acc + (Number(l.cantidad) * Number(l.precio_unit) || 0), 0)
+
+  const provOpts = proveedores.map(p => ({ value: p.proveedor_id, label: p.nombre, pais: p.pais?.bandera }))
+  const cliOpts  = clientes.map(c => ({ value: c.cliente_id, label: c.nombre }))
+  const prodOpts = productos.map(p => ({ value: p.producto_id, label: p.nombre, sku: p.sku }))
 
   const onSubmit = (data) => {
     const payload = {
@@ -70,13 +136,12 @@ export default function NuevoPedido() {
         precio_unit: Number(l.precio_unit),
         nota:        l.nota || undefined,
       })),
-    };
-    mutate(payload, { onSuccess: () => navigate('/pedidos') });
-  };
+    }
+    mutate(payload, { onSuccess: () => navigate('/pedidos') })
+  }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-w-4xl">
-      {/* Banner duplicado */}
       {duplicado?.duplicadoDe && (
         <div className="rounded-card border border-tl/20 bg-tl-xl px-4 py-3 flex items-center gap-3">
           <span>📋</span>
@@ -86,31 +151,35 @@ export default function NuevoPedido() {
         </div>
       )}
 
-      {/* Cabecera */}
       <div className="card">
         <div className="card-header">
           <div className="card-title">📋 Datos del pedido</div>
         </div>
         <div className="card-body grid grid-cols-2 gap-4">
+
           <div className="form-group">
             <label className="form-label">Proveedor *</label>
-            <select {...register('proveedor_id')} className="form-input">
-              <option value="">Seleccionar...</option>
-              {proveedores.map(p => (
-                <option key={p.proveedor_id} value={p.proveedor_id}>{p.nombre}</option>
-              ))}
-            </select>
+            <SearchableSelect
+              options={provOpts}
+              value={wProvId}
+              onChange={v => setValue('proveedor_id', v, { shouldValidate: true })}
+              placeholder="Seleccionar proveedor..."
+              searchPlaceholder="Buscar por nombre..."
+              renderOption={o => `${o.pais || ''} ${o.label}`.trim()}
+            />
             {errors.proveedor_id && <span className="text-xs text-rs">{errors.proveedor_id.message}</span>}
           </div>
 
           <div className="form-group">
             <label className="form-label">Cliente</label>
-            <select {...register('cliente_id')} className="form-input">
-              <option value="">Sin cliente asociado</option>
-              {clientes.map(c => (
-                <option key={c.cliente_id} value={c.cliente_id}>{c.nombre}</option>
-              ))}
-            </select>
+            <SearchableSelect
+              options={cliOpts}
+              value={wCliId}
+              onChange={v => setValue('cliente_id', v)}
+              placeholder="Sin cliente asociado"
+              searchPlaceholder="Buscar cliente..."
+              renderOption={o => o.label}
+            />
           </div>
 
           <div className="form-group">
@@ -150,27 +219,19 @@ export default function NuevoPedido() {
             </select>
           </div>
 
-          {/* ── Nota del pedido */}
           <div className="form-group col-span-2">
             <label className="form-label">Nota del pedido</label>
-            <input
-              {...register('nota')}
-              className="form-input"
-              placeholder="Observaciones generales del pedido (opcional)"
-            />
+            <input {...register('nota')} className="form-input"
+              placeholder="Observaciones generales del pedido (opcional)" />
           </div>
         </div>
       </div>
 
-      {/* Líneas */}
       <div className="card">
         <div className="card-header">
           <div className="card-title">📦 Líneas del pedido</div>
-          <button
-            type="button"
-            className="btn btn-outline text-xs"
-            onClick={() => append({ producto_id: '', cantidad: '', precio_unit: '', nota: '' })}
-          >
+          <button type="button" className="btn btn-outline text-xs"
+            onClick={() => append({ producto_id: '', cantidad: '', precio_unit: '', nota: '' })}>
             ＋ Agregar línea
           </button>
         </div>
@@ -188,61 +249,52 @@ export default function NuevoPedido() {
             </thead>
             <tbody>
               {fields.map((field, i) => {
-                const sub = Number(lineas[i]?.cantidad) * Number(lineas[i]?.precio_unit) || 0;
+                const sub    = Number(lineas[i]?.cantidad) * Number(lineas[i]?.precio_unit) || 0
+                const prodId = watch(`lineas.${i}.producto_id`)
                 return (
                   <tr key={field.id}>
-                    <td>
-                      <select {...register(`lineas.${i}.producto_id`)} className="form-input h-8 text-xs">
-                        <option value="">Seleccionar producto...</option>
-                        {productos.map(p => (
-                          <option key={p.producto_id} value={p.producto_id}>[{p.sku}] {p.nombre}</option>
-                        ))}
-                      </select>
+                    <td className="min-w-[240px]">
+                      <SearchableSelect
+                        options={prodOpts}
+                        value={prodId}
+                        onChange={v => setValue(`lineas.${i}.producto_id`, v, { shouldValidate: true })}
+                        placeholder="Seleccionar producto..."
+                        searchPlaceholder="Buscar por nombre o SKU..."
+                        renderOption={o => `[${o.sku}] ${o.label}`}
+                        renderSelected={o => `[${o.sku}] ${o.label}`}
+                      />
                       {errors.lineas?.[i]?.producto_id && (
                         <span className="text-[10px] text-rs">{errors.lineas[i].producto_id.message}</span>
                       )}
                     </td>
                     <td>
-                      <input
-                        type="number" step="0.001"
+                      <input type="number" step="0.001"
                         {...register(`lineas.${i}.cantidad`)}
-                        className="form-input h-8 text-xs"
-                        placeholder="0"
-                      />
+                        className="form-input h-8 text-xs" placeholder="0" />
                     </td>
                     <td>
-                      <input
-                        type="number" step="0.01"
+                      <input type="number" step="0.01"
                         {...register(`lineas.${i}.precio_unit`)}
-                        className="form-input h-8 text-xs"
-                        placeholder="0.00"
-                      />
+                        className="form-input h-8 text-xs" placeholder="0.00" />
                     </td>
                     <td className="font-semibold text-xs">
                       ${sub.toLocaleString('en', { minimumFractionDigits: 2 })}
                     </td>
-                    {/* ── Nota por línea */}
                     <td>
-                      <input
-                        type="text"
+                      <input type="text"
                         {...register(`lineas.${i}.nota`)}
-                        className="form-input h-8 text-xs"
-                        placeholder="Nota opcional..."
-                      />
+                        className="form-input h-8 text-xs" placeholder="Nota opcional..." />
                     </td>
                     <td>
                       {fields.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => remove(i)}
-                          className="text-mist hover:text-rs transition-colors text-base leading-none"
-                        >
+                        <button type="button" onClick={() => remove(i)}
+                          className="text-mist hover:text-rs transition-colors text-base leading-none">
                           ×
                         </button>
                       )}
                     </td>
                   </tr>
-                );
+                )
               })}
             </tbody>
             <tfoot>
@@ -261,14 +313,12 @@ export default function NuevoPedido() {
         )}
       </div>
 
-      {/* Error global */}
       {error && (
         <div className="bg-rs-l text-rs text-xs px-4 py-3 rounded-lg border border-rs/20">
           {error?.error?.message || 'Error al crear el pedido'}
         </div>
       )}
 
-      {/* Acciones */}
       <div className="flex items-center justify-between">
         <button type="button" className="btn btn-outline" onClick={() => navigate('/pedidos')}>
           ← Cancelar
@@ -278,5 +328,5 @@ export default function NuevoPedido() {
         </button>
       </div>
     </form>
-  );
+  )
 }
