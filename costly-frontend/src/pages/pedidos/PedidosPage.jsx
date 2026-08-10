@@ -244,7 +244,35 @@ export default function PedidosPage() {
         createLabel="Nuevo pedido"
         onCreate={() => navigate('/pedidos/nuevo')}
       />
-
+      <div className="flex gap-2 justify-end">
+  <button className="btn btn-outline text-xs"
+    onClick={async () => {
+      try {
+        const res = await api.get('/import/plantilla/pedidos', { responseType: 'blob' })
+        const url = URL.createObjectURL(new Blob([res]))
+        const a = document.createElement('a')
+        a.href = url; a.download = 'plantilla_pedidos.xlsx'; a.click()
+        URL.revokeObjectURL(url)
+      } catch { alert('Error al descargar plantilla') }
+    }}>
+    📥 Plantilla Excel
+  </button>
+  <label className="btn btn-outline text-xs cursor-pointer">
+    📊 Importar pedidos
+    <input type="file" className="hidden" accept=".xlsx,.xls"
+      onChange={async (e) => {
+        const file = e.target.files?.[0]; if (!file) return
+        const formData = new FormData(); formData.append('archivo', file)
+        try {
+          const res = await api.post('/import/pedidos', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+          const errMsg = res.errores?.length ? `\n\n⚠️ ${res.errores.length} errores:\n${res.errores.join('\n')}` : ''
+          alert(`✅ ${res.creados} pedido${res.creados !== 1 ? 's' : ''} importado${res.creados !== 1 ? 's' : ''}${errMsg}`)
+          qc.invalidateQueries({ queryKey: ['pedidos'] })
+        } catch (e) { alert('Error al importar: ' + (e?.message || 'Intentá de nuevo')) }
+        e.target.value = ''
+      }} />
+  </label>
+</div>
       <TableCard
         title="📋 Pedidos"
         countLabel={`${filtered.length} pedidos`}

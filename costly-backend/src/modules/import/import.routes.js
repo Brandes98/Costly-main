@@ -22,4 +22,9 @@ router.post('/proveedores', AUTH, upload.single('archivo'), controller.importarP
 router.post('/clientes',    AUTH, upload.single('archivo'), controller.importarClientes)
 router.post('/productos',   AUTH, upload.single('archivo'), controller.importarProductos)
 
+// Después de router.get('/plantilla/productos', ...):
+router.get('/plantilla/pedidos', AUTH, controller.plantillaPedidos)
+
+// Después de router.post('/productos', ...):
+router.post('/pedidos', AUTH, upload.single('archivo'), controller.importarPedidos)
 export default router

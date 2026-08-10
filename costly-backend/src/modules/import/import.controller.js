@@ -250,4 +250,164 @@ export const importarProductos = async (req, res) => {
  
     return successResponse(res, resultados, 201)
   } catch (error) { return errorResponse(res, error) }
+  
+}
+
+// ── Plantilla pedidos
+export const plantillaPedidos = async (req, res) => {
+  try {
+    const empresa_id = req.user.empresa_id
+
+    const [proveedores, productos, clientes] = await Promise.all([
+      prisma.proveedor.findMany({ where: { empresa_id, activo: true }, select: { proveedor_id: true, nombre: true }, take: 5 }),
+      prisma.producto.findMany({  where: { empresa_id, activo: true }, select: { producto_id: true, sku: true, nombre: true }, take: 5 }),
+      prisma.cliente.findMany({   where: { empresa_id, activo: true }, select: { cliente_id: true, nombre: true }, take: 5 }),
+    ])
+
+    const wb = XLSX.utils.book_new()
+
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([
+      ['proveedor_id*', 'cliente_id', 'fecha_pedido*', 'incoterm*', 'moneda*', 'forma_pago', 'nota'],
+      [proveedores[0]?.proveedor_id || 1, clientes[0]?.cliente_id || '', new Date().toISOString().split('T')[0], 'FOB', 'USD', 'contado', 'Pedido de ejemplo'],
+      ['', '', '// fecha: YYYY-MM-DD', '// EXW|FOB|CIF|DAP|DDP|CFR', '// USD|EUR|CNY|CRC', '// contado|30|60|90|180|365', ''],
+    ]), 'Pedidos')
+
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([
+      ['fila_pedido*', 'producto_id*', 'cantidad*', 'precio_unit*', 'nota'],
+      [2, productos[0]?.producto_id || 1, 100, 12.50, 'Línea de ejemplo'],
+      [2, productos[1]?.producto_id || 2, 50,  8.00,  ''],
+      ['// fila_pedido = fila del pedido en hoja Pedidos (empieza en 2)', '', '', '', ''],
+    ]), 'Lineas')
+
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([
+      ['proveedor_id', 'nombre'],
+      ...proveedores.map(p => [p.proveedor_id, p.nombre]),
+    ]), 'Ref_Proveedores')
+
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([
+      ['producto_id', 'sku', 'nombre'],
+      ...productos.map(p => [p.producto_id, p.sku, p.nombre]),
+    ]), 'Ref_Productos')
+
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([
+      ['cliente_id', 'nombre'],
+      ...clientes.map(c => [c.cliente_id, c.nombre]),
+    ]), 'Ref_Clientes')
+
+    const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
+    res.setHeader('Content-Disposition', 'attachment; filename=plantilla_pedidos.xlsx')
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    res.send(buf)
+  } catch (error) { return errorResponse(res, error) }
+}
+
+// ── Importar pedidos
+export const importarPedidos = async (req, res) => {
+  try {
+    const wb = XLSX.read(req.file.buffer, { type: 'buffer', cellDates: true })
+    const wsPed = wb.Sheets['Pedidos']
+    const wsLin = wb.Sheets['Lineas']
+    if (!wsPed) return errorResponse(res, { message: 'Falta la hoja "Pedidos"', status: 400 })
+    if (!wsLin) return errorResponse(res, { message: 'Falta la hoja "Lineas"', status: 400 })
+
+    const rowsPed = XLSX.utils.sheet_to_json(wsPed, { defval: '' })
+    const rowsLin = XLSX.utils.sheet_to_json(wsLin, { defval: '' })
+    const empresa_id = req.user.empresa_id
+    const usuario_id = req.user.usuario_id
+    const resultados = { creados: 0, errores: [] }
+
+    const INCOTERMS   = ['EXW','FOB','CIF','DAP','DDP','CFR']
+    const MONEDAS     = ['USD','EUR','CNY','CRC']
+    const FORMAS_PAGO = ['contado','30','60','90','180','365']
+
+    const [proveedores, productos, clientes] = await Promise.all([
+      prisma.proveedor.findMany({ where: { empresa_id, activo: true }, select: { proveedor_id: true } }),
+      prisma.producto.findMany({  where: { empresa_id, activo: true }, select: { producto_id: true } }),
+      prisma.cliente.findMany({   where: { empresa_id, activo: true }, select: { cliente_id: true } }),
+    ])
+    const provIds = new Set(proveedores.map(p => p.proveedor_id))
+    const prodIds = new Set(productos.map(p => p.producto_id))
+    const cliIds  = new Set(clientes.map(c => c.cliente_id))
+
+    // Agrupar líneas por fila_pedido
+    const lineasPorFila = {}
+    for (const [j, lin] of rowsLin.entries()) {
+      const fila = String(lin['fila_pedido*'] || lin['fila_pedido'] || '').trim()
+      if (!fila || fila.startsWith('//')) continue
+      if (!lineasPorFila[fila]) lineasPorFila[fila] = []
+      lineasPorFila[fila].push({ lin, j })
+    }
+
+    for (const [i, row] of rowsPed.entries()) {
+      const filaNum = String(i + 2)
+      if (String(row['proveedor_id*'] || '').startsWith('//')) continue
+
+      const proveedor_id = parseInt(row['proveedor_id*'] || row['proveedor_id'])
+      const fecha_str    = String(row['fecha_pedido*'] || row['fecha_pedido'] || '').trim()
+      const incoterm     = String(row['incoterm*'] || row['incoterm'] || '').trim().toUpperCase()
+      const moneda       = String(row['moneda*']   || row['moneda']   || '').trim().toUpperCase()
+      const forma_pago   = String(row['forma_pago'] || 'contado').trim()
+
+      if (!proveedor_id || isNaN(proveedor_id)) { resultados.errores.push(`Fila ${filaNum}: proveedor_id requerido`); continue }
+      if (!provIds.has(proveedor_id))            { resultados.errores.push(`Fila ${filaNum}: proveedor_id ${proveedor_id} no existe`); continue }
+      if (!fecha_str)                            { resultados.errores.push(`Fila ${filaNum}: fecha_pedido requerida`); continue }
+
+      const fecha_pedido = new Date(fecha_str)
+      if (isNaN(fecha_pedido.getTime()))         { resultados.errores.push(`Fila ${filaNum}: fecha inválida "${fecha_str}"`); continue }
+      if (!INCOTERMS.includes(incoterm))         { resultados.errores.push(`Fila ${filaNum}: incoterm inválido "${incoterm}"`); continue }
+      if (!MONEDAS.includes(moneda))             { resultados.errores.push(`Fila ${filaNum}: moneda inválida "${moneda}"`); continue }
+      if (!FORMAS_PAGO.includes(forma_pago))     { resultados.errores.push(`Fila ${filaNum}: forma_pago inválida "${forma_pago}"`); continue }
+
+      const cliente_id_raw = row['cliente_id'] ? parseInt(row['cliente_id']) : null
+      if (cliente_id_raw && !cliIds.has(cliente_id_raw)) { resultados.errores.push(`Fila ${filaNum}: cliente_id ${cliente_id_raw} no existe`); continue }
+
+      const lineasFila = lineasPorFila[filaNum] || []
+      if (!lineasFila.length) { resultados.errores.push(`Fila ${filaNum}: sin líneas en hoja Lineas`); continue }
+
+      const lineasValidas = []
+      let ok = true
+      for (const { lin, j } of lineasFila) {
+        const producto_id = parseInt(lin['producto_id*'] || lin['producto_id'])
+        const cantidad    = parseFloat(lin['cantidad*']   || lin['cantidad'])
+        const precio_unit = parseFloat(lin['precio_unit*'] || lin['precio_unit'])
+
+        if (!producto_id || isNaN(producto_id))    { resultados.errores.push(`Lineas fila ${j+2}: producto_id requerido`); ok = false; break }
+        if (!prodIds.has(producto_id))             { resultados.errores.push(`Lineas fila ${j+2}: producto_id ${producto_id} no existe`); ok = false; break }
+        if (!cantidad || cantidad <= 0)            { resultados.errores.push(`Lineas fila ${j+2}: cantidad inválida`); ok = false; break }
+        if (!precio_unit || precio_unit <= 0)      { resultados.errores.push(`Lineas fila ${j+2}: precio_unit inválido`); ok = false; break }
+
+        lineasValidas.push({
+          producto_id, cantidad, precio_unit,
+          total_linea: cantidad * precio_unit,
+          nota: String(lin['nota'] || '').trim() || null,
+        })
+      }
+      if (!ok) continue
+
+      const year   = fecha_pedido.getFullYear()
+      const count  = await prisma.pedido.count({ where: { empresa_id } })
+      const codigo = `PED-${year}-${String(count + 1).padStart(3, '0')}`
+
+      await prisma.pedido.create({
+        data: {
+          empresa_id, proveedor_id,
+          cliente_id: cliente_id_raw || null,
+          creado_por: usuario_id,
+          codigo, fecha_pedido, incoterm, moneda, forma_pago,
+          nota:   String(row['nota'] || '').trim() || null,
+          estado: 'borrador',
+          lineas: {
+            create: lineasValidas.map((l, idx) => ({
+              numero: idx + 1, producto_id: l.producto_id,
+              cantidad: l.cantidad, precio_unit: l.precio_unit,
+              total_linea: l.total_linea, nota: l.nota,
+            }))
+          }
+        }
+      })
+      resultados.creados++
+    }
+
+    return successResponse(res, resultados, 201)
+  } catch (error) { return errorResponse(res, error) }
 }
