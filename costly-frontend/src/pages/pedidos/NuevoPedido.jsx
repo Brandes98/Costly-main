@@ -4,7 +4,7 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useCreatePedido, useProveedores, useClientes, useProductos } from '../../hooks/useApi';
-
+import * as XLSX from 'xlsx' 
 const schema = z.object({
   proveedor_id: z.coerce.number().int().positive('Requerido'),
   cliente_id:   z.coerce.number().int().positive().optional().or(z.literal('').transform(() => undefined)),
@@ -142,6 +142,7 @@ export default function NuevoPedido() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-w-4xl">
+      
       {duplicado?.duplicadoDe && (
         <div className="rounded-card border border-tl/20 bg-tl-xl px-4 py-3 flex items-center gap-3">
           <span>📋</span>
@@ -228,13 +229,93 @@ export default function NuevoPedido() {
       </div>
 
       <div className="card">
-        <div className="card-header">
-          <div className="card-title">📦 Líneas del pedido</div>
-          <button type="button" className="btn btn-outline text-xs"
-            onClick={() => append({ producto_id: '', cantidad: '', precio_unit: '', nota: '' })}>
-            ＋ Agregar línea
-          </button>
-        </div>
+       <div className="card-header">
+  <div className="card-title">📦 Líneas del pedido</div>
+  <div className="flex gap-2">
+    <button type="button" className="btn btn-outline text-xs"
+      onClick={() => {
+        const wb = XLSX.utils.book_new()
+        const ws = XLSX.utils.aoa_to_sheet([
+          ['sku*', 'cantidad*', 'precio_unit*', 'nota'],
+          ['MTR-001', '100', '12.50', ''],
+          ['// Usá el SKU del producto de la hoja Ref_Productos', '', '', ''],
+        ])
+        XLSX.utils.book_append_sheet(wb, ws, 'Lineas')
+        const wsRef = XLSX.utils.aoa_to_sheet([
+          ['producto_id', 'sku', 'nombre'],
+          ...prodOpts.map(p => [p.value, p.sku, p.label]),
+        ])
+        XLSX.utils.book_append_sheet(wb, wsRef, 'Ref_Productos')
+        const buf = XLSX.write(wb, { type: 'array', bookType: 'xlsx' })
+        const url = URL.createObjectURL(new Blob([buf]))
+        const a = document.createElement('a')
+        a.href = url; a.download = 'plantilla_lineas.xlsx'; a.click()
+        URL.revokeObjectURL(url)
+      }}>
+      📥 Plantilla líneas
+    </button>
+
+    <label className="btn btn-outline text-xs cursor-pointer">
+      📊 Cargar Excel
+      <input type="file" className="hidden" accept=".xlsx,.xls"
+        onChange={(e) => {
+          const file = e.target.files?.[0]; if (!file) return
+          const reader = new FileReader()
+          reader.onload = (ev) => {
+            const wb   = XLSX.read(ev.target.result, { type: 'array' })
+            const ws   = wb.Sheets['Lineas']
+            if (!ws) { alert('El archivo debe tener una hoja llamada "Lineas"'); return }
+            const rows = XLSX.utils.sheet_to_json(ws, { defval: '' })
+            const errores = []
+            const nuevasLineas = []
+
+            for (const [i, row] of rows.entries()) {
+              const sku         = String(row['sku*'] || row['sku'] || '').trim()
+              if (sku.startsWith('//')) continue
+
+              const cantidad    = parseFloat(row['cantidad*']    || row['cantidad'])
+              const precio_unit = parseFloat(row['precio_unit*'] || row['precio_unit'])
+
+              if (!sku)                         { errores.push(`Fila ${i+2}: SKU requerido`); continue }
+              if (!cantidad || cantidad <= 0)    { errores.push(`Fila ${i+2}: cantidad inválida`); continue }
+              if (!precio_unit || precio_unit <= 0) { errores.push(`Fila ${i+2}: precio_unit inválido`); continue }
+
+              const prod = prodOpts.find(p => p.sku?.toLowerCase() === sku.toLowerCase())
+              if (!prod) { errores.push(`Fila ${i+2}: SKU "${sku}" no existe`); continue }
+
+              nuevasLineas.push({
+                producto_id: String(prod.value),
+                cantidad:    String(cantidad),
+                precio_unit: String(precio_unit),
+                nota:        String(row['nota'] || ''),
+              })
+            }
+
+            if (errores.length) alert(`⚠️ Errores:\n${errores.join('\n')}`)
+            if (nuevasLineas.length) {
+  // Si solo hay una línea vacía (la default), reemplazala
+  const soloVacia = fields.length === 1 && 
+    !lineas[0]?.producto_id && !lineas[0]?.cantidad && !lineas[0]?.precio_unit
+  
+  if (soloVacia) {
+    replace(nuevasLineas)
+  } else {
+    nuevasLineas.forEach(l => append(l))
+  }
+  alert(`✅ ${nuevasLineas.length} línea${nuevasLineas.length !== 1 ? 's' : ''} agregada${nuevasLineas.length !== 1 ? 's' : ''}`)
+}
+          }
+          reader.readAsArrayBuffer(file)
+          e.target.value = ''
+        }} />
+    </label>
+
+    <button type="button" className="btn btn-outline text-xs"
+      onClick={() => append({ producto_id: '', cantidad: '', precio_unit: '', nota: '' })}>
+      ＋ Agregar línea
+    </button>
+  </div>
+</div>
         <div className="overflow-x-auto">
           <table className="tbl">
             <thead>
