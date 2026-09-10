@@ -7,6 +7,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { usePedido, useProveedores, useClientes, useProductos } from '../../hooks/useApi';
 import Spinner from '../../components/ui/Spinner';
 import api from '../../lib/api';
+import { useRef } from 'react';
+import * as XLSX from 'xlsx'
 
 const schema = z.object({
   proveedor_id: z.coerce.number().int().positive('Requerido'),
@@ -25,6 +27,66 @@ const schema = z.object({
   })).min(1, 'Agregá al menos una línea'),
 })
 
+// ── SearchableSelect reutilizable
+function SearchableSelect({ options, value, onChange, placeholder, searchPlaceholder, renderOption, renderSelected }) {
+  const [open,  setOpen]  = useState(false)
+  const [query, setQuery] = useState('')
+  const ref               = useRef(null)
+
+  useEffect(() => {
+    const h = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', h)
+    return () => document.removeEventListener('mousedown', h)
+  }, [])
+
+  const filtered = options.filter(o =>
+    !query || renderOption(o).toLowerCase().includes(query.toLowerCase())
+  )
+  const selected = options.find(o => String(o.value) === String(value))
+
+  return (
+    <div className="relative" ref={ref}>
+      <button type="button"
+        onClick={() => { setOpen(v => !v); setQuery('') }}
+        className="form-input w-full text-left flex items-center justify-between h-9 text-xs">
+        <span className={selected ? 'text-ink' : 'text-mist'}>
+          {selected ? (renderSelected ? renderSelected(selected) : renderOption(selected)) : placeholder}
+        </span>
+        <span className="text-mist text-[10px] ml-2 shrink-0">{open ? '▲' : '▼'}</span>
+      </button>
+
+      {open && (
+        <div className="absolute z-50 w-full mt-1 rounded-card border border-border bg-sur shadow-xl">
+          <div className="p-2 border-b border-border">
+            <input autoFocus type="text"
+              className="form-input h-7 text-xs w-full"
+              placeholder={searchPlaceholder || 'Buscar...'}
+              value={query}
+              onChange={e => setQuery(e.target.value)} />
+          </div>
+          <div className="max-h-48 overflow-y-auto custom-scroll">
+            <button type="button"
+              className="w-full text-left px-3 py-2 text-xs text-mist hover:bg-sur2"
+              onClick={() => { onChange(''); setOpen(false) }}>
+              {placeholder}
+            </button>
+            {filtered.length === 0 ? (
+              <div className="px-3 py-3 text-xs text-mist text-center">Sin resultados</div>
+            ) : filtered.map(o => (
+              <button key={o.value} type="button"
+                className={`w-full text-left px-3 py-2 text-xs transition-colors hover:bg-sur2
+                  ${String(o.value) === String(value) ? 'bg-tl-xl text-tl font-semibold' : 'text-ink'}`}
+                onClick={() => { onChange(o.value); setOpen(false); setQuery('') }}>
+                {renderOption(o)}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function EditarPedido() {
   const navigate = useNavigate()
   const { id }   = useParams()
@@ -34,8 +96,10 @@ export default function EditarPedido() {
   const { data: proveedores = [] } = useProveedores()
   const { data: clientes    = [] } = useClientes()
   const { data: productos   = [] } = useProductos()
-
-  const { register, control, handleSubmit, watch, reset, formState: { errors } } = useForm({
+  const provOpts = proveedores.map(p => ({ value: p.proveedor_id, label: p.nombre, pais: p.pais?.bandera }))
+  const cliOpts  = clientes.map(c => ({ value: c.cliente_id, label: c.nombre }))
+  const prodOpts = productos.map(p => ({ value: p.producto_id, label: p.nombre, sku: p.sku }))
+  const { register, control, handleSubmit, watch, reset, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
       incoterm: 'FOB',
@@ -48,7 +112,8 @@ export default function EditarPedido() {
   const { fields, append, remove } = useFieldArray({ control, name: 'lineas' })
   const lineas = watch('lineas')
   const total  = lineas.reduce((acc, l) => acc + (Number(l.cantidad) * Number(l.precio_unit) || 0), 0)
-
+  const wProvId = watch('proveedor_id')
+  const wCliId  = watch('cliente_id')
   // Precargar datos del pedido cuando lleguen
   useEffect(() => {
     if (!pedido) return
@@ -195,23 +260,39 @@ const facturaEditable = pedido && ['borrador','confirmado'].includes(pedido.esta
         <div className="card-body grid grid-cols-2 gap-4">
           <div className="form-group">
             <label className="form-label">Proveedor *</label>
-            <select {...register('proveedor_id')} className="form-input" disabled={!editable}>
-              <option value="">Seleccionar...</option>
-              {proveedores.map(p => (
-                <option key={p.proveedor_id} value={p.proveedor_id}>{p.nombre}</option>
-              ))}
-            </select>
+            {editable ? (
+  <SearchableSelect
+    options={provOpts}
+    value={wProvId}
+    onChange={v => setValue('proveedor_id', v, { shouldValidate: true })}
+    placeholder="Seleccionar proveedor..."
+    searchPlaceholder="Buscar por nombre..."
+    renderOption={o => `${o.pais || ''} ${o.label}`.trim()}
+  />
+) : (
+  <div className="form-input bg-sur2 text-xs text-ink">
+    {proveedores.find(p => p.proveedor_id === Number(wProvId))?.nombre || '—'}
+  </div>
+)}
             {errors.proveedor_id && <span className="text-xs text-rs">{errors.proveedor_id.message}</span>}
           </div>
 
           <div className="form-group">
             <label className="form-label">Cliente</label>
-            <select {...register('cliente_id')} className="form-input" disabled={!editable}>
-              <option value="">Sin cliente asociado</option>
-              {clientes.map(c => (
-                <option key={c.cliente_id} value={c.cliente_id}>{c.nombre}</option>
-              ))}
-            </select>
+            {editable ? (
+  <SearchableSelect
+    options={cliOpts}
+    value={wCliId}
+    onChange={v => setValue('cliente_id', v)}
+    placeholder="Sin cliente asociado"
+    searchPlaceholder="Buscar cliente..."
+    renderOption={o => o.label}
+  />
+) : (
+  <div className="form-input bg-sur2 text-xs text-ink">
+    {clientes.find(c => c.cliente_id === Number(wCliId))?.nombre || 'Sin cliente'}
+  </div>
+)}
           </div>
 
           <div className="form-group">
@@ -297,16 +378,24 @@ const facturaEditable = pedido && ['borrador','confirmado'].includes(pedido.esta
                 return (
                   <tr key={field.id}>
                     <td>
-                      <select
-                        {...register(`lineas.${i}.producto_id`)}
-                        className="form-input h-8 text-xs"
-                        disabled={!editable || !esNueva}
-                      >
-                        <option value="">Seleccionar producto...</option>
-                        {productos.map(p => (
-                          <option key={p.producto_id} value={p.producto_id}>[{p.sku}] {p.nombre}</option>
-                        ))}
-                      </select>
+                      {editable ? (
+  <SearchableSelect
+    options={prodOpts}
+    value={watch(`lineas.${i}.producto_id`)}
+    onChange={v => setValue(`lineas.${i}.producto_id`, v, { shouldValidate: true })}
+    placeholder="Seleccionar producto..."
+    searchPlaceholder="Buscar por nombre o SKU..."
+    renderOption={o => `[${o.sku}] ${o.label}`}
+    renderSelected={o => `[${o.sku}] ${o.label}`}
+  />
+) : (
+  <div className="form-input bg-sur2 text-xs text-ink h-8 flex items-center">
+    {(() => {
+      const prod = productos.find(p => p.producto_id === Number(lineas[i]?.producto_id))
+      return prod ? `[${prod.sku}] ${prod.nombre}` : '—'
+    })()}
+  </div>
+)}
                       {errors.lineas?.[i]?.producto_id && (
                         <span className="text-[10px] text-rs">{errors.lineas[i].producto_id.message}</span>
                       )}
