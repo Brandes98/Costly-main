@@ -54,8 +54,17 @@ function AccionesMenu({ imp, onNota, onEliminar, onAceptar }) {
         <span className="text-base leading-none font-bold tracking-tight">···</span>
       </button>
       {open && (
-        <div className="absolute right-0 top-8 z-50 w-52 rounded-card border border-border bg-sur shadow-xl py-1">
-          {opciones.map((op, i) =>
+  <div
+    className="fixed z-[9999] w-52 rounded-card border border-border bg-sur shadow-xl py-1"
+    style={(() => {
+      const rect = ref.current?.getBoundingClientRect()
+      if (!rect) return {}
+      const spaceBelow = window.innerHeight - rect.bottom
+      return spaceBelow < 220
+        ? { bottom: window.innerHeight - rect.top + 4, right: window.innerWidth - rect.right }
+        : { top: rect.bottom + 4, right: window.innerWidth - rect.right }
+    })()}
+  >      {opciones.map((op, i) =>
             op.divider ? <div key={i} className="my-1 border-t border-border-lt" /> : (
               <button key={i} onClick={op.action}
                 className={`w-full text-left px-3 py-2 text-xs transition-colors ${op.danger ? 'text-rs hover:bg-rs-l' : 'text-ink hover:bg-sur2'}`}>
@@ -498,7 +507,7 @@ export default function ImportacionesPage() {
   {item.costeoEstado}
 </span>
                 </td>
-                <td onClick={e => e.stopPropagation()}>
+                <td onClick={e => e.stopPropagation()} className="overflow-visible">
                   <div className="flex items-center gap-1">
                     {item.estado !== 'cerrada' && item.pedidosCount > 1 && (
                       <button
